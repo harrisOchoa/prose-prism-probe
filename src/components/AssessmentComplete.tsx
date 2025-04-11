@@ -3,14 +3,23 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle } from "lucide-react";
 
+// Define the type for a writing prompt
+interface WritingPromptItem {
+  id: number;
+  prompt: string;
+  response: string;
+  wordCount: number;
+}
+
 interface AssessmentCompleteProps {
   wordCount: number;
   candidateName: string;
   candidatePosition: string;
   restartAssessment: () => void;
+  completedPrompts: WritingPromptItem[];
 }
 
-const AssessmentComplete = ({ wordCount, candidateName, candidatePosition, restartAssessment }: AssessmentCompleteProps) => {
+const AssessmentComplete = ({ wordCount, candidateName, candidatePosition, restartAssessment, completedPrompts }: AssessmentCompleteProps) => {
   return (
     <div className="assessment-card max-w-4xl mx-auto text-center">
       <div className="flex justify-center mb-6">
