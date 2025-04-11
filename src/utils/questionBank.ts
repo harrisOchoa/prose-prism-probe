@@ -5,47 +5,47 @@ export interface WritingPromptQuestion {
   prompt: string;
 }
 
-// Question bank with 10 diverse writing prompts
+// Question bank with 10 diverse writing prompts that are relatable to people from various backgrounds
 export const questionBank: WritingPromptQuestion[] = [
   {
     id: 1,
-    prompt: "Describe a situation where effective communication helped resolve a conflict in the workplace. What specific communication strategies were used, and why were they effective?",
+    prompt: "Describe a situation where you successfully communicated with someone despite a misunderstanding. What strategies did you use, and what did you learn from this experience?",
   },
   {
     id: 2,
-    prompt: "Many companies are adopting remote work policies. Discuss the advantages and disadvantages of remote work from both an employer's and employee's perspective.",
+    prompt: "Many aspects of daily life have changed with technology. Discuss how technology has impacted your daily routine, and include both positive and negative effects you've experienced.",
   },
   {
     id: 3,
-    prompt: "Explain how technology has changed the way we communicate in professional settings. Include specific examples and discuss whether these changes have been positive or negative overall.",
+    prompt: "Think about a time when you had to learn something new. What challenges did you face, and what techniques helped you learn effectively?",
   },
   {
     id: 4,
-    prompt: "Describe a time when you had to adapt to a significant change at work or school. What strategies did you use to navigate this change successfully?",
+    prompt: "Describe a situation where you had to adapt to an unexpected change. How did you handle it, and what did this experience teach you about flexibility?",
   },
   {
     id: 5,
-    prompt: "Discuss the importance of diversity and inclusion in the workplace. How can organizations create more inclusive environments?",
+    prompt: "Everyone has different strengths and perspectives. Describe how you've benefited from working or interacting with people who are different from you.",
   },
   {
     id: 6,
-    prompt: "What do you consider to be the most important leadership qualities in today's business environment? Provide examples of how these qualities can positively impact an organization.",
+    prompt: "What qualities do you think make someone a good team member? Provide examples of how these qualities have been important in your own experiences.",
   },
   {
     id: 7,
-    prompt: "Describe a challenging project you've worked on. What obstacles did you face, and how did you overcome them?",
+    prompt: "Describe a challenging project or task you've worked on. What obstacles did you face, and how did you overcome them?",
   },
   {
     id: 8,
-    prompt: "How do you approach learning new skills in a rapidly changing job market? Discuss specific strategies you use to stay competitive.",
+    prompt: "How do you approach learning new skills? Discuss specific strategies you use when faced with something unfamiliar.",
   },
   {
     id: 9,
-    prompt: "Discuss the ethical considerations businesses should take into account when implementing artificial intelligence and automation technologies.",
+    prompt: "Many decisions involve ethical considerations. Describe a situation where you had to make a difficult choice, and explain how you decided what to do.",
   },
   {
     id: 10,
-    prompt: "Describe your approach to time management and prioritization when dealing with multiple deadlines. How do you ensure all tasks are completed efficiently and effectively?",
+    prompt: "How do you manage your time when you have multiple responsibilities or tasks? Describe specific techniques that work for you.",
   }
 ];
 
