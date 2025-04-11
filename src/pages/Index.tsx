@@ -9,11 +9,12 @@ import { getRandomAptitudeQuestions, AptitudeQuestion } from "@/utils/aptitudeQu
 
 // Assessment stages
 enum Stage {
-  INFO,
-  INTRO,
-  APTITUDE,
-  WRITING,
-  COMPLETE
+  LANDING,  // New landing stage
+  INFO,     // Name/position collection
+  INTRO,    // Instructions
+  APTITUDE, // Aptitude test
+  WRITING,  // Writing assessment
+  COMPLETE  // Thank you page
 }
 
 // Define the type for a writing prompt with response
@@ -27,7 +28,7 @@ const QUESTIONS_PER_ASSESSMENT = 3;
 const APTITUDE_QUESTIONS_COUNT = 25;
 
 const Index = () => {
-  const [stage, setStage] = useState<Stage>(Stage.INFO);
+  const [stage, setStage] = useState<Stage>(Stage.LANDING);
   const [candidateName, setCandidateName] = useState("");
   const [candidatePosition, setCandidatePosition] = useState("");
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
@@ -39,6 +40,11 @@ const Index = () => {
   const [aptitudeQuestions, setAptitudeQuestions] = useState<AptitudeQuestion[]>([]);
   const [aptitudeAnswers, setAptitudeAnswers] = useState<number[]>([]);
   const [aptitudeScore, setAptitudeScore] = useState(0);
+  
+  // Start the assessment flow
+  const startAssessment = () => {
+    setStage(Stage.INFO);
+  };
   
   // Initialize with random questions when candidate info is submitted
   const handleInfoSubmit = (name: string, position: string) => {
@@ -96,7 +102,7 @@ const Index = () => {
   };
   
   const restartAssessment = () => {
-    setStage(Stage.INFO);
+    setStage(Stage.LANDING);
     setCurrentPromptIndex(0);
     setPrompts([]);
     setAptitudeQuestions([]);
@@ -108,6 +114,40 @@ const Index = () => {
   
   return (
     <div className="assessment-container min-h-screen py-12">
+      {stage === Stage.LANDING && (
+        <div className="assessment-card max-w-4xl mx-auto text-center">
+          <h1 className="assessment-title text-center text-assessment-accent mb-6">Candidate Assessment Platform</h1>
+          <div className="bg-assessment-muted p-6 rounded-md mb-8">
+            <h2 className="text-xl font-semibold mb-4">Welcome to our Assessment Platform</h2>
+            <p className="mb-6">
+              This platform will guide you through a comprehensive assessment process consisting of:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <h3 className="font-semibold text-assessment-primary mb-2">Aptitude Test</h3>
+                <p className="text-gray-700">A 25-question assessment to evaluate your critical thinking skills</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <h3 className="font-semibold text-assessment-primary mb-2">Writing Assessment</h3>
+                <p className="text-gray-700">A series of writing prompts to showcase your communication abilities</p>
+              </div>
+            </div>
+            <p className="text-gray-700 mb-6">
+              The entire assessment will take approximately 75 minutes to complete. Please ensure you have a quiet environment 
+              and uninterrupted time before beginning.
+            </p>
+          </div>
+          <div className="text-center">
+            <button 
+              className="assessment-button text-lg px-8 py-4"
+              onClick={startAssessment}
+            >
+              Start Assessment
+            </button>
+          </div>
+        </div>
+      )}
+      
       {stage === Stage.INFO && (
         <AssessmentIntro 
           step="info" 
