@@ -17,9 +17,21 @@ interface AssessmentCompleteProps {
   candidatePosition: string;
   restartAssessment: () => void;
   completedPrompts: WritingPromptItem[];
+  aptitudeScore?: number;
+  aptitudeTotal?: number;
 }
 
-const AssessmentComplete = ({ wordCount, candidateName, candidatePosition, restartAssessment, completedPrompts }: AssessmentCompleteProps) => {
+const AssessmentComplete = ({ 
+  wordCount, 
+  candidateName, 
+  candidatePosition, 
+  restartAssessment, 
+  completedPrompts,
+  aptitudeScore = 0,
+  aptitudeTotal = 0
+}: AssessmentCompleteProps) => {
+  const aptitudePercentage = aptitudeTotal > 0 ? Math.round((aptitudeScore / aptitudeTotal) * 100) : 0;
+  
   return (
     <div className="assessment-card max-w-4xl mx-auto text-center">
       <div className="flex justify-center mb-6">
@@ -30,14 +42,19 @@ const AssessmentComplete = ({ wordCount, candidateName, candidatePosition, resta
       
       <h1 className="assessment-title mb-4">Assessment Submitted Successfully</h1>
       <p className="text-xl text-gray-600 mb-8">
-        Thank you for completing the writing assessment, {candidateName}!
+        Thank you for completing the assessment, {candidateName}!
       </p>
       
       <Card className="mb-8 p-6 bg-gray-50">
-        <h2 className="text-xl font-semibold mb-4">Response Summary</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h2 className="text-xl font-semibold mb-4">Assessment Results</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-lg p-4 shadow-sm">
-            <p className="text-gray-500 text-sm">Word Count</p>
+            <p className="text-gray-500 text-sm">Aptitude Score</p>
+            <p className="text-3xl font-bold text-assessment-primary">{aptitudeScore}/{aptitudeTotal}</p>
+            <p className="text-sm text-gray-500">{aptitudePercentage}%</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <p className="text-gray-500 text-sm">Writing - Word Count</p>
             <p className="text-3xl font-bold text-assessment-primary">{wordCount}</p>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm">
@@ -46,12 +63,13 @@ const AssessmentComplete = ({ wordCount, candidateName, candidatePosition, resta
               {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <p className="text-gray-500 text-sm">Submission Date</p>
-            <p className="text-3xl font-bold text-assessment-primary">
-              {new Date().toLocaleDateString()}
-            </p>
-          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg p-4 shadow-sm mb-4">
+          <p className="text-gray-500 text-sm mb-2">Submission Date</p>
+          <p className="text-xl font-bold text-assessment-primary">
+            {new Date().toLocaleDateString()}
+          </p>
         </div>
       </Card>
       
@@ -71,7 +89,7 @@ const AssessmentComplete = ({ wordCount, candidateName, candidatePosition, resta
         <h2 className="text-xl font-semibold mb-4">What Happens Next?</h2>
         <p className="text-gray-700 mb-4">
           Your assessment will be reviewed by our team. The evaluation typically takes 1-2 business days.
-          You will receive feedback on your writing skills via email.
+          You will receive feedback on your aptitude test and writing skills via email.
         </p>
       </div>
       

@@ -3,12 +3,15 @@ import { useState, useEffect } from "react";
 import AssessmentIntro from "@/components/AssessmentIntro";
 import WritingPrompt from "@/components/WritingPrompt";
 import AssessmentComplete from "@/components/AssessmentComplete";
+import AptitudeTest from "@/components/AptitudeTest";
 import { getRandomQuestions, WritingPromptQuestion } from "@/utils/questionBank";
+import { getRandomAptitudeQuestions, AptitudeQuestion } from "@/utils/aptitudeQuestions";
 
 // Assessment stages
 enum Stage {
   INFO,
   INTRO,
+  APTITUDE,
   WRITING,
   COMPLETE
 }
@@ -21,6 +24,7 @@ interface WritingPromptItem extends WritingPromptQuestion {
 
 // Number of questions each candidate will receive
 const QUESTIONS_PER_ASSESSMENT = 3;
+const APTITUDE_QUESTIONS_COUNT = 25;
 
 const Index = () => {
   const [stage, setStage] = useState<Stage>(Stage.INFO);
@@ -31,12 +35,32 @@ const Index = () => {
   // State for storing the selected prompts
   const [prompts, setPrompts] = useState<WritingPromptItem[]>([]);
   
+  // State for aptitude test
+  const [aptitudeQuestions, setAptitudeQuestions] = useState<AptitudeQuestion[]>([]);
+  const [aptitudeAnswers, setAptitudeAnswers] = useState<number[]>([]);
+  const [aptitudeScore, setAptitudeScore] = useState(0);
+  
   // Initialize with random questions when candidate info is submitted
   const handleInfoSubmit = (name: string, position: string) => {
     setCandidateName(name);
     setCandidatePosition(position);
     
-    // Get random questions and initialize them with empty responses
+    setStage(Stage.INTRO);
+  };
+  
+  const handleStart = () => {
+    // Initialize the aptitude questions
+    const selectedAptitudeQuestions = getRandomAptitudeQuestions(APTITUDE_QUESTIONS_COUNT);
+    setAptitudeQuestions(selectedAptitudeQuestions);
+    
+    setStage(Stage.APTITUDE);
+  };
+  
+  const handleAptitudeComplete = (answers: number[], score: number) => {
+    setAptitudeAnswers(answers);
+    setAptitudeScore(score);
+    
+    // Get random writing questions and initialize them with empty responses
     const selectedQuestions = getRandomQuestions(QUESTIONS_PER_ASSESSMENT);
     const initialPrompts: WritingPromptItem[] = selectedQuestions.map(question => ({
       ...question,
@@ -45,12 +69,8 @@ const Index = () => {
     }));
     
     setPrompts(initialPrompts);
-    setStage(Stage.INTRO);
-  };
-  
-  const handleStart = () => {
-    setStage(Stage.WRITING);
     setCurrentPromptIndex(0);
+    setStage(Stage.WRITING);
   };
   
   const handlePromptSubmit = (text: string) => {
@@ -79,6 +99,9 @@ const Index = () => {
     setStage(Stage.INFO);
     setCurrentPromptIndex(0);
     setPrompts([]);
+    setAptitudeQuestions([]);
+    setAptitudeAnswers([]);
+    setAptitudeScore(0);
     setCandidateName("");
     setCandidatePosition("");
   };
@@ -102,6 +125,14 @@ const Index = () => {
         />
       )}
       
+      {stage === Stage.APTITUDE && aptitudeQuestions.length > 0 && (
+        <AptitudeTest 
+          questions={aptitudeQuestions}
+          onComplete={handleAptitudeComplete}
+          timeLimit={45 * 60} // 45 minutes in seconds
+        />
+      )}
+      
       {stage === Stage.WRITING && prompts.length > 0 && (
         <WritingPrompt 
           prompt={prompts[currentPromptIndex].prompt}
@@ -120,6 +151,8 @@ const Index = () => {
           candidatePosition={candidatePosition}
           restartAssessment={restartAssessment}
           completedPrompts={prompts}
+          aptitudeScore={aptitudeScore}
+          aptitudeTotal={aptitudeQuestions.length}
         />
       )}
     </div>
