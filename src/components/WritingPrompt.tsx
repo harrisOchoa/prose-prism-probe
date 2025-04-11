@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import AssessmentTimer from "./AssessmentTimer";
@@ -7,13 +7,31 @@ import { toast } from "@/components/ui/use-toast";
 
 interface WritingPromptProps {
   prompt: string;
+  response: string;
   timeLimit: number; // in seconds
   onSubmit: (response: string) => void;
+  currentQuestion: number;
+  totalQuestions: number;
 }
 
-const WritingPrompt = ({ prompt, timeLimit, onSubmit }: WritingPromptProps) => {
-  const [response, setResponse] = useState("");
+const WritingPrompt = ({ 
+  prompt, 
+  response: initialResponse, 
+  timeLimit, 
+  onSubmit, 
+  currentQuestion, 
+  totalQuestions 
+}: WritingPromptProps) => {
+  const [response, setResponse] = useState(initialResponse);
   const [wordCount, setWordCount] = useState(0);
+  
+  // Reset response state when prompt changes
+  useEffect(() => {
+    setResponse(initialResponse);
+    // Count words for initial response (if any)
+    const words = initialResponse.trim().split(/\s+/).filter(word => word !== "");
+    setWordCount(words.length);
+  }, [initialResponse, prompt]);
   
   const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
@@ -52,6 +70,12 @@ const WritingPrompt = ({ prompt, timeLimit, onSubmit }: WritingPromptProps) => {
         <AssessmentTimer duration={timeLimit} onTimeEnd={handleTimeEnd} />
       </div>
       
+      <div className="flex items-center mb-4 text-sm font-medium text-assessment-accent">
+        <span className="bg-assessment-accent/10 rounded-full px-3 py-1">
+          Question {currentQuestion} of {totalQuestions}
+        </span>
+      </div>
+      
       <div className="bg-assessment-muted p-6 rounded-md mb-6">
         <h2 className="text-xl font-semibold mb-2">Writing Prompt:</h2>
         <p className="text-gray-700">{prompt}</p>
@@ -63,7 +87,7 @@ const WritingPrompt = ({ prompt, timeLimit, onSubmit }: WritingPromptProps) => {
         </label>
         <Textarea 
           id="response"
-          className="assessment-textarea"
+          className="assessment-textarea min-h-[300px]"
           placeholder="Start writing your response here..."
           value={response}
           onChange={handleResponseChange}
@@ -82,7 +106,7 @@ const WritingPrompt = ({ prompt, timeLimit, onSubmit }: WritingPromptProps) => {
           className="assessment-button"
           onClick={handleSubmit}
         >
-          Submit Response
+          {currentQuestion < totalQuestions ? `Continue to Next Question` : `Complete Assessment`}
         </Button>
       </div>
     </div>
