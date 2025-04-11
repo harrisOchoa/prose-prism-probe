@@ -1,8 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AssessmentIntro from "@/components/AssessmentIntro";
 import WritingPrompt from "@/components/WritingPrompt";
 import AssessmentComplete from "@/components/AssessmentComplete";
+import { getRandomQuestions, WritingPromptQuestion } from "@/utils/questionBank";
 
 // Assessment stages
 enum Stage {
@@ -12,13 +13,14 @@ enum Stage {
   COMPLETE
 }
 
-// Define the type for a writing prompt
-interface WritingPromptItem {
-  id: number;
-  prompt: string;
+// Define the type for a writing prompt with response
+interface WritingPromptItem extends WritingPromptQuestion {
   response: string;
   wordCount: number;
 }
+
+// Number of questions each candidate will receive
+const QUESTIONS_PER_ASSESSMENT = 3;
 
 const Index = () => {
   const [stage, setStage] = useState<Stage>(Stage.INFO);
@@ -26,31 +28,23 @@ const Index = () => {
   const [candidatePosition, setCandidatePosition] = useState("");
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   
-  // Sample writing prompts with initial empty responses
-  const [prompts, setPrompts] = useState<WritingPromptItem[]>([
-    {
-      id: 1,
-      prompt: "Describe a situation where effective communication helped resolve a conflict in the workplace. What specific communication strategies were used, and why were they effective?",
-      response: "",
-      wordCount: 0
-    },
-    {
-      id: 2,
-      prompt: "Many companies are adopting remote work policies. Discuss the advantages and disadvantages of remote work from both an employer's and employee's perspective.",
-      response: "",
-      wordCount: 0
-    },
-    {
-      id: 3,
-      prompt: "Explain how technology has changed the way we communicate in professional settings. Include specific examples and discuss whether these changes have been positive or negative overall.",
-      response: "",
-      wordCount: 0
-    }
-  ]);
+  // State for storing the selected prompts
+  const [prompts, setPrompts] = useState<WritingPromptItem[]>([]);
   
+  // Initialize with random questions when candidate info is submitted
   const handleInfoSubmit = (name: string, position: string) => {
     setCandidateName(name);
     setCandidatePosition(position);
+    
+    // Get random questions and initialize them with empty responses
+    const selectedQuestions = getRandomQuestions(QUESTIONS_PER_ASSESSMENT);
+    const initialPrompts: WritingPromptItem[] = selectedQuestions.map(question => ({
+      ...question,
+      response: "",
+      wordCount: 0
+    }));
+    
+    setPrompts(initialPrompts);
     setStage(Stage.INTRO);
   };
   
@@ -84,7 +78,7 @@ const Index = () => {
   const restartAssessment = () => {
     setStage(Stage.INFO);
     setCurrentPromptIndex(0);
-    setPrompts(prompts.map(prompt => ({ ...prompt, response: "", wordCount: 0 })));
+    setPrompts([]);
     setCandidateName("");
     setCandidatePosition("");
   };
@@ -108,7 +102,7 @@ const Index = () => {
         />
       )}
       
-      {stage === Stage.WRITING && (
+      {stage === Stage.WRITING && prompts.length > 0 && (
         <WritingPrompt 
           prompt={prompts[currentPromptIndex].prompt}
           response={prompts[currentPromptIndex].response}
