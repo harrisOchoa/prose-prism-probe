@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import AssessmentIntro from "@/components/AssessmentIntro";
 import WritingPrompt from "@/components/WritingPrompt";
@@ -25,7 +24,7 @@ interface WritingPromptItem extends WritingPromptQuestion {
 
 // Number of questions each candidate will receive
 const QUESTIONS_PER_ASSESSMENT = 3;
-const APTITUDE_QUESTIONS_COUNT = 25;
+const APTITUDE_QUESTIONS_COUNT = 30; // Updated to 30 questions
 
 const Index = () => {
   const [stage, setStage] = useState<Stage>(Stage.LANDING);
@@ -125,7 +124,7 @@ const Index = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="bg-white rounded-lg p-4 shadow-sm">
                 <h3 className="font-semibold text-assessment-primary mb-2">Aptitude Test</h3>
-                <p className="text-gray-700">A 25-question assessment to evaluate your critical thinking skills</p>
+                <p className="text-gray-700">A 30-question assessment to evaluate your critical thinking skills</p>
               </div>
               <div className="bg-white rounded-lg p-4 shadow-sm">
                 <h3 className="font-semibold text-assessment-primary mb-2">Writing Assessment</h3>

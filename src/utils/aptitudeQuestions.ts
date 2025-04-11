@@ -9,153 +9,183 @@ export interface AptitudeQuestion {
 export const aptitudeQuestions: AptitudeQuestion[] = [
   {
     id: 1,
-    question: "Which of the following is not a primitive data type in JavaScript?",
-    options: ["String", "Number", "Boolean", "Array"],
-    correctAnswer: 3
+    question: "What is 25% of 80?",
+    options: ["15", "20", "25", "30"],
+    correctAnswer: 1
   },
   {
     id: 2,
-    question: "What does CSS stand for?",
-    options: ["Creative Style Sheets", "Cascading Style Sheets", "Computer Style Sheets", "Colorful Style Sheets"],
+    question: "If a book costs $10, what is the cost for 3 books?",
+    options: ["$20", "$30", "$25", "$40"],
     correctAnswer: 1
   },
   {
     id: 3,
-    question: "If a train travels at 60 mph, how long will it take to travel 180 miles?",
-    options: ["2 hours", "3 hours", "4 hours", "6 hours"],
+    question: "Find the missing number in the sequence: 2, 4, 6, __, 10",
+    options: ["7", "8", "9", "10"],
     correctAnswer: 1
   },
   {
     id: 4,
-    question: "Which of the following is an example of a properly formatted HTML tag?",
-    options: ["<p>Text</p>", "<paragraph>Text</paragraph>", "<text>Text</text>", "[p]Text[/p]"],
-    correctAnswer: 0
-  },
-  {
-    id: 5,
-    question: "A company's sales increased from $10,000 to $12,000. What is the percentage increase?",
-    options: ["2%", "12%", "20%", "120%"],
+    question: "Which number is the largest?",
+    options: ["1/4", "1/3", "1/2", "1/5"],
     correctAnswer: 2
   },
   {
-    id: 6,
-    question: "Which of the following is NOT a valid HTTP request method?",
-    options: ["GET", "POST", "DELETE", "FETCH"],
+    id: 5,
+    question: "What is the next number in the series: 1, 1, 2, 3, 5, ?",
+    options: ["5", "6", "7", "8"],
     correctAnswer: 3
   },
   {
+    id: 6,
+    question: "Select the word that is opposite in meaning to \"ancient\":",
+    options: ["Old", "Modern", "Historic", "Obsolete"],
+    correctAnswer: 1
+  },
+  {
     id: 7,
-    question: "If 5x + 3 = 18, what is the value of x?",
-    options: ["2", "3", "5", "15"],
+    question: "If \"cat\" is to \"kitten\", then \"dog\" is to:",
+    options: ["Pup", "Puppy", "Cub", "Calf"],
     correctAnswer: 1
   },
   {
     id: 8,
-    question: "Which data structure operates on a LIFO (Last In, First Out) principle?",
-    options: ["Queue", "Stack", "Linked List", "Tree"],
+    question: "Which of the following figures has 4 equal sides?",
+    options: ["Rectangle", "Square", "Trapezoid", "Parallelogram"],
     correctAnswer: 1
   },
   {
     id: 9,
-    question: "What does API stand for?",
-    options: ["Application Programming Interface", "Application Process Integration", "Advanced Programming Interface", "Automated Process Interaction"],
-    correctAnswer: 0
+    question: "Which of the following is a prime number?",
+    options: ["21", "33", "29", "15"],
+    correctAnswer: 2
   },
   {
     id: 10,
-    question: "If a rectangle has a width of 5 units and a length of 8 units, what is its area?",
-    options: ["13 square units", "26 square units", "40 square units", "80 square units"],
+    question: "What is the square root of 64?",
+    options: ["6", "7", "8", "9"],
     correctAnswer: 2
   },
   {
     id: 11,
-    question: "Which of the following is a valid way to declare a variable in JavaScript?",
-    options: ["var x = 5;", "variable x = 5;", "v x = 5;", "int x = 5;"],
+    question: "If 5x = 20, what is the value of x?",
+    options: ["4", "5", "3", "6"],
     correctAnswer: 0
   },
   {
     id: 12,
-    question: "In a group of 30 people, 40% are males. How many females are in the group?",
-    options: ["12", "18", "16", "14"],
-    correctAnswer: 1
+    question: "How many months in a year have 31 days?",
+    options: ["5", "6", "7", "8"],
+    correctAnswer: 2
   },
   {
     id: 13,
-    question: "Which of the following is NOT a JavaScript framework or library?",
-    options: ["React", "Angular", "Vue", "Pascal"],
-    correctAnswer: 3
+    question: "Which planet is known as the Red Planet?",
+    options: ["Venus", "Mars", "Jupiter", "Saturn"],
+    correctAnswer: 1
   },
   {
     id: 14,
-    question: "If you invest $1000 at a 5% annual interest rate, how much will you have after 2 years (simple interest)?",
-    options: ["$1050", "$1100", "$1102.50", "$1200"],
-    correctAnswer: 1
+    question: "What is the capital of France?",
+    options: ["Madrid", "Berlin", "Rome", "Paris"],
+    correctAnswer: 3
   },
   {
     id: 15,
-    question: "Which HTML tag is used to create a hyperlink?",
-    options: ["<link>", "<a>", "<href>", "<url>"],
-    correctAnswer: 1
+    question: "If 3 people take 2 hours to complete a task, how long would 6 people take to complete the same task (assuming equal work distribution)?",
+    options: ["1 hour", "2 hours", "3 hours", "0.5 hour"],
+    correctAnswer: 0
   },
   {
     id: 16,
-    question: "What is the output of 2 + 2 * 3?",
-    options: ["6", "8", "10", "12"],
+    question: "What is the chemical symbol for water?",
+    options: ["HO", "H₂O", "O₂", "CO₂"],
     correctAnswer: 1
   },
   {
     id: 17,
-    question: "Which of the following is a valid CSS selector?",
-    options: ["#header", "header@", ".header", "*header"],
-    correctAnswer: 0
+    question: "Which gas do plants absorb from the atmosphere?",
+    options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"],
+    correctAnswer: 2
   },
   {
     id: 18,
-    question: "A car travels 150 miles in 3 hours. What is its average speed?",
-    options: ["45 mph", "50 mph", "60 mph", "75 mph"],
+    question: "When you mix red and blue, what color do you get?",
+    options: ["Green", "Purple", "Orange", "Brown"],
     correctAnswer: 1
   },
   {
     id: 19,
-    question: "What does SQL stand for?",
-    options: ["Structured Query Language", "Simple Query Language", "Standard Query Logic", "System Question Language"],
-    correctAnswer: 0
+    question: "Which is the largest continent by area?",
+    options: ["Africa", "Europe", "Asia", "Antarctica"],
+    correctAnswer: 2
   },
   {
     id: 20,
-    question: "If log(x) = 2, what is the value of x?",
-    options: ["10", "20", "100", "200"],
+    question: "What do you call an angle that is more than 90° and less than 180°?",
+    options: ["Acute", "Right", "Obtuse", "Straight"],
     correctAnswer: 2
   },
   {
     id: 21,
-    question: "Which of the following is NOT a property of a flex container in CSS?",
-    options: ["flex-direction", "justify-content", "align-items", "flex-color"],
-    correctAnswer: 3
+    question: "Which instrument has 88 keys?",
+    options: ["Guitar", "Drum", "Piano", "Violin"],
+    correctAnswer: 2
   },
   {
     id: 22,
-    question: "If a shirt costs $25 and is discounted by 20%, what is the final price?",
-    options: ["$5", "$20", "$22.50", "$20.50"],
-    correctAnswer: 1
+    question: "If you travel north from the equator, which direction are you going?",
+    options: ["East", "West", "North", "South"],
+    correctAnswer: 2
   },
   {
     id: 23,
-    question: "Which protocol is used for secure web browsing?",
-    options: ["HTTP", "FTP", "HTTPS", "SMTP"],
+    question: "What is the hardest natural substance on Earth?",
+    options: ["Gold", "Iron", "Diamond", "Silver"],
     correctAnswer: 2
   },
   {
     id: 24,
-    question: "A recipe calls for 2/3 cup of flour. If you want to make 1.5 times the recipe, how much flour do you need?",
-    options: ["1 cup", "1.5 cups", "1 cup", "3/4 cup"],
+    question: "Which number is both a perfect square and a perfect cube?",
+    options: ["64", "36", "16", "81"],
     correctAnswer: 0
   },
   {
     id: 25,
-    question: "Which of the following is a valid way to comment in JavaScript?",
-    options: ["// Comment", "<!-- Comment -->", "# Comment", "/* Comment */"],
+    question: "The cat is to whiskers as the bird is to _____?",
+    options: ["Beak", "Wing", "Feather", "Claw"],
     correctAnswer: 0
+  },
+  {
+    id: 26,
+    question: "A store sells notebooks at $2 each and pens at $1 each. If a customer buys a total of 10 items and spends $15, how many notebooks did the customer buy?",
+    options: ["3", "4", "5", "6"],
+    correctAnswer: 2
+  },
+  {
+    id: 27,
+    question: "A car's fuel efficiency is 25 miles per gallon. How many gallons of fuel are needed to drive 200 miles?",
+    options: ["6", "8", "9", "10"],
+    correctAnswer: 1
+  },
+  {
+    id: 28,
+    question: "If five machines take 5 minutes to produce 5 widgets, how long would 100 machines take to produce 100 widgets?",
+    options: ["5 minutes", "50 minutes", "100 minutes", "10 minutes"],
+    correctAnswer: 0
+  },
+  {
+    id: 29,
+    question: "A cyclist travels from city A to city B at an average speed of 12 mph and returns by the same route at an average speed of 8 mph. What is the average speed for the round trip?",
+    options: ["10 mph", "11 mph", "9.6 mph", "8 mph"],
+    correctAnswer: 2
+  },
+  {
+    id: 30,
+    question: "Sarah can paint a wall in 45 minutes and John can paint the same wall in 30 minutes. If they paint together, how long will it take them to paint the wall?",
+    options: ["15 minutes", "18 minutes", "20 minutes", "25 minutes"],
+    correctAnswer: 1
   }
 ];
 
