@@ -6,13 +6,14 @@ import AssessmentComplete from "@/components/AssessmentComplete";
 
 // Assessment stages
 enum Stage {
+  INFO,
   INTRO,
   WRITING,
   COMPLETE
 }
 
 const Index = () => {
-  const [stage, setStage] = useState<Stage>(Stage.INTRO);
+  const [stage, setStage] = useState<Stage>(Stage.INFO);
   const [response, setResponse] = useState("");
   const [wordCount, setWordCount] = useState(0);
   const [candidateName, setCandidateName] = useState("");
@@ -28,9 +29,13 @@ const Index = () => {
   // Randomly select one prompt
   const selectedPrompt = prompts[Math.floor(Math.random() * prompts.length)];
   
-  const handleStart = (name: string, position: string) => {
+  const handleInfoSubmit = (name: string, position: string) => {
     setCandidateName(name);
     setCandidatePosition(position);
+    setStage(Stage.INTRO);
+  };
+  
+  const handleStart = () => {
     setStage(Stage.WRITING);
   };
   
@@ -43,7 +48,7 @@ const Index = () => {
   };
   
   const restartAssessment = () => {
-    setStage(Stage.INTRO);
+    setStage(Stage.INFO);
     setResponse("");
     setWordCount(0);
     setCandidateName("");
@@ -52,8 +57,21 @@ const Index = () => {
   
   return (
     <div className="assessment-container min-h-screen py-12">
+      {stage === Stage.INFO && (
+        <AssessmentIntro 
+          step="info" 
+          candidateName={candidateName}
+          candidatePosition={candidatePosition}
+          onInfoSubmit={handleInfoSubmit} 
+        />
+      )}
+      
       {stage === Stage.INTRO && (
-        <AssessmentIntro onStart={handleStart} />
+        <AssessmentIntro 
+          step="instructions" 
+          candidateName={candidateName}
+          onStart={handleStart} 
+        />
       )}
       
       {stage === Stage.WRITING && (
