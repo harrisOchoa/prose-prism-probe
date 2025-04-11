@@ -1,13 +1,18 @@
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useState } from "react";
 
 interface AssessmentIntroProps {
-  onStart: () => void;
+  onStart: (name: string, position: string) => void;
 }
 
 const AssessmentIntro = ({ onStart }: AssessmentIntroProps) => {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [position, setPosition] = useState("");
+  const [formError, setFormError] = useState(false);
   
   const faqItems = [
     {
@@ -40,9 +45,52 @@ const AssessmentIntro = ({ onStart }: AssessmentIntroProps) => {
     }
   };
   
+  const handleStartAssessment = () => {
+    if (name.trim() === "" || position.trim() === "") {
+      setFormError(true);
+      return;
+    }
+    
+    setFormError(false);
+    onStart(name, position);
+  };
+  
   return (
     <div className="assessment-card max-w-4xl mx-auto">
       <h1 className="assessment-title text-center text-assessment-accent mb-6">Writing Skills Assessment</h1>
+      
+      <div className="bg-assessment-muted p-6 rounded-md mb-8">
+        <h2 className="text-xl font-semibold mb-4">Candidate Information</h2>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="fullName">Full Name</Label>
+            <Input 
+              id="fullName" 
+              placeholder="Enter your full name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={formError && name.trim() === "" ? "border-assessment-danger" : ""}
+            />
+            {formError && name.trim() === "" && (
+              <p className="text-assessment-danger text-sm mt-1">Please enter your full name</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="position">Position Applied For</Label>
+            <Input 
+              id="position" 
+              placeholder="Enter the position you are applying for"
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              className={formError && position.trim() === "" ? "border-assessment-danger" : ""}
+            />
+            {formError && position.trim() === "" && (
+              <p className="text-assessment-danger text-sm mt-1">Please enter the position</p>
+            )}
+          </div>
+        </div>
+      </div>
+      
       <div className="bg-assessment-muted p-6 rounded-md mb-8">
         <h2 className="text-xl font-semibold mb-4">Instructions</h2>
         <ul className="space-y-3 text-gray-700">
@@ -98,7 +146,7 @@ const AssessmentIntro = ({ onStart }: AssessmentIntroProps) => {
       <div className="text-center">
         <Button 
           className="assessment-button text-lg px-8 py-4"
-          onClick={onStart}
+          onClick={handleStartAssessment}
         >
           Begin Assessment
         </Button>

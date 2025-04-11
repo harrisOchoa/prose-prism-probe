@@ -15,6 +15,8 @@ const Index = () => {
   const [stage, setStage] = useState<Stage>(Stage.INTRO);
   const [response, setResponse] = useState("");
   const [wordCount, setWordCount] = useState(0);
+  const [candidateName, setCandidateName] = useState("");
+  const [candidatePosition, setCandidatePosition] = useState("");
   
   // Sample writing prompts
   const prompts = [
@@ -26,7 +28,9 @@ const Index = () => {
   // Randomly select one prompt
   const selectedPrompt = prompts[Math.floor(Math.random() * prompts.length)];
   
-  const handleStart = () => {
+  const handleStart = (name: string, position: string) => {
+    setCandidateName(name);
+    setCandidatePosition(position);
     setStage(Stage.WRITING);
   };
   
@@ -42,6 +46,8 @@ const Index = () => {
     setStage(Stage.INTRO);
     setResponse("");
     setWordCount(0);
+    setCandidateName("");
+    setCandidatePosition("");
   };
   
   return (
@@ -61,6 +67,8 @@ const Index = () => {
       {stage === Stage.COMPLETE && (
         <AssessmentComplete
           wordCount={wordCount}
+          candidateName={candidateName}
+          candidatePosition={candidatePosition}
           restartAssessment={restartAssessment}
         />
       )}
