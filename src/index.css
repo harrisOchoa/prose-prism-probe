@@ -117,18 +117,23 @@
   }
   
   .assessment-textarea {
-    @apply min-h-[300px] w-full p-4 border rounded-md focus:ring-2 focus:ring-assessment-primary focus:border-assessment-primary transition-all;
+    @apply min-h-[300px] w-full p-4 border rounded-md focus:ring-2 focus:ring-hirescribe-primary focus:border-hirescribe-primary transition-all;
   }
   
   .assessment-button {
-    @apply bg-assessment-primary text-white px-6 py-3 rounded-md font-medium transition-colors hover:bg-assessment-accent focus:outline-none focus:ring-2 focus:ring-assessment-primary focus:ring-offset-2;
+    @apply bg-hirescribe-primary text-white px-6 py-3 rounded-md font-medium transition-colors hover:bg-hirescribe-accent focus:outline-none focus:ring-2 focus:ring-hirescribe-primary focus:ring-offset-2;
   }
 
   .assessment-timer {
-    @apply text-xl font-semibold text-assessment-accent flex items-center gap-2;
+    @apply text-xl font-semibold text-hirescribe-accent flex items-center gap-2;
   }
   
   .assessment-card {
     @apply bg-white rounded-lg shadow-md p-6 border border-gray-100 animate-fade-in;
+  }
+  
+  /* HireScribe button styles */
+  .hirescribe-button {
+    @apply bg-hirescribe-primary text-white px-6 py-3 rounded-md font-medium transition-colors hover:bg-hirescribe-accent focus:outline-none focus:ring-2 focus:ring-hirescribe-primary focus:ring-offset-2;
   }
 }

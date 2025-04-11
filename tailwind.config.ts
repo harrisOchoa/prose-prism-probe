@@ -25,11 +25,20 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				hirescribe: {
+					primary: '#4F46E5', // Indigo
+					secondary: '#818CF8', // Lighter indigo
+					accent: '#3730A3', // Darker indigo
+					muted: '#F5F7FF', // Very light indigo/blue
+					success: '#10b981',
+					warning: '#f59e0b',
+					danger: '#ef4444',
+				},
 				assessment: {
-					primary: '#3b82f6',
-					secondary: '#93c5fd',
-					accent: '#1e40af',
-					muted: '#f0f9ff',
+					primary: '#4F46E5', // Updated to match hirescribe-primary
+					secondary: '#818CF8', // Updated to match hirescribe-secondary
+					accent: '#3730A3', // Updated to match hirescribe-accent
+					muted: '#F5F7FF', // Updated to match hirescribe-muted
 					success: '#10b981',
 					warning: '#f59e0b',
 					danger: '#ef4444',
