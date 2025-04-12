@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils"
 
 const Progress = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { value?: number }
->(({ className, value, ...props }, ref) => (
+  React.HTMLAttributes<HTMLDivElement> & { value?: number; color?: string }
+>(({ className, value, color, ...props }, ref) => (
   <div
     ref={ref}
     role="progressbar"
@@ -23,7 +23,7 @@ const Progress = React.forwardRef<
       className="h-full w-full flex-1 bg-primary transition-all"
       style={{ 
         transform: `translateX(-${100 - (value || 0)}%)`,
-        backgroundColor: 'var(--progress-background, var(--primary))'
+        backgroundColor: color || 'var(--progress-background, var(--primary))'
       }}
     />
   </div>

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import AssessmentDetails from "@/components/AssessmentDetails";
 import { toast } from "@/hooks/use-toast";
-import { WritingScore } from "@/services/geminiService";
+import { WritingScore, generateCandidateSummary, generateStrengthsAndWeaknesses } from "@/services/geminiService";
 import { WritingPromptItem } from "@/components/AssessmentManager";
 
 // Define the type for assessment data
@@ -23,6 +23,9 @@ interface AssessmentData {
   writingScores?: WritingScore[];
   overallWritingScore?: number;
   submittedAt: any;
+  aiSummary?: string;
+  strengths?: string[];
+  weaknesses?: string[];
   [key: string]: any; // For any other properties that might exist
 }
 
@@ -32,6 +35,7 @@ const View = () => {
   const [assessment, setAssessment] = useState<AssessmentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [generatingSummary, setGeneratingSummary] = useState(false);
 
   useEffect(() => {
     const fetchAssessment = async () => {
@@ -71,6 +75,36 @@ const View = () => {
                 description: `${errorScores.length} writing prompt(s) could not be evaluated. Try using the 'Evaluate Writing' button to retry.`,
                 variant: "destructive",
               });
+            }
+            
+            // Generate AI summary if writing scores exist but no summary yet
+            if (!assessmentData.aiSummary || !assessmentData.strengths || !assessmentData.weaknesses) {
+              setGeneratingSummary(true);
+              console.log("Generating AI insights for assessment");
+              
+              try {
+                const [summary, analysis] = await Promise.all([
+                  generateCandidateSummary(assessmentData),
+                  generateStrengthsAndWeaknesses(assessmentData)
+                ]);
+                
+                assessmentData.aiSummary = summary;
+                assessmentData.strengths = analysis.strengths;
+                assessmentData.weaknesses = analysis.weaknesses;
+                
+                // Update the assessment in Firestore with the new AI insights
+                await updateDoc(docRef, {
+                  aiSummary: summary,
+                  strengths: analysis.strengths,
+                  weaknesses: analysis.weaknesses
+                });
+                
+                console.log("AI insights saved to assessment:", assessmentData);
+              } catch (aiError) {
+                console.error("Error generating AI insights:", aiError);
+              } finally {
+                setGeneratingSummary(false);
+              }
             }
           }
           
@@ -126,6 +160,7 @@ const View = () => {
         <AssessmentDetails 
           assessment={assessment} 
           onBack={() => navigate('/admin')} 
+          isGeneratingSummary={generatingSummary}
         />
       ) : (
         <div className="text-center">
