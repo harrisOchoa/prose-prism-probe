@@ -59,3 +59,17 @@ export const getAssessmentsByCandidate = async (candidateName: string): Promise<
     throw new Error('Failed to fetch assessments');
   }
 };
+
+export const getAllAssessments = async (): Promise<DocumentData[]> => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'assessments'));
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error fetching all assessments:', error);
+    throw new Error('Failed to fetch all assessments');
+  }
+};
