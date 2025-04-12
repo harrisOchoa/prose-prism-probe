@@ -65,7 +65,7 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
             variant="secondary" 
             onClick={regenerateInsights} 
             disabled={generatingSummary}
-            className="flex-1 sm:flex-none"
+            className="flex-1 sm:flex-none pdf-hide"
           >
             {generatingSummary ? (
               <>
@@ -84,7 +84,7 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
             variant="default" 
             onClick={handleManualEvaluation} 
             disabled={evaluating}
-            className="flex-1 sm:flex-none"
+            className="flex-1 sm:flex-none pdf-hide"
           >
             {evaluating ? (
               <>

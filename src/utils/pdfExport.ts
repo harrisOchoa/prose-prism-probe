@@ -52,61 +52,16 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     pdf.text(`Generated on ${formattedDate}`, pageWidth - 70, 10);
     
     // Position the content after the header
-    let yPosition = 20;
+    const yPosition = 20;
     
-    // Add the content
+    // Add the content - ensuring we only use one page
     pdf.addImage(imgData, 'PNG', 10, yPosition, imgWidth, imgHeight);
-    let heightLeft = imgHeight;
-    
-    // Add more pages if content overflows
-    while (heightLeft > pageHeight - yPosition - 20) { // 20mm margin at bottom
-      heightLeft -= (pageHeight - yPosition - 20);
-      yPosition = 20; // Reset y position for new page
-      pdf.addPage();
-      
-      // Add header to new page
-      pdf.setFillColor(248, 250, 252);
-      pdf.rect(0, 0, pageWidth, 15, 'F');
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(45, 55, 72);
-      pdf.setFontSize(14);
-      pdf.text(`Candidate Assessment Report (cont.)`, 10, 10);
-      
-      // Add page number
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100, 116, 139);
-      pdf.text(`Page ${pdf.getNumberOfPages()}`, pageWidth - 30, 10);
-      
-      // Fix: Correct the addImage call with proper number of arguments
-      pdf.addImage(
-        imgData, 
-        'PNG', 
-        10, 
-        yPosition, 
-        imgWidth, 
-        imgHeight, 
-        '', 
-        'FAST'
-      );
-      
-      // If needed, adjust the image position for the new page
-      if (heightLeft > 0) {
-        // Apply a clipping to show only the remaining part
-        pdf.setPage(pdf.getNumberOfPages());
-        // Additional positioning adjustments can be made here if needed
-      }
-    }
     
     // Add footer with company info
-    const pageCount = pdf.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      pdf.setPage(i);
-      pdf.setFontSize(8);
-      pdf.setTextColor(156, 163, 175); // Gray text
-      pdf.text('HireScribe Assessment Platform', 10, pageHeight - 5);
-      pdf.text(`Page ${i} of ${pageCount}`, pageWidth - 30, pageHeight - 5);
-    }
+    pdf.setFontSize(8);
+    pdf.setTextColor(156, 163, 175); // Gray text
+    pdf.text('HireScribe Assessment Platform', 10, pageHeight - 5);
+    pdf.text('Page 1 of 1', pageWidth - 30, pageHeight - 5);
     
     pdf.save(`${filename}.pdf`);
     return true;
