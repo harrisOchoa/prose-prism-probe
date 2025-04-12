@@ -6,6 +6,8 @@ import { WritingScore, generateCandidateSummary, generateStrengthsAndWeaknesses 
 import { evaluateAllWritingPrompts } from "@/services/geminiService";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import SkillsRadarChart from "@/components/assessment/SkillsRadarChart";
 import CandidateComparison from "@/components/assessment/CandidateComparison";
 import AssessmentHeader from "@/components/assessment/AssessmentHeader";
