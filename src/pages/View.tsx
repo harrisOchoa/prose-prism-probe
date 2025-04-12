@@ -8,11 +8,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import AssessmentDetails from "@/components/AssessmentDetails";
 import { toast } from "@/hooks/use-toast";
+import { WritingScore } from "@/services/geminiService";
+import { WritingPromptItem } from "@/components/AssessmentManager";
+
+// Define the type for assessment data
+interface AssessmentData {
+  id: string;
+  candidateName: string;
+  candidatePosition: string;
+  aptitudeScore: number;
+  aptitudeTotal: number;
+  completedPrompts: WritingPromptItem[];
+  wordCount: number;
+  writingScores?: WritingScore[];
+  overallWritingScore?: number;
+  submittedAt: any;
+  [key: string]: any; // For any other properties that might exist
+}
 
 const View = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [assessment, setAssessment] = useState<any>(null);
+  const [assessment, setAssessment] = useState<AssessmentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,10 +47,10 @@ const View = () => {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          const assessmentData = {
+          const assessmentData: AssessmentData = {
             id: docSnap.id,
             ...docSnap.data()
-          };
+          } as AssessmentData;
           
           console.log("Assessment data retrieved:", assessmentData);
           
