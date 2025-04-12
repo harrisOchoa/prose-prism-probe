@@ -3,7 +3,15 @@ import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
-import { evaluateAllWritingPrompts, generateCandidateSummary, generateStrengthsAndWeaknesses } from "@/services/geminiService";
+import { 
+  evaluateAllWritingPrompts, 
+  generateCandidateSummary, 
+  generateStrengthsAndWeaknesses,
+  generateDetailedWritingAnalysis,
+  generateInterviewQuestions,
+  generatePersonalityInsights,
+  compareWithIdealProfile
+} from "@/services/geminiService";
 
 export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: (data: any) => void) => {
   const [evaluating, setEvaluating] = useState(false);
@@ -153,11 +161,79 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     }
   };
 
+  const generateAdvancedAnalysis = async (analysisType: string) => {
+    if (!assessmentData.writingScores || assessmentData.writingScores.length === 0) {
+      toast({
+        title: "No Writing Scores",
+        description: "Please evaluate the writing first to generate advanced analysis.",
+        variant: "destructive",
+      });
+      return null;
+    }
+    
+    try {
+      toast({
+        title: "Generating Analysis",
+        description: `AI is generating ${analysisType} analysis. This may take a moment.`,
+      });
+      
+      let result;
+      const assessmentRef = doc(db, "assessments", assessmentData.id);
+      
+      switch (analysisType) {
+        case "detailed":
+          result = await generateDetailedWritingAnalysis(assessmentData);
+          await updateDoc(assessmentRef, { detailedWritingAnalysis: result });
+          break;
+        case "personality":
+          result = await generatePersonalityInsights(assessmentData);
+          await updateDoc(assessmentRef, { personalityInsights: result });
+          break;
+        case "questions":
+          result = await generateInterviewQuestions(assessmentData);
+          await updateDoc(assessmentRef, { interviewQuestions: result });
+          break;
+        case "profile":
+          result = await compareWithIdealProfile(assessmentData);
+          await updateDoc(assessmentRef, { profileMatch: result });
+          break;
+        default:
+          throw new Error("Invalid analysis type");
+      }
+      
+      const updatedDoc = await getDoc(assessmentRef);
+      if (updatedDoc.exists()) {
+        const updatedData = {
+          id: updatedDoc.id,
+          ...updatedDoc.data()
+        };
+        
+        setAssessmentData(updatedData);
+      }
+      
+      toast({
+        title: "Analysis Complete",
+        description: `${analysisType} analysis has been generated successfully.`,
+      });
+      
+      return result;
+    } catch (error) {
+      console.error(`Error generating ${analysisType} analysis:`, error);
+      toast({
+        title: "Analysis Failed",
+        description: `Error: ${error.message}`,
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
   return {
     evaluating,
     generatingSummary,
     handleManualEvaluation,
     regenerateInsights,
+    generateAdvancedAnalysis,
     setGeneratingSummary
   };
 };

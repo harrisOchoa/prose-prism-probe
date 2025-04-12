@@ -39,7 +39,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
           {generatingSummary ? (
             <div className="flex flex-col items-center justify-center py-6">
               <Loader2 className="h-8 w-8 animate-spin text-indigo-500 mb-3" />
-              <p className="text-sm text-gray-500">Generating AI insights...</p>
+              <p className="text-sm text-gray-500">Generating insights...</p>
             </div>
           ) : assessmentData.aiSummary ? (
             <div className="space-y-4">
@@ -82,7 +82,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
           ) : assessmentData.writingScores && assessmentData.writingScores.length > 0 ? (
             <div className="text-center py-4">
               <p className="text-gray-500">
-                AI summary not generated yet. Click the "Regenerate Insights" button above to create an assessment summary.
+                Summary not generated yet. Click the "Regenerate Insights" button above to create an assessment summary.
               </p>
             </div>
           ) : (
@@ -90,7 +90,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
               <AlertCircle className="h-6 w-6 text-amber-500 mx-auto mb-2" />
               <p className="text-amber-800 font-medium">Writing needs to be evaluated first</p>
               <p className="text-amber-700 text-sm mt-1">
-                Use the "Evaluate Writing" button to assess the candidate's writing and generate AI insights.
+                Use the "Evaluate Writing" button to assess the candidate's writing and generate insights.
               </p>
             </div>
           )}

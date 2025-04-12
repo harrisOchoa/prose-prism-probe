@@ -7,6 +7,7 @@ import OverviewTab from "@/components/assessment/tabs/OverviewTab";
 import AptitudeTab from "@/components/assessment/tabs/AptitudeTab";
 import WritingTab from "@/components/assessment/tabs/WritingTab";
 import CandidateComparison from "@/components/assessment/tabs/ComparisonTab";
+import AdvancedAnalysisTab from "@/components/assessment/AdvancedAnalysisTab";
 import { useAssessmentCalculations } from "@/hooks/useAssessmentCalculations";
 import { useAssessmentEvaluation } from "@/hooks/useAssessmentEvaluation";
 import { usePdfExport } from "@/hooks/usePdfExport";
@@ -72,6 +73,9 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
           <TabsTrigger value="writing" className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow">
             Writing Assessment
           </TabsTrigger>
+          <TabsTrigger value="advanced" className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow">
+            Advanced Analysis
+          </TabsTrigger>
           <TabsTrigger value="comparison" className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow">
             Comparison
           </TabsTrigger>
@@ -102,6 +106,13 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
               getScoreColor={calculations.getScoreColor}
               getScoreBgColor={calculations.getScoreBgColor}
               getScoreLabel={calculations.getScoreLabel}
+            />
+          </TabsContent>
+          
+          <TabsContent value="advanced" className="space-y-4">
+            <AdvancedAnalysisTab 
+              assessmentData={assessmentData}
+              getProgressColor={calculations.getProgressColor}
             />
           </TabsContent>
           
