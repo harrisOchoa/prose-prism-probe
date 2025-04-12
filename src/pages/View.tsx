@@ -59,7 +59,7 @@ const View = () => {
             console.log("No writing scores found in assessment data");
             toast({
               title: "Writing Scores Missing",
-              description: "This assessment does not have AI-evaluated writing scores.",
+              description: "This assessment does not have AI-evaluated writing scores. Use the 'Evaluate Writing' button to start evaluation.",
               variant: "destructive",
             });
           } else {
@@ -68,7 +68,7 @@ const View = () => {
               console.log("Found error scores:", errorScores);
               toast({
                 title: "Writing Evaluation Errors",
-                description: "Some writing prompts could not be evaluated by AI. Please check manually.",
+                description: `${errorScores.length} writing prompt(s) could not be evaluated. Try using the 'Evaluate Writing' button to retry.`,
                 variant: "destructive",
               });
             }

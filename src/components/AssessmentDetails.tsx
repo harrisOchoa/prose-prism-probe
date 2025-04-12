@@ -2,9 +2,14 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Check, X, AlertCircle } from "lucide-react";
+import { ArrowLeft, Check, X, AlertCircle, Zap } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { scoringCriteria } from "@/services/geminiService";
+import { toast } from "@/hooks/use-toast";
+import { evaluateAllWritingPrompts } from "@/services/geminiService";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/firebase/config";
+import { useState } from "react";
 
 interface AssessmentDetailsProps {
   assessment: any;
@@ -12,6 +17,8 @@ interface AssessmentDetailsProps {
 }
 
 const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBack }) => {
+  const [evaluating, setEvaluating] = useState(false);
+  
   const getScoreColor = (score: number) => {
     if (score === 0) return "text-gray-600";
     if (score >= 4.5) return "text-green-600";
@@ -28,6 +35,64 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBac
     if (score >= 2.5) return "Satisfactory";
     if (score >= 1.5) return "Basic";
     return "Needs Improvement";
+  };
+
+  const handleManualEvaluation = async () => {
+    if (!assessment.completedPrompts || assessment.completedPrompts.length === 0) {
+      toast({
+        title: "No Writing Prompts",
+        description: "This assessment does not have any completed writing prompts to evaluate.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setEvaluating(true);
+      toast({
+        title: "AI Evaluation Started",
+        description: "The AI is now evaluating the writing responses. This may take a moment.",
+      });
+
+      // Call the API to evaluate all writing prompts
+      const scores = await evaluateAllWritingPrompts(assessment.completedPrompts);
+      
+      if (scores.length === 0) {
+        throw new Error("No scores were returned from evaluation");
+      }
+
+      // Calculate overall writing score (average of all prompt scores)
+      const validScores = scores.filter(score => score.score > 0);
+      const overallScore = validScores.length > 0
+        ? Number((validScores.reduce((sum, score) => sum + score.score, 0) / validScores.length).toFixed(1))
+        : 0;
+
+      // Update the assessment in Firestore
+      const assessmentRef = doc(db, "assessments", assessment.id);
+      await updateDoc(assessmentRef, {
+        writingScores: scores,
+        overallWritingScore: overallScore
+      });
+
+      // Success message
+      toast({
+        title: "Evaluation Complete",
+        description: `Successfully evaluated ${validScores.length} of ${scores.length} writing prompts.`,
+        variant: "default",
+      });
+
+      // Refresh the page to show updated scores
+      window.location.reload();
+    } catch (error) {
+      console.error("Error during manual evaluation:", error);
+      toast({
+        title: "Evaluation Failed",
+        description: `There was an error evaluating the writing: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setEvaluating(false);
+    }
   };
 
   return (
@@ -89,8 +154,17 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBac
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle>Writing Assessment Score</CardTitle>
+            <Button 
+              onClick={handleManualEvaluation} 
+              disabled={evaluating} 
+              variant="outline"
+              className="px-3"
+            >
+              <Zap className="mr-2 h-4 w-4 text-yellow-500" />
+              {evaluating ? "Evaluating..." : "Evaluate Writing"}
+            </Button>
           </CardHeader>
           <CardContent>
             {assessment.overallWritingScore ? (
