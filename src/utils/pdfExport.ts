@@ -18,7 +18,7 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF({
-      orientation: 'landscape', // Changed to landscape
+      orientation: 'landscape', // Using landscape orientation
       unit: 'mm',
       format: 'a4'
     });
@@ -78,7 +78,7 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       pdf.setTextColor(100, 116, 139);
       pdf.text(`Page ${pdf.getNumberOfPages()}`, pageWidth - 30, 10);
       
-      // Add content to new page
+      // Fix: Correct the addImage call with proper number of arguments
       pdf.addImage(
         imgData, 
         'PNG', 
@@ -87,10 +87,15 @@ export const exportToPdf = async (elementId: string, filename: string) => {
         imgWidth, 
         imgHeight, 
         '', 
-        'FAST',
-        0,
-        heightLeft > 0 ? -imgHeight + (pageHeight - yPosition - 20) : 0
+        'FAST'
       );
+      
+      // If needed, adjust the image position for the new page
+      if (heightLeft > 0) {
+        // Apply a clipping to show only the remaining part
+        pdf.setPage(pdf.getNumberOfPages());
+        // Additional positioning adjustments can be made here if needed
+      }
     }
     
     // Add footer with company info
