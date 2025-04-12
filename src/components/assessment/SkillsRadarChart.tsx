@@ -29,11 +29,11 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
 }) => {
   const validScores = writingScores?.filter(score => score.score > 0) || [];
   
-  // Group writing scores by category
+  // Group writing scores by criteria
   const categorizedScores: Record<string, number[]> = {};
   validScores.forEach(score => {
-    // Extract category from the prompt (assuming format like "Category: Prompt text")
-    const category = score.category || "General Writing";
+    // Use the promptId as a fallback category if no category exists
+    const category = score.promptId || "General Writing";
     if (!categorizedScores[category]) {
       categorizedScores[category] = [];
     }
