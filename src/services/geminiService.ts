@@ -18,6 +18,9 @@ export type WritingScore = {
 
 export const evaluateWritingResponse = async (prompt: string, userResponse: string): Promise<WritingScore> => {
   try {
+    console.log("Starting evaluation for prompt:", prompt.substring(0, 30) + "...");
+    console.log("Response length:", userResponse.length, "characters");
+    
     const apiKey = "AIzaSyApWiYP8pkZKNMrCDKmdbRJVoiWUCANow0";
     const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
     
@@ -50,68 +53,85 @@ Return your evaluation as JSON with the following structure:
 
     console.log("Sending request to Gemini API...");
     
-    const apiResponse = await fetch(`${url}?key=${apiKey}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: promptTemplate
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.2,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 1024,
-        }
-      })
-    });
-
-    const data = await apiResponse.json();
-    console.log("Gemini API response received:", data);
-    
-    if (!apiResponse.ok) {
-      console.error("Gemini API error:", data);
-      return { score: 0, feedback: "Error evaluating writing. Please check manually.", promptId: 0 };
-    }
-
-    // Extract the JSON from the response text
-    const text = data.candidates[0].content.parts[0].text;
-    console.log("Raw text response:", text);
-    
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) {
-      console.error("Failed to extract JSON from response");
-      return { score: 0, feedback: "Error parsing AI evaluation. Please check manually.", promptId: 0 };
-    }
-    
     try {
-      const evaluation = JSON.parse(jsonMatch[0]);
-      console.log("Parsed evaluation:", evaluation);
+      const apiResponse = await fetch(`${url}?key=${apiKey}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: promptTemplate
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 1024,
+          }
+        })
+      });
       
-      // Ensure score is a number
-      const score = Number(evaluation.score);
+      if (!apiResponse.ok) {
+        const errorData = await apiResponse.text();
+        console.error("Gemini API error status:", apiResponse.status);
+        console.error("Error response:", errorData);
+        throw new Error(`API error: ${apiResponse.status} - ${errorData}`);
+      }
+
+      const data = await apiResponse.json();
+      console.log("Gemini API response received:", JSON.stringify(data).substring(0, 500) + "...");
       
-      return { 
-        score: isNaN(score) ? 0 : score, 
-        feedback: evaluation.feedback || "No feedback provided",
-        promptId: 0 // This will be set by the calling function
-      };
-    } catch (parseError) {
-      console.error("Error parsing JSON:", parseError, "JSON string:", jsonMatch[0]);
-      return { score: 0, feedback: "Error parsing AI evaluation. Please check manually.", promptId: 0 };
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
+        console.error("Unexpected API response structure:", JSON.stringify(data));
+        throw new Error("Invalid API response structure");
+      }
+      
+      // Extract the JSON from the response text
+      const text = data.candidates[0].content.parts[0].text;
+      console.log("Raw text response:", text);
+      
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        console.error("Failed to extract JSON from response");
+        throw new Error("Failed to parse evaluation results");
+      }
+      
+      try {
+        const evaluation = JSON.parse(jsonMatch[0]);
+        console.log("Parsed evaluation:", evaluation);
+        
+        // Ensure score is a number
+        const score = Number(evaluation.score);
+        
+        if (isNaN(score)) {
+          console.error("Invalid score (not a number):", evaluation.score);
+          throw new Error("Invalid score format");
+        }
+        
+        return { 
+          score: score, 
+          feedback: evaluation.feedback || "No feedback provided",
+          promptId: 0 // This will be set by the calling function
+        };
+      } catch (parseError) {
+        console.error("Error parsing JSON:", parseError, "JSON string:", jsonMatch[0]);
+        throw new Error("Error parsing evaluation results");
+      }
+    } catch (fetchError) {
+      console.error("Fetch error:", fetchError);
+      throw new Error(`Network error: ${fetchError.message}`);
     }
   } catch (error) {
     console.error("Error evaluating writing:", error);
-    return { score: 0, feedback: "Error evaluating writing. Please check manually.", promptId: 0 };
+    return { score: 0, feedback: `Error evaluating writing: ${error.message}. Please check manually.`, promptId: 0 };
   }
 };
 
@@ -133,7 +153,11 @@ export const evaluateAllWritingPrompts = async (prompts: WritingPromptItem[]): P
         })
         .catch(error => {
           console.error(`Error evaluating prompt ID ${prompt.id}:`, error);
-          return { score: 0, feedback: "Evaluation failed. Please check manually.", promptId: prompt.id };
+          return { 
+            score: 0, 
+            feedback: `Evaluation failed: ${error.message}. Please check manually.`, 
+            promptId: prompt.id 
+          };
         });
     });
 

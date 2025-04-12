@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Check, X } from "lucide-react";
+import { ArrowLeft, Check, X, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { scoringCriteria } from "@/services/geminiService";
 
@@ -13,6 +13,7 @@ interface AssessmentDetailsProps {
 
 const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBack }) => {
   const getScoreColor = (score: number) => {
+    if (score === 0) return "text-gray-600";
     if (score >= 4.5) return "text-green-600";
     if (score >= 3.5) return "text-blue-600";
     if (score >= 2.5) return "text-yellow-600";
@@ -21,6 +22,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBac
   };
 
   const getScoreLabel = (score: number) => {
+    if (score === 0) return "Not Evaluated";
     if (score >= 4.5) return "Exceptional";
     if (score >= 3.5) return "Proficient";
     if (score >= 2.5) return "Satisfactory";
@@ -119,7 +121,10 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBac
                 </div>
               </div>
             ) : (
-              <p className="text-gray-500">No AI evaluation available for this assessment.</p>
+              <div className="flex items-center gap-2 text-amber-600">
+                <AlertCircle className="h-5 w-5" />
+                <p>No AI evaluation available for this assessment.</p>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -141,21 +146,41 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBac
                 <div className="flex justify-between items-start">
                   <h3 className="text-lg font-medium mb-2">{prompt.prompt}</h3>
                   
-                  {promptScore && (
-                    <div className={`rounded-full px-3 py-1 text-white font-medium ${getScoreColor(promptScore.score)} bg-opacity-90`}>
-                      Score: {promptScore.score}/5
+                  {promptScore ? (
+                    <div className={`rounded-full px-3 py-1 text-white font-medium ${
+                      promptScore.score === 0 
+                        ? "bg-gray-400" 
+                        : getScoreColor(promptScore.score).replace("text-", "bg-")
+                    } bg-opacity-90`}>
+                      {promptScore.score === 0 ? "Not Evaluated" : `Score: ${promptScore.score}/5`}
+                    </div>
+                  ) : (
+                    <div className="rounded-full px-3 py-1 text-white font-medium bg-gray-400 bg-opacity-90">
+                      Not Evaluated
                     </div>
                   )}
                 </div>
                 
-                <div className="bg-muted p-4 rounded-md whitespace-pre-wrap text-sm">
+                <div className="bg-muted p-4 rounded-md whitespace-pre-wrap text-sm mt-2">
                   {prompt.response}
                 </div>
                 
                 {promptScore && (
-                  <div className="mt-4 bg-blue-50 p-3 rounded border border-blue-100">
-                    <p className="text-sm font-medium text-blue-700">AI Feedback:</p>
-                    <p className="text-sm text-blue-600">{promptScore.feedback}</p>
+                  <div className={`mt-4 p-3 rounded border ${
+                    promptScore.score === 0 
+                      ? "bg-gray-50 border-gray-200" 
+                      : "bg-blue-50 border-blue-100"
+                  }`}>
+                    <p className={`text-sm font-medium ${
+                      promptScore.score === 0 ? "text-gray-700" : "text-blue-700"
+                    }`}>
+                      AI Feedback:
+                    </p>
+                    <p className={`text-sm ${
+                      promptScore.score === 0 ? "text-gray-600" : "text-blue-600"
+                    }`}>
+                      {promptScore.feedback}
+                    </p>
                   </div>
                 )}
                 

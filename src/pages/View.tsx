@@ -54,7 +54,7 @@ const View = () => {
           
           console.log("Assessment data retrieved:", assessmentData);
           
-          // Check if there are writing scores
+          // Check if there are writing scores and if any have errors
           if (!assessmentData.writingScores || assessmentData.writingScores.length === 0) {
             console.log("No writing scores found in assessment data");
             toast({
@@ -62,6 +62,16 @@ const View = () => {
               description: "This assessment does not have AI-evaluated writing scores.",
               variant: "destructive",
             });
+          } else {
+            const errorScores = assessmentData.writingScores.filter(score => score.score === 0);
+            if (errorScores.length > 0) {
+              console.log("Found error scores:", errorScores);
+              toast({
+                title: "Writing Evaluation Errors",
+                description: "Some writing prompts could not be evaluated by AI. Please check manually.",
+                variant: "destructive",
+              });
+            }
           }
           
           setAssessment(assessmentData);
