@@ -1,6 +1,6 @@
 
 import { db } from './config';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData, updateDoc, doc } from 'firebase/firestore';
 import { WritingPromptItem } from '@/components/AssessmentManager';
 import { WritingScore } from '@/services/geminiService';
 
@@ -65,6 +65,20 @@ export const saveAssessmentResult = async (
   } catch (error) {
     console.error('Error saving assessment:', error);
     throw new Error('Failed to save assessment results');
+  }
+};
+
+export const updateAssessmentAnalysis = async (
+  assessmentId: string,
+  analysisData: Partial<AssessmentSubmission>
+): Promise<boolean> => {
+  try {
+    const assessmentRef = doc(db, 'assessments', assessmentId);
+    await updateDoc(assessmentRef, analysisData);
+    return true;
+  } catch (error) {
+    console.error('Error updating assessment analysis:', error);
+    throw new Error('Failed to update assessment analysis');
   }
 };
 

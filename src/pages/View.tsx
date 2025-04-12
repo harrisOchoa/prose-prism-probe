@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
+import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -65,7 +66,7 @@ const View = () => {
             console.log("No writing scores found in assessment data");
             toast({
               title: "Writing Scores Missing",
-              description: "This assessment does not have AI-evaluated writing scores. Use the 'Evaluate Writing' button to start evaluation.",
+              description: "This assessment does not have evaluated writing scores. Use the 'Evaluate Writing' button to start evaluation.",
               variant: "destructive",
             });
           } else {
@@ -81,7 +82,7 @@ const View = () => {
             
             if (!assessmentData.aiSummary || !assessmentData.strengths || !assessmentData.weaknesses) {
               setGeneratingSummary(true);
-              console.log("Generating AI insights for assessment");
+              console.log("Generating insights for assessment");
               
               try {
                 const [summary, analysis] = await Promise.all([
@@ -89,19 +90,21 @@ const View = () => {
                   generateStrengthsAndWeaknesses(assessmentData)
                 ]);
                 
+                // Update assessment data in memory
                 assessmentData.aiSummary = summary;
                 assessmentData.strengths = analysis.strengths;
                 assessmentData.weaknesses = analysis.weaknesses;
                 
-                await updateDoc(docRef, {
+                // Save to Firebase
+                await updateAssessmentAnalysis(assessmentData.id, {
                   aiSummary: summary,
                   strengths: analysis.strengths,
                   weaknesses: analysis.weaknesses
                 });
                 
-                console.log("AI insights saved to assessment:", assessmentData);
+                console.log("Insights saved to assessment:", assessmentData);
               } catch (aiError) {
-                console.error("Error generating AI insights:", aiError);
+                console.error("Error generating insights:", aiError);
               } finally {
                 setGeneratingSummary(false);
               }

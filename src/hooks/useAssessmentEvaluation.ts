@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
+import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
 import { 
   evaluateAllWritingPrompts, 
   generateCandidateSummary, 
@@ -36,8 +37,8 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     try {
       setEvaluating(true);
       toast({
-        title: "AI Evaluation Started",
-        description: "The AI is now evaluating the writing responses. This may take a moment.",
+        title: "Evaluation Started",
+        description: "The system is now evaluating the writing responses. This may take a moment.",
       });
 
       const scores = await evaluateAllWritingPrompts(assessmentData.completedPrompts);
@@ -51,9 +52,8 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
         ? Number((validScores.reduce((sum, score) => sum + score.score, 0) / validScores.length).toFixed(1))
         : 0;
 
-      const assessmentRef = doc(db, "assessments", assessmentData.id);
-      
-      await updateDoc(assessmentRef, {
+      // Update Firebase with the writing scores
+      await updateAssessmentAnalysis(assessmentData.id, {
         writingScores: scores,
         overallWritingScore: overallScore
       });
@@ -61,7 +61,7 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
       setGeneratingSummary(true);
       toast({
         title: "Generating Insights",
-        description: "AI is now analyzing the assessment to provide additional insights.",
+        description: "System is now analyzing the assessment to provide additional insights.",
       });
       
       try {
@@ -70,25 +70,26 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
           generateStrengthsAndWeaknesses({...assessmentData, writingScores: scores, overallWritingScore: overallScore})
         ]);
         
-        await updateDoc(assessmentRef, {
+        // Update Firebase with the insights
+        await updateAssessmentAnalysis(assessmentData.id, {
           aiSummary: summary,
           strengths: analysis.strengths,
           weaknesses: analysis.weaknesses
         });
         
-        console.log("AI insights generated:", { summary, analysis });
+        console.log("Insights generated:", { summary, analysis });
       } catch (aiError) {
-        console.error("Error generating AI insights:", aiError);
+        console.error("Error generating insights:", aiError);
         toast({
           title: "Insight Generation Failed",
-          description: "There was an error generating AI insights. The evaluation scores were saved successfully.",
+          description: "There was an error generating insights. The evaluation scores were saved successfully.",
           variant: "destructive",
         });
       } finally {
         setGeneratingSummary(false);
       }
 
-      const updatedDoc = await getDoc(assessmentRef);
+      const updatedDoc = await getDoc(doc(db, "assessments", assessmentData.id));
       if (updatedDoc.exists()) {
         const updatedData = {
           id: updatedDoc.id,
@@ -129,7 +130,7 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
       setGeneratingSummary(true);
       toast({
         title: "Regenerating Insights",
-        description: "AI is analyzing the assessment to provide updated insights.",
+        description: "System is analyzing the assessment to provide updated insights.",
       });
       
       const [summary, analysis] = await Promise.all([
@@ -137,8 +138,8 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
         generateStrengthsAndWeaknesses(assessmentData)
       ]);
       
-      const assessmentRef = doc(db, "assessments", assessmentData.id);
-      await updateDoc(assessmentRef, {
+      // Update Firebase with the new insights
+      await updateAssessmentAnalysis(assessmentData.id, {
         aiSummary: summary,
         strengths: analysis.strengths,
         weaknesses: analysis.weaknesses
@@ -153,7 +154,7 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
       
       toast({
         title: "Insights Updated",
-        description: "AI insights have been regenerated successfully.",
+        description: "Assessment insights have been regenerated successfully.",
       });
     } catch (error) {
       console.error("Error generating insights:", error);
@@ -183,46 +184,43 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
       
       toast({
         title: "Generating Analysis",
-        description: `AI is generating ${analysisType} analysis. This may take a moment.`,
+        description: `System is generating ${analysisType} analysis. This may take a moment.`,
       });
       
       let result;
-      const assessmentRef = doc(db, "assessments", assessmentData.id);
+      const updateData: any = {};
       
       switch (analysisType) {
         case "detailed":
           result = await generateDetailedWritingAnalysis(assessmentData);
-          await updateDoc(assessmentRef, { detailedWritingAnalysis: result });
+          updateData.detailedWritingAnalysis = result;
           break;
         case "personality":
           result = await generatePersonalityInsights(assessmentData);
-          await updateDoc(assessmentRef, { personalityInsights: result });
+          updateData.personalityInsights = result;
           break;
         case "questions":
           result = await generateInterviewQuestions(assessmentData);
-          await updateDoc(assessmentRef, { interviewQuestions: result });
+          updateData.interviewQuestions = result;
           break;
         case "profile":
           result = await compareWithIdealProfile(assessmentData);
-          await updateDoc(assessmentRef, { profileMatch: result });
+          updateData.profileMatch = result;
           break;
         default:
           throw new Error("Invalid analysis type");
       }
       
-      // Fetch the updated document to get all analysis data
-      const updatedDoc = await getDoc(assessmentRef);
-      if (updatedDoc.exists()) {
-        const updatedData = {
-          id: updatedDoc.id,
-          ...updatedDoc.data()
-        };
-        
-        setAssessmentData(updatedData);
-        
-        // Log the updated data for debugging
-        console.log(`Updated ${analysisType} analysis data saved:`, updatedData);
-      }
+      // Save to Firebase
+      await updateAssessmentAnalysis(assessmentData.id, updateData);
+      
+      // Update local state
+      setAssessmentData({
+        ...assessmentData,
+        ...updateData
+      });
+      
+      console.log(`Updated ${analysisType} analysis data:`, result);
       
       toast({
         title: "Analysis Complete",
