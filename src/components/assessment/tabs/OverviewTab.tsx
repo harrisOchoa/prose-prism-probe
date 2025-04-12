@@ -28,7 +28,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
             <Sparkles className="mr-2 h-5 w-5 text-indigo-500" />
-            <span className="pdf-hide">AI Assessment Summary</span>
+            <span className="pdf-hide">Assessment Summary</span>
             <span className="hidden pdf-show">Assessment Summary</span>
           </CardTitle>
           <CardDescription>
