@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +10,6 @@ import { toast } from "@/hooks/use-toast";
 import { WritingScore, generateCandidateSummary, generateStrengthsAndWeaknesses } from "@/services/geminiService";
 import { WritingPromptItem } from "@/components/AssessmentManager";
 
-// Define the type for assessment data
 interface AssessmentData {
   id: string;
   candidateName: string;
@@ -26,7 +24,7 @@ interface AssessmentData {
   aiSummary?: string;
   strengths?: string[];
   weaknesses?: string[];
-  [key: string]: any; // For any other properties that might exist
+  [key: string]: any;
 }
 
 const View = () => {
@@ -58,7 +56,6 @@ const View = () => {
           
           console.log("Assessment data retrieved:", assessmentData);
           
-          // Check if there are writing scores and if any have errors
           if (!assessmentData.writingScores || assessmentData.writingScores.length === 0) {
             console.log("No writing scores found in assessment data");
             toast({
@@ -77,7 +74,6 @@ const View = () => {
               });
             }
             
-            // Generate AI summary if writing scores exist but no summary yet
             if (!assessmentData.aiSummary || !assessmentData.strengths || !assessmentData.weaknesses) {
               setGeneratingSummary(true);
               console.log("Generating AI insights for assessment");
@@ -92,7 +88,6 @@ const View = () => {
                 assessmentData.strengths = analysis.strengths;
                 assessmentData.weaknesses = analysis.weaknesses;
                 
-                // Update the assessment in Firestore with the new AI insights
                 await updateDoc(docRef, {
                   aiSummary: summary,
                   strengths: analysis.strengths,
