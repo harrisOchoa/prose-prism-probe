@@ -16,6 +16,12 @@ import {
 export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: (data: any) => void) => {
   const [evaluating, setEvaluating] = useState(false);
   const [generatingSummary, setGeneratingSummary] = useState(false);
+  const [generatingAnalysis, setGeneratingAnalysis] = useState({
+    detailed: false,
+    personality: false,
+    questions: false,
+    profile: false
+  });
 
   const handleManualEvaluation = async () => {
     if (!assessmentData.completedPrompts || assessmentData.completedPrompts.length === 0) {
@@ -172,6 +178,9 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     }
     
     try {
+      // Set the appropriate loading state
+      setGeneratingAnalysis(prev => ({ ...prev, [analysisType]: true }));
+      
       toast({
         title: "Generating Analysis",
         description: `AI is generating ${analysisType} analysis. This may take a moment.`,
@@ -201,6 +210,7 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
           throw new Error("Invalid analysis type");
       }
       
+      // Fetch the updated document to get all analysis data
       const updatedDoc = await getDoc(assessmentRef);
       if (updatedDoc.exists()) {
         const updatedData = {
@@ -209,11 +219,14 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
         };
         
         setAssessmentData(updatedData);
+        
+        // Log the updated data for debugging
+        console.log(`Updated ${analysisType} analysis data saved:`, updatedData);
       }
       
       toast({
         title: "Analysis Complete",
-        description: `${analysisType} analysis has been generated successfully.`,
+        description: `${analysisType} analysis has been generated and saved successfully.`,
       });
       
       return result;
@@ -225,12 +238,16 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
         variant: "destructive",
       });
       return null;
+    } finally {
+      // Reset the loading state
+      setGeneratingAnalysis(prev => ({ ...prev, [analysisType]: false }));
     }
   };
 
   return {
     evaluating,
     generatingSummary,
+    generatingAnalysis,
     handleManualEvaluation,
     regenerateInsights,
     generateAdvancedAnalysis,

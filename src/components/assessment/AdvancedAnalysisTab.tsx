@@ -14,21 +14,21 @@ import {
   PersonalityInsight, 
   InterviewQuestion, 
   DetailedAnalysis,
-  CandidateProfileMatch,
-  generateDetailedWritingAnalysis,
-  generateInterviewQuestions,
-  generatePersonalityInsights,
-  compareWithIdealProfile
+  CandidateProfileMatch
 } from "@/services/geminiService";
 
 interface AdvancedAnalysisTabProps {
   assessmentData: any;
   getProgressColor: (value: number) => string;
+  generateAdvancedAnalysis: (analysisType: string) => Promise<any>;
+  generatingAnalysis: {[key: string]: boolean};
 }
 
 const AdvancedAnalysisTab: React.FC<AdvancedAnalysisTabProps> = ({
   assessmentData,
-  getProgressColor
+  getProgressColor,
+  generateAdvancedAnalysis,
+  generatingAnalysis = {}
 }) => {
   const [activeTab, setActiveTab] = useState<string>("writing");
   const [loading, setLoading] = useState<{[key: string]: boolean}>({
@@ -41,6 +41,69 @@ const AdvancedAnalysisTab: React.FC<AdvancedAnalysisTabProps> = ({
   const [personalityInsights, setPersonalityInsights] = useState<PersonalityInsight[] | null>(null);
   const [interviewQuestions, setInterviewQuestions] = useState<InterviewQuestion[] | null>(null);
   const [profileMatch, setProfileMatch] = useState<CandidateProfileMatch | null>(null);
+
+  // Initialize the tab data from assessmentData if available
+  useEffect(() => {
+    if (assessmentData) {
+      console.log("Initializing advanced analysis tab with assessment data");
+      
+      if (assessmentData.detailedWritingAnalysis) {
+        console.log("Loading detailed writing analysis from assessment data");
+        setDetailedAnalysis(assessmentData.detailedWritingAnalysis);
+      }
+      
+      if (assessmentData.personalityInsights) {
+        console.log("Loading personality insights from assessment data");
+        setPersonalityInsights(assessmentData.personalityInsights);
+      }
+      
+      if (assessmentData.interviewQuestions) {
+        console.log("Loading interview questions from assessment data");
+        setInterviewQuestions(assessmentData.interviewQuestions);
+      }
+      
+      if (assessmentData.profileMatch) {
+        console.log("Loading profile match data from assessment data");
+        setProfileMatch(assessmentData.profileMatch);
+      }
+    }
+  }, [assessmentData]);
+
+  // Update loading states from props
+  useEffect(() => {
+    if (generatingAnalysis) {
+      setLoading({
+        writing: generatingAnalysis.detailed || false,
+        personality: generatingAnalysis.personality || false,
+        questions: generatingAnalysis.questions || false,
+        profile: generatingAnalysis.profile || false
+      });
+    }
+  }, [generatingAnalysis]);
+
+  // Update state after new data comes in
+  useEffect(() => {
+    if (assessmentData.detailedWritingAnalysis && !detailedAnalysis) {
+      setDetailedAnalysis(assessmentData.detailedWritingAnalysis);
+    }
+    
+    if (assessmentData.personalityInsights && !personalityInsights) {
+      setPersonalityInsights(assessmentData.personalityInsights);
+    }
+    
+    if (assessmentData.interviewQuestions && !interviewQuestions) {
+      setInterviewQuestions(assessmentData.interviewQuestions);
+    }
+    
+    if (assessmentData.profileMatch && !profileMatch) {
+      setProfileMatch(assessmentData.profileMatch);
+    }
+  }, [
+    assessmentData.detailedWritingAnalysis, 
+    assessmentData.personalityInsights,
+    assessmentData.interviewQuestions,
+    assessmentData.profileMatch
+  ]);
 
   const getAnalysisButtonLabel = (analysisType: string) => {
     switch(analysisType) {
@@ -67,41 +130,30 @@ const AdvancedAnalysisTab: React.FC<AdvancedAnalysisTabProps> = ({
       return;
     }
 
-    setLoading({...loading, [analysisType]: true});
-    
     try {
+      let result;
+      
       switch(analysisType) {
         case "writing":
-          const analysis = await generateDetailedWritingAnalysis(assessmentData);
-          setDetailedAnalysis(analysis);
+          result = await generateAdvancedAnalysis("detailed");
+          if (result) setDetailedAnalysis(result);
           break;
         case "personality":
-          const insights = await generatePersonalityInsights(assessmentData);
-          setPersonalityInsights(insights);
+          result = await generateAdvancedAnalysis("personality");
+          if (result) setPersonalityInsights(result);
           break;
         case "questions":
-          const questions = await generateInterviewQuestions(assessmentData);
-          setInterviewQuestions(questions);
+          result = await generateAdvancedAnalysis("questions");
+          if (result) setInterviewQuestions(result);
           break;
         case "profile":
-          const match = await compareWithIdealProfile(assessmentData);
-          setProfileMatch(match);
+          result = await generateAdvancedAnalysis("profile");
+          if (result) setProfileMatch(result);
           break;
       }
       
-      toast({
-        title: "Analysis Complete",
-        description: `Successfully generated ${analysisType} analysis.`,
-      });
     } catch (error) {
-      console.error(`Error generating ${analysisType} analysis:`, error);
-      toast({
-        title: "Analysis Failed",
-        description: `Failed to generate ${analysisType} analysis. Please try again.`,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading({...loading, [analysisType]: false});
+      console.error(`Error in handleGenerateAnalysis for ${analysisType}:`, error);
     }
   };
 
@@ -130,7 +182,7 @@ const AdvancedAnalysisTab: React.FC<AdvancedAnalysisTabProps> = ({
     <div className="space-y-6">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle>Advanced AI Analysis</CardTitle>
+          <CardTitle>Advanced Analysis</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

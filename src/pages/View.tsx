@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
@@ -24,6 +25,10 @@ interface AssessmentData {
   aiSummary?: string;
   strengths?: string[];
   weaknesses?: string[];
+  detailedWritingAnalysis?: any;
+  personalityInsights?: any[];
+  interviewQuestions?: any[];
+  profileMatch?: any;
   [key: string]: any;
 }
 
@@ -100,6 +105,23 @@ const View = () => {
               } finally {
                 setGeneratingSummary(false);
               }
+            }
+
+            // Log any advanced analysis data that exists
+            if (assessmentData.detailedWritingAnalysis) {
+              console.log("Detailed writing analysis found in assessment data");
+            }
+            
+            if (assessmentData.personalityInsights) {
+              console.log("Personality insights found in assessment data");
+            }
+            
+            if (assessmentData.interviewQuestions) {
+              console.log("Interview questions found in assessment data");
+            }
+            
+            if (assessmentData.profileMatch) {
+              console.log("Profile match data found in assessment data");
             }
           }
           

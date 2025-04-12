@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AssessmentHeader from "@/components/assessment/AssessmentHeader";
 import CandidateSummaryCard from "@/components/assessment/CandidateSummaryCard";
@@ -31,15 +31,39 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
   const {
     evaluating,
     generatingSummary,
+    generatingAnalysis,
     handleManualEvaluation,
     regenerateInsights,
+    generateAdvancedAnalysis,
     setGeneratingSummary
   } = useAssessmentEvaluation(assessmentData, setAssessmentData);
 
   const { handleExportPdf } = usePdfExport();
 
+  // Log initial assessment data for debugging
+  useEffect(() => {
+    console.log("Initial assessment data in AssessmentDetails:", assessmentData);
+    
+    // Log any advanced analysis data that exists
+    if (assessmentData.detailedWritingAnalysis) {
+      console.log("Detailed writing analysis loaded:", assessmentData.detailedWritingAnalysis);
+    }
+    
+    if (assessmentData.personalityInsights) {
+      console.log("Personality insights loaded:", assessmentData.personalityInsights);
+    }
+    
+    if (assessmentData.interviewQuestions) {
+      console.log("Interview questions loaded:", assessmentData.interviewQuestions);
+    }
+    
+    if (assessmentData.profileMatch) {
+      console.log("Profile match data loaded:", assessmentData.profileMatch);
+    }
+  }, []);
+
   // Set initial state for generatingSummary if provided
-  React.useEffect(() => {
+  useEffect(() => {
     if (isGeneratingSummary) {
       setGeneratingSummary(true);
     }
@@ -113,6 +137,8 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
             <AdvancedAnalysisTab 
               assessmentData={assessmentData}
               getProgressColor={calculations.getProgressColor}
+              generateAdvancedAnalysis={generateAdvancedAnalysis}
+              generatingAnalysis={generatingAnalysis || {}}
             />
           </TabsContent>
           

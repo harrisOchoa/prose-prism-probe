@@ -14,6 +14,13 @@ interface AssessmentSubmission {
   writingScores?: WritingScore[];
   overallWritingScore?: number;
   submittedAt: any;
+  aiSummary?: string;
+  strengths?: string[];
+  weaknesses?: string[];
+  detailedWritingAnalysis?: any;
+  personalityInsights?: any[];
+  interviewQuestions?: any[];
+  profileMatch?: any;
 }
 
 export const saveAssessmentResult = async (
