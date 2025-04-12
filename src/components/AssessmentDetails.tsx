@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
@@ -15,6 +14,7 @@ import CandidateSummaryCard from "@/components/assessment/CandidateSummaryCard";
 import OverviewTab from "@/components/assessment/tabs/OverviewTab";
 import AptitudeTab from "@/components/assessment/tabs/AptitudeTab";
 import WritingTab from "@/components/assessment/tabs/WritingTab";
+import { exportToPdf } from "@/utils/pdfExport";
 
 interface AssessmentDetailsProps {
   assessment: any;
@@ -230,6 +230,29 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
     }
   };
 
+  const handleExportPdf = async () => {
+    toast({
+      title: "Preparing PDF",
+      description: "Creating a professional report of this assessment...",
+    });
+    
+    const success = await exportToPdf("assessment-content", `${assessment.candidateName}_Assessment_Report`);
+    
+    if (success) {
+      toast({
+        title: "PDF Exported Successfully",
+        description: "The assessment report has been downloaded.",
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "PDF Export Failed",
+        description: "There was an error creating the PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <AssessmentHeader 
@@ -239,6 +262,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
         generatingSummary={generatingSummary}
         handleManualEvaluation={handleManualEvaluation}
         regenerateInsights={regenerateInsights}
+        handleExportPdf={handleExportPdf}
       />
 
       <CandidateSummaryCard 

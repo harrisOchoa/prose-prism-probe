@@ -1,17 +1,24 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, BrainCircuit, Zap } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { exportToPdf } from "@/utils/pdfExport";
+import { 
+  ArrowLeft, 
+  Calculator, 
+  FileText, 
+  Loader2, 
+  RefreshCw, 
+  Download,
+  FileUp
+} from "lucide-react";
 
 interface AssessmentHeaderProps {
   assessmentData: any;
   onBack: () => void;
   evaluating: boolean;
   generatingSummary: boolean;
-  handleManualEvaluation: () => Promise<void>;
-  regenerateInsights: () => Promise<void>;
+  handleManualEvaluation: () => void;
+  regenerateInsights: () => void;
+  handleExportPdf?: () => void;
 }
 
 const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
@@ -20,64 +27,78 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
   evaluating,
   generatingSummary,
   handleManualEvaluation,
-  regenerateInsights
+  regenerateInsights,
+  handleExportPdf
 }) => {
-  const handlePrintPdf = async () => {
-    toast({
-      title: "Generating PDF",
-      description: "Please wait while we prepare your PDF...",
-    });
-    
-    const success = await exportToPdf("assessment-content", `${assessmentData.candidateName}-Assessment`);
-    
-    if (success) {
-      toast({
-        title: "PDF Generated",
-        description: "Assessment has been exported to PDF successfully.",
-      });
-    } else {
-      toast({
-        title: "PDF Generation Failed",
-        description: "There was an error exporting to PDF. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border shadow-sm">
+      <div className="flex items-center gap-2">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={onBack}
+        >
+          <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-3xl font-bold">Assessment Details</h1>
+        <div>
+          <h1 className="text-xl font-semibold">{assessmentData.candidateName}</h1>
+          <p className="text-sm text-muted-foreground">
+            {assessmentData.candidatePosition || "Position not specified"}
+          </p>
+        </div>
       </div>
-      <div className="space-x-2">
-        <Button 
-          onClick={handlePrintPdf} 
-          variant="outline"
-          className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
-        >
-          <Printer className="mr-2 h-4 w-4" />
-          Export PDF
-        </Button>
-        <Button 
-          onClick={regenerateInsights} 
-          disabled={evaluating || generatingSummary || !assessmentData.writingScores} 
-          variant="outline"
-          className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
-        >
-          <BrainCircuit className="mr-2 h-4 w-4" />
-          {generatingSummary ? "Processing..." : "Regenerate Insights"}
-        </Button>
-        <Button 
-          onClick={handleManualEvaluation} 
-          disabled={evaluating || generatingSummary} 
-          className="bg-indigo-600 hover:bg-indigo-700"
-        >
-          <Zap className="mr-2 h-4 w-4" />
-          {evaluating ? "Processing..." : "Evaluate Writing"}
-        </Button>
+      
+      <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+        {handleExportPdf && (
+          <Button 
+            variant="secondary"
+            onClick={handleExportPdf}
+            className="flex-1 sm:flex-none"
+          >
+            <FileUp className="mr-2 h-4 w-4" />
+            Export PDF
+          </Button>
+        )}
+        
+        {assessmentData.writingScores && assessmentData.writingScores.length > 0 ? (
+          <Button 
+            variant="secondary" 
+            onClick={regenerateInsights} 
+            disabled={generatingSummary}
+            className="flex-1 sm:flex-none"
+          >
+            {generatingSummary ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating
+              </>
+            ) : (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Regenerate Insights
+              </>
+            )}
+          </Button>
+        ) : (
+          <Button 
+            variant="default" 
+            onClick={handleManualEvaluation} 
+            disabled={evaluating}
+            className="flex-1 sm:flex-none"
+          >
+            {evaluating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Evaluating
+              </>
+            ) : (
+              <>
+                <Calculator className="mr-2 h-4 w-4" />
+                Evaluate Writing
+              </>
+            )}
+          </Button>
+        )}
       </div>
     </div>
   );
