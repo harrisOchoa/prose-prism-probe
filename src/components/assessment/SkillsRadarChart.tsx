@@ -7,7 +7,6 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   ResponsiveContainer,
-  Tooltip as RechartsTooltip
 } from "recharts";
 import { 
   ChartContainer,

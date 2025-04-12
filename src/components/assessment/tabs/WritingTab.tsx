@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertCircle, HelpCircle, Loader2 } from "lucide-react";
 import { WritingScore, scoringCriteria } from "@/services/geminiService";
+import SkillsRadarChart from "@/components/assessment/SkillsRadarChart";
 
 interface WritingTabProps {
   assessmentData: any;
@@ -12,6 +13,109 @@ interface WritingTabProps {
   getScoreBgColor: (score: number) => string;
   getScoreLabel: (score: number) => string;
 }
+
+// Extract WritingResponseItem into its own component
+const WritingResponseItem: React.FC<{
+  prompt: any;
+  index: number;
+  promptScore: any;
+  getScoreColor: (score: number) => string;
+  getScoreBgColor: (score: number) => string;
+}> = ({ prompt, index, promptScore, getScoreColor, getScoreBgColor }) => {
+  return (
+    <div key={index} className="border rounded-lg overflow-hidden">
+      <div className="bg-gray-50 p-4 border-b flex justify-between items-start">
+        <h3 className="text-lg font-medium">{prompt.prompt}</h3>
+        
+        {promptScore ? (
+          <div className={`rounded-full px-3 py-1 text-white font-medium ${
+            promptScore.score === 0 
+              ? "bg-gray-400" 
+              : getScoreColor(promptScore.score).replace("text-", "bg-")
+          } bg-opacity-90`}>
+            {promptScore.score === 0 ? "Not Evaluated" : `${promptScore.score}/5`}
+          </div>
+        ) : (
+          <div className="rounded-full px-3 py-1 text-white font-medium bg-gray-400 bg-opacity-90">
+            Not Evaluated
+          </div>
+        )}
+      </div>
+      
+      <div className="p-4">
+        <div className="bg-muted p-4 rounded-md whitespace-pre-wrap text-sm">
+          {prompt.response}
+        </div>
+        
+        {promptScore && (
+          <div className={`mt-4 p-3 rounded border ${
+            promptScore.score === 0 
+              ? "bg-gray-50 border-gray-200" 
+              : "bg-blue-50 border-blue-100"
+          }`}>
+            <p className={`text-sm font-medium ${
+              promptScore.score === 0 ? "text-gray-700" : "text-blue-700"
+            }`}>
+              AI Feedback:
+            </p>
+            <p className={`text-sm ${
+              promptScore.score === 0 ? "text-gray-600" : "text-blue-600"
+            }`}>
+              {promptScore.feedback}
+            </p>
+          </div>
+        )}
+        
+        <div className="mt-4 flex justify-between text-sm text-muted-foreground">
+          <span>Word count: {prompt.wordCount}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Extract ScoreDistribution into its own component
+const ScoreDistribution: React.FC<{
+  writingScores: WritingScore[];
+}> = ({ writingScores }) => {
+  return (
+    <div className="border rounded-lg p-4">
+      <h4 className="font-medium mb-3">Score Distribution</h4>
+      <div className="space-y-3">
+        {[...Array(5)].map((_, idx) => {
+          const score = 5 - idx;
+          const count = writingScores.filter(
+            (s: WritingScore) => Math.floor(s.score) === score
+          ).length;
+          const percentage = writingScores.length > 0 
+            ? (count / writingScores.length) * 100 
+            : 0;
+          
+          return (
+            <div key={score}>
+              <div className="flex justify-between mb-1">
+                <span className="text-sm">{score} - {scoringCriteria[score].split(':')[0]}</span>
+                <span className="text-sm font-medium">{count}</span>
+              </div>
+              <Progress 
+                value={percentage} 
+                className="h-2"
+                style={{
+                  '--progress-background': 
+                    score === 5 ? '#22c55e' : 
+                    score === 4 ? '#3b82f6' : 
+                    score === 3 ? '#eab308' : 
+                    score === 2 ? '#f97316' : 
+                    '#ef4444'
+                } as React.CSSProperties} 
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 const WritingTab: React.FC<WritingTabProps> = ({
   assessmentData,
@@ -74,43 +178,9 @@ const WritingTab: React.FC<WritingTabProps> = ({
               </div>
             </div>
             
-            <div className="border rounded-lg p-4">
-              <h4 className="font-medium mb-3">Score Distribution</h4>
-              <div className="space-y-3">
-                {assessmentData.writingScores && 
-                  [...Array(5)].map((_, idx) => {
-                    const score = 5 - idx;
-                    const count = assessmentData.writingScores.filter(
-                      (s: WritingScore) => Math.floor(s.score) === score
-                    ).length;
-                    const percentage = assessmentData.writingScores.length > 0 
-                      ? (count / assessmentData.writingScores.length) * 100 
-                      : 0;
-                    
-                    return (
-                      <div key={score}>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm">{score} - {scoringCriteria[score].split(':')[0]}</span>
-                          <span className="text-sm font-medium">{count}</span>
-                        </div>
-                        <Progress 
-                          value={percentage} 
-                          className="h-2"
-                          style={{
-                            '--progress-background': 
-                              score === 5 ? '#22c55e' : 
-                              score === 4 ? '#3b82f6' : 
-                              score === 3 ? '#eab308' : 
-                              score === 2 ? '#f97316' : 
-                              '#ef4444'
-                          } as React.CSSProperties} 
-                        />
-                      </div>
-                    );
-                  })
-                }
-              </div>
-            </div>
+            {assessmentData.writingScores && assessmentData.writingScores.length > 0 && (
+              <ScoreDistribution writingScores={assessmentData.writingScores} />
+            )}
           </div>
         ) : (
           <div className="flex items-center justify-center p-6 bg-amber-50 rounded-lg mb-6">
@@ -124,6 +194,18 @@ const WritingTab: React.FC<WritingTabProps> = ({
           </div>
         )}
         
+        {/* Add SkillsRadarChart for skills visualization */}
+        {assessmentData.writingScores && assessmentData.writingScores.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-medium border-b pb-2 mb-4">Skills Analysis</h3>
+            <SkillsRadarChart 
+              writingScores={assessmentData.writingScores} 
+              aptitudeScore={assessmentData.aptitudeScore}
+              aptitudeTotal={assessmentData.aptitudeTotal}
+            />
+          </div>
+        )}
+        
         <div className="space-y-6">
           <h3 className="text-lg font-medium border-b pb-2">Writing Responses</h3>
           {assessmentData.completedPrompts.map((prompt: any, index: number) => {
@@ -132,54 +214,14 @@ const WritingTab: React.FC<WritingTabProps> = ({
             );
             
             return (
-              <div key={index} className="border rounded-lg overflow-hidden">
-                <div className="bg-gray-50 p-4 border-b flex justify-between items-start">
-                  <h3 className="text-lg font-medium">{prompt.prompt}</h3>
-                  
-                  {promptScore ? (
-                    <div className={`rounded-full px-3 py-1 text-white font-medium ${
-                      promptScore.score === 0 
-                        ? "bg-gray-400" 
-                        : getScoreColor(promptScore.score).replace("text-", "bg-")
-                    } bg-opacity-90`}>
-                      {promptScore.score === 0 ? "Not Evaluated" : `${promptScore.score}/5`}
-                    </div>
-                  ) : (
-                    <div className="rounded-full px-3 py-1 text-white font-medium bg-gray-400 bg-opacity-90">
-                      Not Evaluated
-                    </div>
-                  )}
-                </div>
-                
-                <div className="p-4">
-                  <div className="bg-muted p-4 rounded-md whitespace-pre-wrap text-sm">
-                    {prompt.response}
-                  </div>
-                  
-                  {promptScore && (
-                    <div className={`mt-4 p-3 rounded border ${
-                      promptScore.score === 0 
-                        ? "bg-gray-50 border-gray-200" 
-                        : "bg-blue-50 border-blue-100"
-                    }`}>
-                      <p className={`text-sm font-medium ${
-                        promptScore.score === 0 ? "text-gray-700" : "text-blue-700"
-                      }`}>
-                        AI Feedback:
-                      </p>
-                      <p className={`text-sm ${
-                        promptScore.score === 0 ? "text-gray-600" : "text-blue-600"
-                      }`}>
-                        {promptScore.feedback}
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div className="mt-4 flex justify-between text-sm text-muted-foreground">
-                    <span>Word count: {prompt.wordCount}</span>
-                  </div>
-                </div>
-              </div>
+              <WritingResponseItem 
+                key={index}
+                prompt={prompt}
+                index={index}
+                promptScore={promptScore}
+                getScoreColor={getScoreColor}
+                getScoreBgColor={getScoreBgColor}
+              />
             );
           })}
         </div>

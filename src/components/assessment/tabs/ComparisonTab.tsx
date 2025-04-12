@@ -6,6 +6,103 @@ import { Users, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from "recharts";
 
+interface ComparisonChartProps {
+  comparisonData: any[];
+}
+
+const ComparisonChart: React.FC<ComparisonChartProps> = ({ comparisonData }) => {
+  return (
+    <div className="h-[300px] mt-4">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={comparisonData}
+          margin={{
+            top: 5,
+            right: 30,
+            left: 20,
+            bottom: 5,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis domain={[0, 100]} />
+          <RechartsTooltip formatter={(value) => [`${value}%`, null]} />
+          <Legend />
+          <Bar dataKey="Candidate" fill="#3b82f6" name="This Candidate" />
+          <Bar dataKey="Average" fill="#9ca3af" name="Average Candidate" />
+          <Bar dataKey="Top" fill="#22c55e" name="Top Performer" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+interface BenchmarkTableProps {
+  assessmentData: any;
+  getAptitudeScorePercentage: () => number;
+  getWritingScorePercentage: () => number;
+  getOverallScore: () => number;
+}
+
+const BenchmarkTable: React.FC<BenchmarkTableProps> = ({
+  assessmentData,
+  getAptitudeScorePercentage,
+  getWritingScorePercentage,
+  getOverallScore
+}) => {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Metric</TableHead>
+          <TableHead>This Candidate</TableHead>
+          <TableHead>Average</TableHead>
+          <TableHead>Top Performer</TableHead>
+          <TableHead>Percentile</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        <TableRow>
+          <TableCell className="font-medium">Overall Score</TableCell>
+          <TableCell>{getOverallScore()}%</TableCell>
+          <TableCell>72%</TableCell>
+          <TableCell>94%</TableCell>
+          <TableCell>
+            {Math.round((getOverallScore() / 72) * 50)}th
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell className="font-medium">Aptitude</TableCell>
+          <TableCell>{getAptitudeScorePercentage()}%</TableCell>
+          <TableCell>68%</TableCell>
+          <TableCell>92%</TableCell>
+          <TableCell>
+            {Math.round((getAptitudeScorePercentage() / 68) * 50)}th
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell className="font-medium">Writing</TableCell>
+          <TableCell>{getWritingScorePercentage()}%</TableCell>
+          <TableCell>76%</TableCell>
+          <TableCell>96%</TableCell>
+          <TableCell>
+            {Math.round((getWritingScorePercentage() / 76) * 50)}th
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell className="font-medium">Word Count</TableCell>
+          <TableCell>{assessmentData.wordCount} words</TableCell>
+          <TableCell>450 words</TableCell>
+          <TableCell>750 words</TableCell>
+          <TableCell>
+            {Math.round((assessmentData.wordCount / 450) * 50)}th
+          </TableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
+  );
+};
+
 interface CandidateComparisonProps {
   assessmentData: any;
   getAptitudeScorePercentage: () => number;
@@ -66,28 +163,7 @@ const CandidateComparison: React.FC<CandidateComparisonProps> = ({
           <Users className="h-5 w-5 text-indigo-500" />
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={comparisonData}
-                margin={{
-                  top: 5,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis domain={[0, 100]} />
-                <RechartsTooltip formatter={(value) => [`${value}%`, null]} />
-                <Legend />
-                <Bar dataKey="Candidate" fill="#3b82f6" name="This Candidate" />
-                <Bar dataKey="Average" fill="#9ca3af" name="Average Candidate" />
-                <Bar dataKey="Top" fill="#22c55e" name="Top Performer" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <ComparisonChart comparisonData={comparisonData} />
         </CardContent>
       </Card>
             
@@ -99,55 +175,12 @@ const CandidateComparison: React.FC<CandidateComparisonProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Metric</TableHead>
-                <TableHead>This Candidate</TableHead>
-                <TableHead>Average</TableHead>
-                <TableHead>Top Performer</TableHead>
-                <TableHead>Percentile</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell className="font-medium">Overall Score</TableCell>
-                <TableCell>{getOverallScore()}%</TableCell>
-                <TableCell>72%</TableCell>
-                <TableCell>94%</TableCell>
-                <TableCell>
-                  {Math.round((getOverallScore() / 72) * 50)}th
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium">Aptitude</TableCell>
-                <TableCell>{getAptitudeScorePercentage()}%</TableCell>
-                <TableCell>68%</TableCell>
-                <TableCell>92%</TableCell>
-                <TableCell>
-                  {Math.round((getAptitudeScorePercentage() / 68) * 50)}th
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium">Writing</TableCell>
-                <TableCell>{getWritingScorePercentage()}%</TableCell>
-                <TableCell>76%</TableCell>
-                <TableCell>96%</TableCell>
-                <TableCell>
-                  {Math.round((getWritingScorePercentage() / 76) * 50)}th
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium">Word Count</TableCell>
-                <TableCell>{assessmentData.wordCount} words</TableCell>
-                <TableCell>450 words</TableCell>
-                <TableCell>750 words</TableCell>
-                <TableCell>
-                  {Math.round((assessmentData.wordCount / 450) * 50)}th
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          <BenchmarkTable 
+            assessmentData={assessmentData}
+            getAptitudeScorePercentage={getAptitudeScorePercentage}
+            getWritingScorePercentage={getWritingScorePercentage}
+            getOverallScore={getOverallScore}
+          />
         </CardContent>
       </Card>
     </>
