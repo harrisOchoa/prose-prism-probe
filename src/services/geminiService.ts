@@ -16,7 +16,7 @@ export type WritingScore = {
   promptId: number;
 };
 
-export const evaluateWritingResponse = async (prompt: string, response: string): Promise<WritingScore> => {
+export const evaluateWritingResponse = async (prompt: string, userResponse: string): Promise<WritingScore> => {
   try {
     const apiKey = "AIzaSyApWiYP8pkZKNMrCDKmdbRJVoiWUCANow0";
     const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
@@ -39,7 +39,7 @@ Consider the following aspects:
 
 Writing Prompt: "${prompt}"
 
-Candidate's Response: "${response}"
+Candidate's Response: "${userResponse}"
 
 Return your evaluation as JSON with the following structure:
 {
@@ -48,7 +48,7 @@ Return your evaluation as JSON with the following structure:
 }
 `;
 
-    const response = await fetch(`${url}?key=${apiKey}`, {
+    const apiResponse = await fetch(`${url}?key=${apiKey}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -72,9 +72,9 @@ Return your evaluation as JSON with the following structure:
       })
     });
 
-    const data = await response.json();
+    const data = await apiResponse.json();
     
-    if (!response.ok) {
+    if (!apiResponse.ok) {
       console.error("Gemini API error:", data);
       return { score: 0, feedback: "Error evaluating writing. Please check manually.", promptId: 0 };
     }
