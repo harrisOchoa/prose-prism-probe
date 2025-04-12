@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import AssessmentDetails from "@/components/AssessmentDetails";
+import { toast } from "@/hooks/use-toast";
 
 const View = () => {
   const { id } = useParams();
@@ -24,16 +25,32 @@ const View = () => {
       }
 
       try {
+        console.log("Fetching assessment with ID:", id);
         const docRef = doc(db, "assessments", id);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          setAssessment({
+          const assessmentData = {
             id: docSnap.id,
             ...docSnap.data()
-          });
+          };
+          
+          console.log("Assessment data retrieved:", assessmentData);
+          
+          // Check if there are writing scores
+          if (!assessmentData.writingScores || assessmentData.writingScores.length === 0) {
+            console.log("No writing scores found in assessment data");
+            toast({
+              title: "Writing Scores Missing",
+              description: "This assessment does not have AI-evaluated writing scores.",
+              variant: "destructive",
+            });
+          }
+          
+          setAssessment(assessmentData);
         } else {
           setError("Assessment not found");
+          console.log("Assessment document does not exist");
         }
       } catch (err) {
         console.error("Error fetching assessment:", err);

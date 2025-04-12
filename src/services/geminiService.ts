@@ -48,6 +48,8 @@ Return your evaluation as JSON with the following structure:
 }
 `;
 
+    console.log("Sending request to Gemini API...");
+    
     const apiResponse = await fetch(`${url}?key=${apiKey}`, {
       method: "POST",
       headers: {
@@ -73,6 +75,7 @@ Return your evaluation as JSON with the following structure:
     });
 
     const data = await apiResponse.json();
+    console.log("Gemini API response received:", data);
     
     if (!apiResponse.ok) {
       console.error("Gemini API error:", data);
@@ -81,18 +84,31 @@ Return your evaluation as JSON with the following structure:
 
     // Extract the JSON from the response text
     const text = data.candidates[0].content.parts[0].text;
+    console.log("Raw text response:", text);
+    
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     
     if (!jsonMatch) {
+      console.error("Failed to extract JSON from response");
       return { score: 0, feedback: "Error parsing AI evaluation. Please check manually.", promptId: 0 };
     }
     
-    const evaluation = JSON.parse(jsonMatch[0]);
-    return { 
-      score: evaluation.score, 
-      feedback: evaluation.feedback,
-      promptId: 0 // This will be set by the calling function
-    };
+    try {
+      const evaluation = JSON.parse(jsonMatch[0]);
+      console.log("Parsed evaluation:", evaluation);
+      
+      // Ensure score is a number
+      const score = Number(evaluation.score);
+      
+      return { 
+        score: isNaN(score) ? 0 : score, 
+        feedback: evaluation.feedback || "No feedback provided",
+        promptId: 0 // This will be set by the calling function
+      };
+    } catch (parseError) {
+      console.error("Error parsing JSON:", parseError, "JSON string:", jsonMatch[0]);
+      return { score: 0, feedback: "Error parsing AI evaluation. Please check manually.", promptId: 0 };
+    }
   } catch (error) {
     console.error("Error evaluating writing:", error);
     return { score: 0, feedback: "Error evaluating writing. Please check manually.", promptId: 0 };
@@ -100,10 +116,32 @@ Return your evaluation as JSON with the following structure:
 };
 
 export const evaluateAllWritingPrompts = async (prompts: WritingPromptItem[]): Promise<WritingScore[]> => {
-  const evaluationPromises = prompts.map(prompt => 
-    evaluateWritingResponse(prompt.prompt, prompt.response)
-      .then(result => ({ ...result, promptId: prompt.id }))
-  );
+  console.log("Starting evaluation of all writing prompts:", prompts);
+  
+  if (!prompts || prompts.length === 0) {
+    console.log("No prompts to evaluate");
+    return [];
+  }
+  
+  try {
+    const evaluationPromises = prompts.map(prompt => {
+      console.log(`Evaluating prompt ID ${prompt.id}: "${prompt.prompt.substring(0, 30)}..."`);
+      return evaluateWritingResponse(prompt.prompt, prompt.response)
+        .then(result => {
+          console.log(`Evaluation completed for prompt ID ${prompt.id}:`, result);
+          return { ...result, promptId: prompt.id };
+        })
+        .catch(error => {
+          console.error(`Error evaluating prompt ID ${prompt.id}:`, error);
+          return { score: 0, feedback: "Evaluation failed. Please check manually.", promptId: prompt.id };
+        });
+    });
 
-  return Promise.all(evaluationPromises);
+    const results = await Promise.all(evaluationPromises);
+    console.log("All evaluations completed:", results);
+    return results;
+  } catch (error) {
+    console.error("Error in evaluateAllWritingPrompts:", error);
+    return [];
+  }
 };
