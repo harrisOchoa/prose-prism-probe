@@ -22,7 +22,8 @@ export const evaluateWritingResponse = async (prompt: string, userResponse: stri
     console.log("Response length:", userResponse.length, "characters");
     
     const apiKey = "AIzaSyApWiYP8pkZKNMrCDKmdbRJVoiWUCANow0";
-    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+    // Updated API URL with corrected model name
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
     
     const promptTemplate = `
 You are an expert writing evaluator for job candidates.
@@ -51,7 +52,7 @@ Return your evaluation as JSON with the following structure:
 }
 `;
 
-    console.log("Sending request to Gemini API...");
+    console.log("Sending request to Gemini API with updated model...");
     
     try {
       const apiResponse = await fetch(`${url}?key=${apiKey}`, {
