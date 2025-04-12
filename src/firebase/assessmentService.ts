@@ -2,7 +2,7 @@
 import { db } from './config';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData } from 'firebase/firestore';
 import { WritingPromptItem } from '@/components/AssessmentManager';
-import { AptitudeQuestion } from '@/utils/aptitudeQuestions';
+import { WritingScore } from '@/services/geminiService';
 
 interface AssessmentSubmission {
   candidateName: string;
@@ -11,6 +11,8 @@ interface AssessmentSubmission {
   aptitudeTotal: number;
   completedPrompts: WritingPromptItem[];
   wordCount: number;
+  writingScores?: WritingScore[];
+  overallWritingScore?: number;
   submittedAt: any;
 }
 
@@ -19,11 +21,19 @@ export const saveAssessmentResult = async (
   candidatePosition: string,
   completedPrompts: WritingPromptItem[],
   aptitudeScore: number,
-  aptitudeTotal: number
+  aptitudeTotal: number,
+  writingScores?: WritingScore[]
 ): Promise<string> => {
   try {
     // Calculate the total word count
     const wordCount = completedPrompts.reduce((total, prompt) => total + prompt.wordCount, 0);
+    
+    // Calculate the average writing score if scores exist
+    let overallWritingScore;
+    if (writingScores && writingScores.length > 0) {
+      const totalScore = writingScores.reduce((sum, evaluation) => sum + evaluation.score, 0);
+      overallWritingScore = Number((totalScore / writingScores.length).toFixed(1));
+    }
     
     // Create the submission object
     const submission: AssessmentSubmission = {
@@ -35,6 +45,12 @@ export const saveAssessmentResult = async (
       wordCount,
       submittedAt: serverTimestamp()
     };
+
+    // Add writing scores if available
+    if (writingScores && writingScores.length > 0) {
+      submission.writingScores = writingScores;
+      submission.overallWritingScore = overallWritingScore;
+    }
     
     // Add to Firestore
     const docRef = await addDoc(collection(db, 'assessments'), submission);

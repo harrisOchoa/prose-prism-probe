@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, FileText, Users } from "lucide-react";
+import { Search, FileText, Users, Brain } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import AssessmentDetails from "./AssessmentDetails";
@@ -69,6 +69,18 @@ const AdminDashboard = () => {
   const averageWordCount = assessments.length > 0
     ? Math.round(assessments.reduce((sum, assessment) => sum + assessment.wordCount, 0) / assessments.length)
     : 0;
+  const averageWritingScore = assessments.length > 0 
+    ? (assessments.reduce((sum, assessment) => sum + (assessment.overallWritingScore || 0), 0) / 
+       assessments.filter(a => a.overallWritingScore).length).toFixed(1)
+    : 0;
+
+  const getScoreColor = (score: number) => {
+    if (score >= 4.5) return "text-green-600";
+    if (score >= 3.5) return "text-blue-600";
+    if (score >= 2.5) return "text-yellow-600";
+    if (score >= 1.5) return "text-orange-600";
+    return "text-red-600";
+  };
 
   if (showDetails && selectedAssessment) {
     return <AssessmentDetails assessment={selectedAssessment} onBack={() => setShowDetails(false)} />;
@@ -89,7 +101,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Assessments</CardTitle>
@@ -101,7 +113,7 @@ const AdminDashboard = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Aptitude Score</CardTitle>
+            <CardTitle className="text-sm font-medium">Avg Aptitude Score</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -110,11 +122,20 @@ const AdminDashboard = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Word Count</CardTitle>
+            <CardTitle className="text-sm font-medium">Avg Word Count</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{averageWordCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Writing Score</CardTitle>
+            <Brain className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{averageWritingScore}/5</div>
           </CardContent>
         </Card>
       </div>
@@ -136,6 +157,7 @@ const AdminDashboard = () => {
                     <TableHead>Candidate Name</TableHead>
                     <TableHead>Position</TableHead>
                     <TableHead>Aptitude Score</TableHead>
+                    <TableHead>Writing Score</TableHead>
                     <TableHead>Word Count</TableHead>
                     <TableHead>Submission Date</TableHead>
                     <TableHead>Actions</TableHead>
@@ -149,6 +171,15 @@ const AdminDashboard = () => {
                         <TableCell>{assessment.candidatePosition}</TableCell>
                         <TableCell>
                           {assessment.aptitudeScore}/{assessment.aptitudeTotal} ({Math.round((assessment.aptitudeScore / assessment.aptitudeTotal) * 100)}%)
+                        </TableCell>
+                        <TableCell>
+                          {assessment.overallWritingScore ? (
+                            <span className={getScoreColor(assessment.overallWritingScore)}>
+                              {assessment.overallWritingScore}/5
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">N/A</span>
+                          )}
                         </TableCell>
                         <TableCell>{assessment.wordCount}</TableCell>
                         <TableCell>
@@ -169,7 +200,7 @@ const AdminDashboard = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-4">
+                      <TableCell colSpan={7} className="text-center py-4">
                         No assessments found
                       </TableCell>
                     </TableRow>
