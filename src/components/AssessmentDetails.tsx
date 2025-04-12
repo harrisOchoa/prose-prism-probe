@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Check, X, AlertCircle, Zap } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { scoringCriteria } from "@/services/geminiService";
+import { scoringCriteria, WritingScore } from "@/services/geminiService";
 import { toast } from "@/hooks/use-toast";
 import { evaluateAllWritingPrompts } from "@/services/geminiService";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { useState } from "react";
 
@@ -18,6 +18,7 @@ interface AssessmentDetailsProps {
 
 const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBack }) => {
   const [evaluating, setEvaluating] = useState(false);
+  const [assessmentData, setAssessmentData] = useState(assessment);
   
   const getScoreColor = (score: number) => {
     if (score === 0) return "text-gray-600";
@@ -38,7 +39,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBac
   };
 
   const handleManualEvaluation = async () => {
-    if (!assessment.completedPrompts || assessment.completedPrompts.length === 0) {
+    if (!assessmentData.completedPrompts || assessmentData.completedPrompts.length === 0) {
       toast({
         title: "No Writing Prompts",
         description: "This assessment does not have any completed writing prompts to evaluate.",
@@ -55,7 +56,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBac
       });
 
       // Call the API to evaluate all writing prompts
-      const scores = await evaluateAllWritingPrompts(assessment.completedPrompts);
+      const scores = await evaluateAllWritingPrompts(assessmentData.completedPrompts);
       
       if (scores.length === 0) {
         throw new Error("No scores were returned from evaluation");
@@ -68,11 +69,23 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBac
         : 0;
 
       // Update the assessment in Firestore
-      const assessmentRef = doc(db, "assessments", assessment.id);
+      const assessmentRef = doc(db, "assessments", assessmentData.id);
       await updateDoc(assessmentRef, {
         writingScores: scores,
         overallWritingScore: overallScore
       });
+
+      // Fetch the updated assessment data
+      const updatedDoc = await getDoc(assessmentRef);
+      if (updatedDoc.exists()) {
+        const updatedData = {
+          id: updatedDoc.id,
+          ...updatedDoc.data()
+        };
+        
+        // Update local state instead of reloading the page
+        setAssessmentData(updatedData);
+      }
 
       // Success message
       toast({
@@ -80,9 +93,6 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBac
         description: `Successfully evaluated ${validScores.length} of ${scores.length} writing prompts.`,
         variant: "default",
       });
-
-      // Refresh the page to show updated scores
-      window.location.reload();
     } catch (error) {
       console.error("Error during manual evaluation:", error);
       toast({
@@ -111,23 +121,23 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBac
         <CardContent className="grid md:grid-cols-2 gap-4">
           <div>
             <h3 className="font-semibold text-sm text-muted-foreground">Name</h3>
-            <p className="text-lg">{assessment.candidateName}</p>
+            <p className="text-lg">{assessmentData.candidateName}</p>
           </div>
           <div>
             <h3 className="font-semibold text-sm text-muted-foreground">Position</h3>
-            <p className="text-lg">{assessment.candidatePosition}</p>
+            <p className="text-lg">{assessmentData.candidatePosition}</p>
           </div>
           <div>
             <h3 className="font-semibold text-sm text-muted-foreground">Submission Date</h3>
             <p className="text-lg">
-              {assessment.submittedAt && assessment.submittedAt.toDate
-                ? new Date(assessment.submittedAt.toDate()).toLocaleString()
+              {assessmentData.submittedAt && assessmentData.submittedAt.toDate
+                ? new Date(assessmentData.submittedAt.toDate()).toLocaleString()
                 : "N/A"}
             </p>
           </div>
           <div>
             <h3 className="font-semibold text-sm text-muted-foreground">Total Word Count</h3>
-            <p className="text-lg">{assessment.wordCount} words</p>
+            <p className="text-lg">{assessmentData.wordCount} words</p>
           </div>
         </CardContent>
       </Card>
@@ -141,12 +151,12 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBac
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-lg font-medium">Score</h3>
-                <p className="text-3xl font-bold">{assessment.aptitudeScore}/{assessment.aptitudeTotal}</p>
+                <p className="text-3xl font-bold">{assessmentData.aptitudeScore}/{assessmentData.aptitudeTotal}</p>
               </div>
               <div>
                 <h3 className="text-lg font-medium">Percentage</h3>
                 <p className="text-3xl font-bold">
-                  {Math.round((assessment.aptitudeScore / assessment.aptitudeTotal) * 100)}%
+                  {Math.round((assessmentData.aptitudeScore / assessmentData.aptitudeTotal) * 100)}%
                 </p>
               </div>
             </div>
@@ -167,19 +177,19 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBac
             </Button>
           </CardHeader>
           <CardContent>
-            {assessment.overallWritingScore ? (
+            {assessmentData.overallWritingScore ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-medium">Overall Score</h3>
-                    <p className={`text-3xl font-bold ${getScoreColor(assessment.overallWritingScore)}`}>
-                      {assessment.overallWritingScore}/5
+                    <p className={`text-3xl font-bold ${getScoreColor(assessmentData.overallWritingScore)}`}>
+                      {assessmentData.overallWritingScore}/5
                     </p>
                   </div>
                   <div>
                     <h3 className="text-lg font-medium">Rating</h3>
-                    <p className={`text-xl font-bold ${getScoreColor(assessment.overallWritingScore)}`}>
-                      {getScoreLabel(assessment.overallWritingScore)}
+                    <p className={`text-xl font-bold ${getScoreColor(assessmentData.overallWritingScore)}`}>
+                      {getScoreLabel(assessmentData.overallWritingScore)}
                     </p>
                   </div>
                 </div>
@@ -209,9 +219,9 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ assessment, onBac
           <CardTitle>Writing Prompts</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {assessment.completedPrompts.map((prompt: any, index: number) => {
+          {assessmentData.completedPrompts.map((prompt: any, index: number) => {
             // Find matching writing score if available
-            const promptScore = assessment.writingScores?.find(
+            const promptScore = assessmentData.writingScores?.find(
               (score: any) => score.promptId === prompt.id
             );
             
