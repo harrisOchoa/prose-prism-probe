@@ -53,7 +53,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
         
         {/* Skills Radar Chart as a standalone section with clean spacing */}
         {assessmentData.writingScores && assessmentData.writingScores.length > 0 && (
-          <div>
+          <div className="mb-8">
             <SkillsRadarChart 
               writingScores={assessmentData.writingScores} 
               aptitudeScore={assessmentData.aptitudeScore}
@@ -63,7 +63,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
         )}
         
         {/* Writing Responses with clean separation */}
-        <div className="pt-2">
+        <div>
           <WritingResponsesList 
             completedPrompts={assessmentData.completedPrompts}
             writingScores={assessmentData.writingScores}

@@ -75,9 +75,9 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
         <Zap className="h-5 w-5 text-hirescribe-primary" />
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="flex flex-col items-center">
-          {/* Radar chart in fixed size container */}
-          <div className="w-full h-[260px] mb-6">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Left side: Radar chart */}
+          <div className="w-full md:w-1/2 h-[320px]">
             <ChartContainer 
               config={{
                 skills: { theme: { light: '#4F46E5', dark: '#818CF8' } }
@@ -87,7 +87,7 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
                 <RadarChart 
                   cx="50%" 
                   cy="50%" 
-                  outerRadius="45%" 
+                  outerRadius="70%" 
                   data={chartData}
                 >
                   <PolarGrid stroke="#e5e7eb" />
@@ -139,24 +139,26 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
             </ChartContainer>
           </div>
           
-          {/* Score cards in a grid layout with clear spacing below chart */}
-          <div className="w-full max-w-4xl grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {chartData.map((item, index) => (
-              <div 
-                key={index} 
-                className="text-center p-3 rounded-md border transition-all duration-300 hover:shadow-md bg-indigo-50/80"
-              >
-                <div className="text-xs font-medium text-gray-600 truncate mb-1">
-                  {item.fullName || item.category}
-                </div>
+          {/* Right side: Score cards */}
+          <div className="w-full md:w-1/2 flex flex-col justify-center">
+            <div className="grid grid-cols-2 gap-4">
+              {chartData.map((item, index) => (
                 <div 
-                  className="text-lg font-semibold" 
-                  style={{ color: getScoreColor(item.score) }}
+                  key={index} 
+                  className="p-4 rounded-md border bg-indigo-50/80 hover:shadow-md transition-all duration-200"
                 >
-                  {item.score}/5
+                  <div className="text-sm font-medium text-gray-600 mb-1 truncate">
+                    {item.fullName || item.category}
+                  </div>
+                  <div 
+                    className="text-xl font-semibold" 
+                    style={{ color: getScoreColor(item.score) }}
+                  >
+                    {item.score}/5
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </CardContent>
