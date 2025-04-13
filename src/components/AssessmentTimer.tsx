@@ -12,15 +12,17 @@ const AssessmentTimer = ({ duration, onTimeEnd }: AssessmentTimerProps) => {
   const [timeRemaining, setTimeRemaining] = useState(duration);
   const [isWarning, setIsWarning] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const endTimeRef = useRef<number>(Date.now() + duration * 1000);
+  const endTimeRef = useRef<number | null>(null);
   
   useEffect(() => {
-    // Set the absolute end time when the component mounts
-    endTimeRef.current = Date.now() + duration * 1000;
+    // Only set the end time when the component mounts or if it hasn't been set yet
+    if (endTimeRef.current === null) {
+      endTimeRef.current = Date.now() + duration * 1000;
+    }
     
     const updateTimer = () => {
       const now = Date.now();
-      const remaining = Math.max(0, Math.floor((endTimeRef.current - now) / 1000));
+      const remaining = Math.max(0, Math.floor((endTimeRef.current! - now) / 1000));
       
       setTimeRemaining(remaining);
       
