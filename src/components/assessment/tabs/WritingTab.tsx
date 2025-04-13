@@ -51,15 +51,13 @@ const WritingTab: React.FC<WritingTabProps> = ({
           <NoEvaluationMessage />
         )}
         
-        {/* Add SkillsRadarChart for skills visualization */}
+        {/* Add SkillsRadarChart as a standalone component */}
         {assessmentData.writingScores && assessmentData.writingScores.length > 0 && (
-          <div className="mb-6">
-            <SkillsRadarChart 
-              writingScores={assessmentData.writingScores} 
-              aptitudeScore={assessmentData.aptitudeScore}
-              aptitudeTotal={assessmentData.aptitudeTotal}
-            />
-          </div>
+          <SkillsRadarChart 
+            writingScores={assessmentData.writingScores} 
+            aptitudeScore={assessmentData.aptitudeScore}
+            aptitudeTotal={assessmentData.aptitudeTotal}
+          />
         )}
         
         <WritingResponsesList 

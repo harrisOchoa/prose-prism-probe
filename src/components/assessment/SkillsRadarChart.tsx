@@ -46,7 +46,7 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
     const avgScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
     // Truncate category names that are too long
     return {
-      category: category.length > 12 ? category.substring(0, 12) + "..." : category,
+      category: category.length > 10 ? category.substring(0, 10) + "..." : category,
       fullName: category,
       score: Number(avgScore.toFixed(1)),
       fullMark: 5
@@ -76,8 +76,8 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
         <Zap className="h-5 w-5 text-hirescribe-primary" />
       </CardHeader>
       <CardContent className="pt-6">
-        {/* Increased height for radar chart to prevent overlapping */}
-        <div className="w-full h-[350px]">
+        {/* Further increased height and adjusted margins */}
+        <div className="w-full h-[400px]">
           <ChartContainer 
             config={{
               skills: { theme: { light: '#4F46E5', dark: '#818CF8' } }
@@ -87,9 +87,9 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
               <RadarChart 
                 cx="50%" 
                 cy="50%" 
-                outerRadius="65%" 
+                outerRadius="55%" 
                 data={chartData}
-                margin={{ top: 20, right: 30, bottom: 30, left: 30 }}
+                margin={{ top: 60, right: 50, bottom: 60, left: 50 }}
               >
                 <PolarGrid stroke="#e5e7eb" />
                 <PolarAngleAxis 
@@ -102,7 +102,7 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
                   tickLine={false}
                 />
                 <PolarRadiusAxis 
-                  angle={30} 
+                  angle={90} 
                   domain={[0, 5]} 
                   stroke="#9ca3af"
                   tick={{ 
@@ -142,8 +142,8 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
           </ChartContainer>
         </div>
         
-        {/* Added padding and made the grid responsive with better spacing */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-8">
+        {/* Moved score cards outside of the chart container with more space */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-6">
           {chartData.map((item, index) => (
             <div 
               key={index} 
