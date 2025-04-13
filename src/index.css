@@ -38,19 +38,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -98,8 +91,12 @@
     @apply border-border;
   }
 
+  html {
+    @apply scroll-smooth;
+  }
+
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 
@@ -135,5 +132,100 @@
   /* HireScribe button styles */
   .hirescribe-button {
     @apply bg-hirescribe-primary text-white px-6 py-3 rounded-md font-medium transition-colors hover:bg-hirescribe-accent focus:outline-none focus:ring-2 focus:ring-hirescribe-primary focus:ring-offset-2;
+  }
+  
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 ease-in-out hover:shadow-card-hover;
+  }
+  
+  /* Glass effect */
+  .glass-effect {
+    @apply bg-white/90 backdrop-blur-sm border border-white/20;
+  }
+  
+  /* Enhanced input styles */
+  .input-enhanced {
+    @apply transition-all duration-200 focus:ring-2 focus:ring-hirescribe-primary/50 focus:border-hirescribe-primary;
+  }
+  
+  /* Subtle pulse animation for call-to-action elements */
+  .pulse-cta {
+    @apply animate-pulse-subtle;
+  }
+  
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-hirescribe-primary to-hirescribe-secondary bg-clip-text text-transparent;
+  }
+}
+
+/* Remove App.css styles and integrate them here */
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  #root {
+    padding: 1rem;
+  }
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Print styles for PDF export */
+@media print {
+  .pdf-hide {
+    display: none !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+  
+  .assessment-container {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
   }
 }
