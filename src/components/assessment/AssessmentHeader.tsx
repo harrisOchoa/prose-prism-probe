@@ -30,7 +30,7 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
   handleExportPdf
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border shadow-subtle animate-fade-in hover:shadow-elevation-1 transition-all">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-lg border shadow-subtle animate-fade-in hover:shadow-elevation-1 transition-all">
       <div className="flex items-center gap-3">
         <Button 
           variant="outline" 

@@ -23,12 +23,12 @@ const WritingResponseItem: React.FC<{
   getScoreBgColor: (score: number) => string;
 }> = ({ prompt, index, promptScore, getScoreColor, getScoreBgColor }) => {
   return (
-    <div key={index} className="border rounded-lg overflow-hidden">
+    <div key={index} className="border rounded-lg overflow-hidden shadow-subtle">
       <div className="bg-gray-50 p-4 border-b flex justify-between items-start">
         <h3 className="text-lg font-medium">{prompt.prompt}</h3>
         
         {promptScore ? (
-          <div className={`rounded-full px-3 py-1 text-white font-medium ${
+          <div className={`rounded-full px-3 py-1 text-white font-medium ml-2 ${
             promptScore.score === 0 
               ? "bg-gray-400" 
               : getScoreColor(promptScore.score).replace("text-", "bg-")
@@ -36,7 +36,7 @@ const WritingResponseItem: React.FC<{
             {promptScore.score === 0 ? "Not Evaluated" : `${promptScore.score}/5`}
           </div>
         ) : (
-          <div className="rounded-full px-3 py-1 text-white font-medium bg-gray-400 bg-opacity-90">
+          <div className="rounded-full px-3 py-1 text-white font-medium bg-gray-400 bg-opacity-90 ml-2">
             Not Evaluated
           </div>
         )}
@@ -79,7 +79,7 @@ const ScoreDistribution: React.FC<{
   writingScores: WritingScore[];
 }> = ({ writingScores }) => {
   return (
-    <div className="border rounded-lg p-4">
+    <div className="border rounded-lg p-4 shadow-subtle">
       <h4 className="font-medium mb-3">Score Distribution</h4>
       <div className="space-y-3">
         {[...Array(5)].map((_, idx) => {
@@ -124,7 +124,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
   getScoreLabel
 }) => {
   return (
-    <Card>
+    <Card className="shadow-subtle">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-2">
           <CardTitle>Writing Assessment</CardTitle>
@@ -149,9 +149,9 @@ const WritingTab: React.FC<WritingTabProps> = ({
         </div>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="space-y-6">
         {assessmentData.overallWritingScore ? (
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
+          <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -183,7 +183,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
             )}
           </div>
         ) : (
-          <div className="flex items-center justify-center p-6 bg-amber-50 rounded-lg mb-6">
+          <div className="flex items-center justify-center p-6 bg-amber-50 rounded-lg">
             <div className="flex flex-col items-center text-center">
               <AlertCircle className="h-10 w-10 text-amber-500 mb-3" />
               <h3 className="text-lg font-medium text-amber-800 mb-1">No AI Evaluation Available</h3>
@@ -197,7 +197,6 @@ const WritingTab: React.FC<WritingTabProps> = ({
         {/* Add SkillsRadarChart for skills visualization */}
         {assessmentData.writingScores && assessmentData.writingScores.length > 0 && (
           <div className="mb-6">
-            <h3 className="text-lg font-medium border-b pb-2 mb-4">Skills Analysis</h3>
             <SkillsRadarChart 
               writingScores={assessmentData.writingScores} 
               aptitudeScore={assessmentData.aptitudeScore}
@@ -208,22 +207,24 @@ const WritingTab: React.FC<WritingTabProps> = ({
         
         <div className="space-y-6">
           <h3 className="text-lg font-medium border-b pb-2">Writing Responses</h3>
-          {assessmentData.completedPrompts.map((prompt: any, index: number) => {
-            const promptScore = assessmentData.writingScores?.find(
-              (score: any) => score.promptId === prompt.id
-            );
-            
-            return (
-              <WritingResponseItem 
-                key={index}
-                prompt={prompt}
-                index={index}
-                promptScore={promptScore}
-                getScoreColor={getScoreColor}
-                getScoreBgColor={getScoreBgColor}
-              />
-            );
-          })}
+          <div className="space-y-6">
+            {assessmentData.completedPrompts.map((prompt: any, index: number) => {
+              const promptScore = assessmentData.writingScores?.find(
+                (score: any) => score.promptId === prompt.id
+              );
+              
+              return (
+                <WritingResponseItem 
+                  key={index}
+                  prompt={prompt}
+                  index={index}
+                  promptScore={promptScore}
+                  getScoreColor={getScoreColor}
+                  getScoreBgColor={getScoreBgColor}
+                />
+              );
+            })}
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -62,8 +62,8 @@ const AssessmentTimer = ({ duration, onTimeEnd }: AssessmentTimerProps) => {
   
   return (
     <div className={cn(
-      "assessment-timer flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-lg shadow-subtle transition-all",
-      isWarning ? 'text-assessment-warning animate-pulse bg-amber-50' : ''
+      "assessment-timer fixed top-4 right-4 z-50 flex items-center gap-2 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-elevation-1 transition-all",
+      isWarning ? 'text-assessment-warning bg-amber-50 animate-pulse border border-amber-200' : 'border'
     )}>
       {isWarning ? 
         <AlertCircle className="w-5 h-5" /> : 

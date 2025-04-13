@@ -45,7 +45,8 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
   const chartData = Object.entries(categorizedScores).map(([category, scores]) => {
     const avgScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
     return {
-      category,
+      category: category.length > 15 ? category.substring(0, 15) + "..." : category,
+      fullName: category,
       score: Number(avgScore.toFixed(1)),
       fullMark: 5
     };
@@ -54,6 +55,7 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
   // Add aptitude score
   chartData.push({
     category: "Aptitude",
+    fullName: "Aptitude Test Score",
     score: Number(((aptitudeScore / aptitudeTotal) * 5).toFixed(1)),
     fullMark: 5
   });
@@ -67,13 +69,13 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
   };
   
   return (
-    <Card className="border shadow-elevation-1 animate-fade-in">
+    <Card className="border shadow-elevation-1 animate-fade-in overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
         <CardTitle className="text-lg font-medium">Skills Assessment</CardTitle>
         <Zap className="h-5 w-5 text-hirescribe-primary" />
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="w-full h-[300px]">
+        <div className="w-full h-[300px] mb-6">
           <ChartContainer 
             config={{
               skills: { theme: { light: '#4F46E5', dark: '#818CF8' } }
@@ -85,6 +87,7 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
                 cy="50%" 
                 outerRadius="70%" 
                 data={chartData}
+                margin={{ top: 10, right: 30, bottom: 10, left: 30 }}
               >
                 <PolarGrid stroke="#e5e7eb" />
                 <PolarAngleAxis 
@@ -92,8 +95,9 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
                   tick={{ 
                     fill: '#6b7280', 
                     fontSize: 12,
-                    fontWeight: 500
-                  }} 
+                    fontWeight: 500,
+                  }}
+                  tickLine={false}
                 />
                 <PolarRadiusAxis 
                   angle={30} 
@@ -103,8 +107,25 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
                     fill: '#6b7280', 
                     fontSize: 10 
                   }}
+                  tickCount={6}
+                  axisLine={false}
                 />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartTooltip 
+                  content={
+                    ({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-white p-2 rounded-md shadow-lg border text-sm">
+                            <p className="font-medium">{data.fullName || data.category}</p>
+                            <p className="text-hirescribe-primary">Score: {data.score}/5</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }
+                  }
+                />
                 <Radar 
                   name="Skills" 
                   dataKey="score" 
@@ -118,19 +139,19 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
             </ResponsiveContainer>
           </ChartContainer>
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-4">
           {chartData.map((item, index) => (
             <div 
               key={index} 
-              className="text-center p-2 rounded-md"
+              className="text-center p-3 rounded-md border transition-all duration-300 hover:shadow-elevation-1"
               style={{ backgroundColor: `rgba(79, 70, 229, ${item.score/10})` }}
             >
-              <div className="text-xs font-medium text-gray-600 truncate">{item.category}</div>
+              <div className="text-xs font-medium text-gray-600 truncate mb-1">{item.fullName || item.category}</div>
               <div 
                 className="text-lg font-semibold" 
                 style={{ color: getScoreColor(item.score) }}
               >
-                {item.score}
+                {item.score}/5
               </div>
             </div>
           ))}
