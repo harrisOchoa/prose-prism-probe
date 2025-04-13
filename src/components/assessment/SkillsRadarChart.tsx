@@ -44,8 +44,9 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
   // Average scores by category
   const chartData = Object.entries(categorizedScores).map(([category, scores]) => {
     const avgScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+    // Truncate category names that are too long
     return {
-      category: category.length > 15 ? category.substring(0, 15) + "..." : category,
+      category: category.length > 12 ? category.substring(0, 12) + "..." : category,
       fullName: category,
       score: Number(avgScore.toFixed(1)),
       fullMark: 5
@@ -69,13 +70,14 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
   };
   
   return (
-    <Card className="border shadow-elevation-1 animate-fade-in overflow-hidden">
+    <Card className="border shadow-elevation-1 animate-fade-in overflow-hidden mb-8">
       <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
         <CardTitle className="text-lg font-medium">Skills Assessment</CardTitle>
         <Zap className="h-5 w-5 text-hirescribe-primary" />
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="w-full h-[300px] mb-6">
+        {/* Increased height for radar chart to prevent overlapping */}
+        <div className="w-full h-[350px]">
           <ChartContainer 
             config={{
               skills: { theme: { light: '#4F46E5', dark: '#818CF8' } }
@@ -85,16 +87,16 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
               <RadarChart 
                 cx="50%" 
                 cy="50%" 
-                outerRadius="70%" 
+                outerRadius="65%" 
                 data={chartData}
-                margin={{ top: 10, right: 30, bottom: 10, left: 30 }}
+                margin={{ top: 20, right: 30, bottom: 30, left: 30 }}
               >
                 <PolarGrid stroke="#e5e7eb" />
                 <PolarAngleAxis 
                   dataKey="category" 
                   tick={{ 
                     fill: '#6b7280', 
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: 500,
                   }}
                   tickLine={false}
@@ -139,7 +141,9 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
             </ResponsiveContainer>
           </ChartContainer>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-4">
+        
+        {/* Added padding and made the grid responsive with better spacing */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-8">
           {chartData.map((item, index) => (
             <div 
               key={index} 
