@@ -70,14 +70,14 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
   };
   
   return (
-    <Card className="border shadow-elevation-1 animate-fade-in overflow-hidden mb-8">
+    <Card className="border shadow-elevation-1 animate-fade-in overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
         <CardTitle className="text-lg font-medium">Skills Assessment</CardTitle>
         <Zap className="h-5 w-5 text-hirescribe-primary" />
       </CardHeader>
-      <CardContent className="pt-6">
-        {/* Further increased height and adjusted margins */}
-        <div className="w-full h-[400px]">
+      <CardContent className="pt-4 flex flex-col items-center">
+        {/* Chart container with fixed dimensions */}
+        <div className="w-full h-[300px]">
           <ChartContainer 
             config={{
               skills: { theme: { light: '#4F46E5', dark: '#818CF8' } }
@@ -86,10 +86,10 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart 
                 cx="50%" 
-                cy="50%" 
-                outerRadius="55%" 
+                cy="40%" 
+                outerRadius="50%" 
                 data={chartData}
-                margin={{ top: 60, right: 50, bottom: 60, left: 50 }}
+                margin={{ top: 10, right: 30, bottom: 100, left: 30 }}
               >
                 <PolarGrid stroke="#e5e7eb" />
                 <PolarAngleAxis 
@@ -142,8 +142,8 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
           </ChartContainer>
         </div>
         
-        {/* Moved score cards outside of the chart container with more space */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-6">
+        {/* Score cards with better spacing and alignment */}
+        <div className="w-full max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-10">
           {chartData.map((item, index) => (
             <div 
               key={index} 
