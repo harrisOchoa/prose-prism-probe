@@ -33,7 +33,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-8">
+      <CardContent className="space-y-10">
         {assessmentData.overallWritingScore ? (
           <div className="grid md:grid-cols-2 gap-6">
             <ScoringSummary
@@ -51,9 +51,9 @@ const WritingTab: React.FC<WritingTabProps> = ({
           <NoEvaluationMessage />
         )}
         
-        {/* Add SkillsRadarChart component with sufficient spacing */}
+        {/* Skills Radar Chart as a standalone section with clean spacing */}
         {assessmentData.writingScores && assessmentData.writingScores.length > 0 && (
-          <div className="mb-8">
+          <div>
             <SkillsRadarChart 
               writingScores={assessmentData.writingScores} 
               aptitudeScore={assessmentData.aptitudeScore}
@@ -62,12 +62,15 @@ const WritingTab: React.FC<WritingTabProps> = ({
           </div>
         )}
         
-        <WritingResponsesList 
-          completedPrompts={assessmentData.completedPrompts}
-          writingScores={assessmentData.writingScores}
-          getScoreColor={getScoreColor}
-          getScoreBgColor={getScoreBgColor}
-        />
+        {/* Writing Responses with clean separation */}
+        <div className="pt-2">
+          <WritingResponsesList 
+            completedPrompts={assessmentData.completedPrompts}
+            writingScores={assessmentData.writingScores}
+            getScoreColor={getScoreColor}
+            getScoreBgColor={getScoreBgColor}
+          />
+        </div>
       </CardContent>
     </Card>
   );

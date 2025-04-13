@@ -11,7 +11,6 @@ import {
 import { 
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent
 } from "@/components/ui/chart";
 import { WritingScore } from "@/services/geminiService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,46 +74,45 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
         <CardTitle className="text-lg font-medium">Skills Assessment</CardTitle>
         <Zap className="h-5 w-5 text-hirescribe-primary" />
       </CardHeader>
-      <CardContent className="pt-4 flex flex-col items-center">
-        {/* Chart container with fixed dimensions */}
-        <div className="w-full h-[300px]">
-          <ChartContainer 
-            config={{
-              skills: { theme: { light: '#4F46E5', dark: '#818CF8' } }
-            }}
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart 
-                cx="50%" 
-                cy="40%" 
-                outerRadius="50%" 
-                data={chartData}
-                margin={{ top: 10, right: 30, bottom: 100, left: 30 }}
-              >
-                <PolarGrid stroke="#e5e7eb" />
-                <PolarAngleAxis 
-                  dataKey="category" 
-                  tick={{ 
-                    fill: '#6b7280', 
-                    fontSize: 11,
-                    fontWeight: 500,
-                  }}
-                  tickLine={false}
-                />
-                <PolarRadiusAxis 
-                  angle={90} 
-                  domain={[0, 5]} 
-                  stroke="#9ca3af"
-                  tick={{ 
-                    fill: '#6b7280', 
-                    fontSize: 10 
-                  }}
-                  tickCount={6}
-                  axisLine={false}
-                />
-                <ChartTooltip 
-                  content={
-                    ({ active, payload }) => {
+      <CardContent className="pt-6">
+        <div className="flex flex-col items-center">
+          {/* Radar chart in fixed size container */}
+          <div className="w-full h-[260px] mb-6">
+            <ChartContainer 
+              config={{
+                skills: { theme: { light: '#4F46E5', dark: '#818CF8' } }
+              }}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart 
+                  cx="50%" 
+                  cy="50%" 
+                  outerRadius="45%" 
+                  data={chartData}
+                >
+                  <PolarGrid stroke="#e5e7eb" />
+                  <PolarAngleAxis 
+                    dataKey="category" 
+                    tick={{ 
+                      fill: '#6b7280', 
+                      fontSize: 12,
+                      fontWeight: 500,
+                    }}
+                    tickLine={false}
+                  />
+                  <PolarRadiusAxis 
+                    angle={30} 
+                    domain={[0, 5]} 
+                    stroke="#9ca3af"
+                    tick={{ 
+                      fill: '#6b7280', 
+                      fontSize: 10 
+                    }}
+                    tickCount={6}
+                    axisLine={false}
+                  />
+                  <ChartTooltip 
+                    content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
                         return (
@@ -125,40 +123,41 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
                         );
                       }
                       return null;
-                    }
-                  }
-                />
-                <Radar 
-                  name="Skills" 
-                  dataKey="score" 
-                  stroke="#4F46E5" 
-                  fill="#4F46E5" 
-                  fillOpacity={0.6} 
-                  animationDuration={1000}
-                  animationEasing="ease-out"
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </div>
-        
-        {/* Score cards with better spacing and alignment */}
-        <div className="w-full max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-10">
-          {chartData.map((item, index) => (
-            <div 
-              key={index} 
-              className="text-center p-3 rounded-md border transition-all duration-300 hover:shadow-elevation-1"
-              style={{ backgroundColor: `rgba(79, 70, 229, ${item.score/10})` }}
-            >
-              <div className="text-xs font-medium text-gray-600 truncate mb-1">{item.fullName || item.category}</div>
+                    }}
+                  />
+                  <Radar 
+                    name="Skills" 
+                    dataKey="score" 
+                    stroke="#4F46E5" 
+                    fill="#4F46E5" 
+                    fillOpacity={0.6} 
+                    animationDuration={1000}
+                    animationEasing="ease-out"
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </div>
+          
+          {/* Score cards in a grid layout with clear spacing below chart */}
+          <div className="w-full max-w-4xl grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {chartData.map((item, index) => (
               <div 
-                className="text-lg font-semibold" 
-                style={{ color: getScoreColor(item.score) }}
+                key={index} 
+                className="text-center p-3 rounded-md border transition-all duration-300 hover:shadow-md bg-indigo-50/80"
               >
-                {item.score}/5
+                <div className="text-xs font-medium text-gray-600 truncate mb-1">
+                  {item.fullName || item.category}
+                </div>
+                <div 
+                  className="text-lg font-semibold" 
+                  style={{ color: getScoreColor(item.score) }}
+                >
+                  {item.score}/5
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>
