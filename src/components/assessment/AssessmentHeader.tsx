@@ -8,6 +8,7 @@ import {
   RefreshCw, 
   FileUp
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AssessmentHeaderProps {
   assessmentData: any;
@@ -29,13 +30,13 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
   handleExportPdf
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border shadow-subtle animate-fade-in">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border shadow-subtle animate-fade-in hover:shadow-elevation-1 transition-all">
       <div className="flex items-center gap-3">
         <Button 
           variant="outline" 
           size="icon" 
           onClick={onBack}
-          className="rounded-full hover:bg-hirescribe-muted transition-colors"
+          className="rounded-full hover:bg-hirescribe-muted transition-colors shadow-subtle"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -52,7 +53,10 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
           <Button 
             variant="outline"
             onClick={handleExportPdf}
-            className="flex-1 sm:flex-none shadow-subtle hover:shadow-elevation-1 transition-all"
+            className={cn(
+              "flex-1 sm:flex-none shadow-subtle hover:shadow-elevation-1 transition-all",
+              "hover:bg-hirescribe-muted"
+            )}
           >
             <FileUp className="mr-2 h-4 w-4" />
             Export PDF
@@ -64,7 +68,10 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
             variant="secondary" 
             onClick={regenerateInsights} 
             disabled={generatingSummary}
-            className="flex-1 sm:flex-none pdf-hide shadow-subtle hover:shadow-elevation-1 transition-all"
+            className={cn(
+              "flex-1 sm:flex-none pdf-hide shadow-subtle hover:shadow-elevation-1 transition-all",
+              "bg-hirescribe-secondary/10 hover:bg-hirescribe-secondary/20 text-hirescribe-primary"
+            )}
           >
             {generatingSummary ? (
               <>

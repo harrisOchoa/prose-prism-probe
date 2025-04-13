@@ -11,10 +11,11 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, FileText, Users, Brain } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search, FileText, Users, Brain, Filter } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import AssessmentDetails from "./AssessmentDetails";
+import { cn } from "@/lib/utils";
 
 const AdminDashboard = () => {
   const [assessments, setAssessments] = useState<any[]>([]);
@@ -75,11 +76,11 @@ const AdminDashboard = () => {
     : 0;
 
   const getScoreColor = (score: number) => {
-    if (score >= 4.5) return "text-green-600";
-    if (score >= 3.5) return "text-blue-600";
-    if (score >= 2.5) return "text-yellow-600";
-    if (score >= 1.5) return "text-orange-600";
-    return "text-red-600";
+    if (score >= 4.5) return "text-green-600 font-semibold";
+    if (score >= 3.5) return "text-blue-600 font-semibold";
+    if (score >= 2.5) return "text-yellow-600 font-semibold";
+    if (score >= 1.5) return "text-orange-600 font-semibold";
+    return "text-red-600 font-semibold";
   };
 
   if (showDetails && selectedAssessment) {
@@ -87,14 +88,14 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold gradient-text">Admin Dashboard</h1>
         <div className="relative w-full md:w-auto">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by name or position..."
-            className="pl-8 w-full md:w-[300px]"
+            className="pl-8 w-full md:w-[300px] input-enhanced"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -102,75 +103,93 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card className="card-hover">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Assessments</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <FileText className="h-4 w-4 text-hirescribe-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalAssessments}</div>
+            <p className="text-xs text-muted-foreground mt-1">Assessment submissions</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-hover">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg Aptitude Score</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-hirescribe-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{averageAptitudeScore}%</div>
+            <p className="text-xs text-muted-foreground mt-1">Average performance</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-hover">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg Word Count</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <FileText className="h-4 w-4 text-hirescribe-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{averageWordCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">Words per submission</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-hover">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg Writing Score</CardTitle>
-            <Brain className="h-4 w-4 text-muted-foreground" />
+            <Brain className="h-4 w-4 text-hirescribe-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{averageWritingScore}/5</div>
+            <p className="text-xs text-muted-foreground mt-1">Quality assessment</p>
           </CardContent>
         </Card>
       </div>
 
       {loading ? (
         <div className="flex justify-center my-10">
-          <p>Loading assessment data...</p>
+          <Card className="w-full p-8">
+            <div className="flex flex-col items-center justify-center">
+              <div className="h-8 w-8 rounded-full border-2 border-hirescribe-primary border-t-transparent animate-spin mb-4"></div>
+              <p className="text-muted-foreground">Loading assessment data...</p>
+            </div>
+          </Card>
         </div>
       ) : (
-        <>
-          <Card>
-            <CardHeader>
-              <CardTitle>Assessment Results</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card className="shadow-subtle hover:shadow-elevation-1 transition-all">
+          <CardHeader>
+            <CardTitle>Assessment Results</CardTitle>
+            <CardDescription>Comprehensive view of all candidate assessments</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Candidate Name</TableHead>
-                    <TableHead>Position</TableHead>
-                    <TableHead>Aptitude Score</TableHead>
-                    <TableHead>Writing Score</TableHead>
-                    <TableHead>Word Count</TableHead>
-                    <TableHead>Submission Date</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="font-semibold">Candidate Name</TableHead>
+                    <TableHead className="font-semibold">Position</TableHead>
+                    <TableHead className="font-semibold">Aptitude Score</TableHead>
+                    <TableHead className="font-semibold">Writing Score</TableHead>
+                    <TableHead className="font-semibold">Word Count</TableHead>
+                    <TableHead className="font-semibold">Submission Date</TableHead>
+                    <TableHead className="font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {currentItems.length > 0 ? (
                     currentItems.map((assessment) => (
-                      <TableRow key={assessment.id}>
+                      <TableRow key={assessment.id} className="hover:bg-muted/50">
                         <TableCell className="font-medium">{assessment.candidateName}</TableCell>
                         <TableCell>{assessment.candidatePosition}</TableCell>
                         <TableCell>
-                          {assessment.aptitudeScore}/{assessment.aptitudeTotal} ({Math.round((assessment.aptitudeScore / assessment.aptitudeTotal) * 100)}%)
+                          <div className="flex items-center">
+                            <div className="mr-2 h-2 w-full max-w-[60px] bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-hirescribe-primary rounded-full" 
+                                style={{ width: `${Math.round((assessment.aptitudeScore / assessment.aptitudeTotal) * 100)}%` }}
+                              ></div>
+                            </div>
+                            <span>{assessment.aptitudeScore}/{assessment.aptitudeTotal}</span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           {assessment.overallWritingScore ? (
@@ -192,6 +211,7 @@ const AdminDashboard = () => {
                             variant="outline" 
                             size="sm"
                             onClick={() => viewAssessmentDetails(assessment)}
+                            className="shadow-subtle hover:shadow-elevation-1 transition-all"
                           >
                             View Details
                           </Button>
@@ -201,48 +221,62 @@ const AdminDashboard = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-4">
-                        No assessments found
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <Filter className="h-12 w-12 text-muted-foreground mb-2 opacity-25" />
+                          <p>No matching assessments found</p>
+                          {searchTerm && <p className="text-sm text-muted-foreground">Try adjusting your search criteria</p>}
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
+            </div>
 
-              {filteredAssessments.length > itemsPerPage && (
-                <div className="mt-4">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious 
-                          onClick={() => handlePageChange(Math.max(1, currentPage - 1))} 
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                        />
+            {filteredAssessments.length > itemsPerPage && (
+              <div className="mt-6 flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => handlePageChange(Math.max(1, currentPage - 1))} 
+                        className={cn(
+                          "transition-all",
+                          currentPage === 1 ? "pointer-events-none opacity-50" : "hover:text-hirescribe-primary"
+                        )}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => (
+                      <PaginationItem key={i + 1}>
+                        <PaginationLink
+                          isActive={currentPage === i + 1}
+                          onClick={() => handlePageChange(i + 1)}
+                          className={cn(
+                            "transition-all",
+                            currentPage === i + 1 ? "bg-hirescribe-primary text-white" : "hover:text-hirescribe-primary"
+                          )}
+                        >
+                          {i + 1}
+                        </PaginationLink>
                       </PaginationItem>
-                      
-                      {Array.from({ length: totalPages }, (_, i) => (
-                        <PaginationItem key={i + 1}>
-                          <PaginationLink
-                            isActive={currentPage === i + 1}
-                            onClick={() => handlePageChange(i + 1)}
-                          >
-                            {i + 1}
-                          </PaginationLink>
-                        </PaginationItem>
-                      ))}
-                      
-                      <PaginationItem>
-                        <PaginationNext 
-                          onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))} 
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </>
+                    ))}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))} 
+                        className={cn(
+                          "transition-all", 
+                          currentPage === totalPages ? "pointer-events-none opacity-50" : "hover:text-hirescribe-primary"
+                        )}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );
