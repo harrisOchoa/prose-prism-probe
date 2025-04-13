@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, BookOpen } from "lucide-react";
 import { DetailedAnalysis } from "@/services/geminiService";
 
 interface WritingAnalysisTabProps {
