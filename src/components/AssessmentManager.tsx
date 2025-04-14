@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { WritingPromptQuestion, getRandomQuestions } from "@/utils/questionBank";
 import { AptitudeQuestion, getRandomAptitudeQuestions } from "@/utils/aptitudeQuestions";

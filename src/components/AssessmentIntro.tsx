@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,12 +32,12 @@ const AssessmentIntro = ({
     {
       id: "time",
       question: "How long does the assessment take?",
-      answer: "The complete assessment takes approximately 75 minutes: 45 minutes for the aptitude test and 30 minutes for the writing assessment."
+      answer: "The complete assessment takes approximately 60 minutes: 30 minutes for the aptitude test and 30 minutes for the writing assessment."
     },
     {
       id: "format",
       question: "What is the format of the assessment?",
-      answer: "The assessment consists of two parts: a 25-question aptitude test followed by a writing assessment with multiple writing prompts."
+      answer: "The assessment consists of two parts: a 30-question aptitude test followed by a writing assessment with multiple writing prompts."
     },
     {
       id: "criteria",
@@ -133,11 +132,11 @@ const AssessmentIntro = ({
           <ul className="space-y-3 text-gray-700">
             <li className="flex items-start">
               <span className="bg-assessment-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 flex-shrink-0">1</span>
-              <span>You will be given 25 multiple-choice questions testing various aptitude skills.</span>
+              <span>You will be given 30 multiple-choice questions testing various aptitude skills.</span>
             </li>
             <li className="flex items-start">
               <span className="bg-assessment-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 flex-shrink-0">2</span>
-              <span>You have 45 minutes to complete all questions.</span>
+              <span>You have 30 minutes to complete all questions.</span>
             </li>
             <li className="flex items-start">
               <span className="bg-assessment-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 flex-shrink-0">3</span>

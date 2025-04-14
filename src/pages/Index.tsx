@@ -51,7 +51,7 @@ const Index = () => {
             <AptitudeTest 
               questions={aptitudeQuestions}
               onComplete={handleAptitudeComplete}
-              timeLimit={45 * 60} // 45 minutes in seconds
+              timeLimit={30 * 60} // 30 minutes in seconds
             />
           )}
           
