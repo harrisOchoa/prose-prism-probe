@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Brain, AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { PersonalityInsight } from "@/services/geminiService";
 
@@ -76,8 +75,8 @@ const PersonalityInsightsTab: React.FC<PersonalityInsightsTabProps> = ({
                   
                   <div className="px-5 pb-5">
                     <div className="flex justify-between text-xs text-gray-500 mb-1">
-                      <span>Low</span>
-                      <span>High</span>
+                      <span className="w-1/2 text-left">Low</span>
+                      <span className="w-1/2 text-right">High</span>
                     </div>
                     <Progress 
                       value={insight.confidence} 
