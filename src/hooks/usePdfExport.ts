@@ -25,33 +25,20 @@ export const usePdfExport = () => {
       const formattedPosition = assessment.candidatePosition.toLowerCase().replace(/\s+/g, '');
       const filename = `${formattedName}_${formattedPosition}_hirescribe`;
       
-      // Before generating PDF, add classes to hide/show specific elements in PDF
-      document.querySelectorAll('.pdf-hide').forEach((el) => {
-        el.classList.add('hidden-for-pdf');
-      });
+      // Calculate how many pages we expect based on available data
+      let expectedPages = 1; // Overview page is always included
+      if (assessment.detailedWritingAnalysis) expectedPages++;
+      if (assessment.personalityInsights) expectedPages++;
+      if (assessment.profileMatch) expectedPages++;
       
-      document.querySelectorAll('.pdf-show').forEach((el) => {
-        el.classList.add('visible-for-pdf');
-      });
-      
-      // Add a small delay to ensure DOM updates before PDF generation
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log(`PDF Export: Preparing to generate ${expectedPages} pages`);
       
       const success = await exportToPdf("assessment-content", filename, assessment);
-      
-      // Restore the DOM after PDF generation
-      document.querySelectorAll('.hidden-for-pdf').forEach((el) => {
-        el.classList.remove('hidden-for-pdf');
-      });
-      
-      document.querySelectorAll('.visible-for-pdf').forEach((el) => {
-        el.classList.remove('visible-for-pdf');
-      });
       
       if (success) {
         toast({
           title: "PDF Exported Successfully",
-          description: "The assessment report has been downloaded with all available sections.",
+          description: `Assessment report has been downloaded with ${expectedPages} pages.`,
           variant: "default",
         });
       } else {
