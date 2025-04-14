@@ -1,13 +1,19 @@
 
 import { toast } from "@/hooks/use-toast";
 import { exportToPdf } from "@/utils/pdfExport";
+import { AssessmentData } from "@/hooks/useAssessmentView";
 
 export const usePdfExport = () => {
-  const handleExportPdf = async () => {
+  const handleExportPdf = async (assessment: AssessmentData) => {
     toast({
       title: "Preparing PDF",
       description: "Creating a professional report of this assessment...",
     });
+    
+    // Format the filename based on candidate name and position
+    const formattedName = assessment.candidateName.toLowerCase().replace(/\s+/g, '');
+    const formattedPosition = assessment.candidatePosition.toLowerCase().replace(/\s+/g, '');
+    const filename = `${formattedName}_${formattedPosition}_hirescribe`;
     
     // Before generating PDF, add classes to hide/show specific elements in PDF
     document.querySelectorAll('.pdf-hide').forEach((el) => {
@@ -18,7 +24,7 @@ export const usePdfExport = () => {
       el.classList.add('visible-for-pdf');
     });
     
-    const success = await exportToPdf("assessment-content", `Assessment_Report`);
+    const success = await exportToPdf("assessment-content", filename, assessment);
     
     // Restore the DOM after PDF generation
     document.querySelectorAll('.hidden-for-pdf').forEach((el) => {

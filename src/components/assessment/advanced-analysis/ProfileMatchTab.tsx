@@ -20,8 +20,8 @@ const ProfileMatchTab: React.FC<ProfileMatchTabProps> = ({
   getProgressColor
 }) => {
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
+    <div className="space-y-4 profile-match-content">
+      <div className="flex justify-end pdf-hide">
         <Button 
           onClick={() => handleGenerateAnalysis()}
           disabled={loading}
