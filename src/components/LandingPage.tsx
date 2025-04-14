@@ -33,7 +33,7 @@ const LandingPage = ({ onStart }: LandingPageProps) => {
           </div>
         </div>
         <p className="text-gray-700 mb-6">
-          The entire assessment will take approximately 75 minutes to complete. Please ensure you have a quiet environment 
+          The entire assessment will take approximately 60 minutes to complete. Please ensure you have a quiet environment 
           and uninterrupted time before beginning.
         </p>
       </div>
