@@ -18,6 +18,8 @@ export const usePdfExport = () => {
     });
     
     try {
+      console.log("Starting PDF export process for", assessment.candidateName);
+      
       // Format the filename based on candidate name and position
       const formattedName = assessment.candidateName.toLowerCase().replace(/\s+/g, '');
       const formattedPosition = assessment.candidatePosition.toLowerCase().replace(/\s+/g, '');
@@ -33,7 +35,7 @@ export const usePdfExport = () => {
       });
       
       // Add a small delay to ensure DOM updates before PDF generation
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       const success = await exportToPdf("assessment-content", filename, assessment);
       
@@ -49,13 +51,13 @@ export const usePdfExport = () => {
       if (success) {
         toast({
           title: "PDF Exported Successfully",
-          description: "The assessment report has been downloaded.",
+          description: "The assessment report has been downloaded with all available sections.",
           variant: "default",
         });
       } else {
         toast({
           title: "PDF Export Failed",
-          description: "There was an error creating the PDF. Please try again with a different browser or contact support.",
+          description: "There was an error creating the PDF. Please check the console for details and try again.",
           variant: "destructive",
         });
       }

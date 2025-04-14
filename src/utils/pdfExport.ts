@@ -131,13 +131,31 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
     if (assessment.profileMatch) totalPages++;
 
     let pageSuccess = true;
+    
+    // Store the currently active tab to restore it later
+    const activeTabElement = document.querySelector('[data-tab].active') || 
+                             document.querySelector('[data-state="active"][data-tab]');
+    const activeTabId = activeTabElement ? (activeTabElement as HTMLElement).getAttribute('data-tab') : 'overview';
+
+    console.log("PDF Export: Starting export process");
+    console.log("PDF Export: Total pages to generate:", totalPages);
+    console.log("PDF Export: Current active tab:", activeTabId);
 
     // Page 1: Overview Tab
+    const overviewTabTrigger = document.querySelector('[data-tab="overview"]');
+    if (overviewTabTrigger) {
+      console.log("PDF Export: Switching to overview tab");
+      (overviewTabTrigger as HTMLElement).click();
+      // Give the UI time to update
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
     const overviewTab = await captureTab('[data-value="overview"]');
     if (overviewTab) {
+      console.log("PDF Export: Successfully captured overview tab");
       pageSuccess = safelyAddImage(overviewTab, 0, "Assessment Overview", totalPages);
     } else {
-      console.error("Failed to capture overview tab");
+      console.error("PDF Export: Failed to capture overview tab");
       pageSuccess = false;
     }
     
@@ -145,73 +163,94 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
     
     // Page 2: Writing Analysis (if available)
     if (pageSuccess && assessment.detailedWritingAnalysis) {
-      // Switch to detailed writing analysis tab
-      const writingAnalysisTab = document.querySelector('[data-tab="writing-analysis"]');
-      if (writingAnalysisTab) {
-        (writingAnalysisTab as HTMLElement).click();
+      // Switch to advanced tab first
+      const advancedTabTrigger = document.querySelector('[data-tab="advanced"]');
+      if (advancedTabTrigger) {
+        console.log("PDF Export: Switching to advanced tab");
+        (advancedTabTrigger as HTMLElement).click();
         
-        // Wait a moment for the UI to update
+        // Wait for the tab to update
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        const writingAnalysisCanvas = await captureTab('.writing-analysis-content');
-        if (writingAnalysisCanvas) {
-          pageSuccess = safelyAddImage(writingAnalysisCanvas, currentPage, "Writing Analysis", totalPages);
-          currentPage++;
-        } else {
-          console.error("Failed to capture writing analysis tab");
+        // Now switch to writing analysis tab
+        const writingAnalysisTab = document.querySelector('[data-tab="writing-analysis"]');
+        if (writingAnalysisTab) {
+          console.log("PDF Export: Switching to writing analysis subtab");
+          (writingAnalysisTab as HTMLElement).click();
+          
+          // Wait a moment for the UI to update
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          const writingAnalysisCanvas = await captureTab('.writing-analysis-content');
+          if (writingAnalysisCanvas) {
+            console.log("PDF Export: Successfully captured writing analysis tab");
+            pageSuccess = safelyAddImage(writingAnalysisCanvas, currentPage, "Writing Analysis", totalPages);
+            currentPage++;
+          } else {
+            console.error("PDF Export: Failed to capture writing analysis tab");
+          }
         }
       }
     }
     
     // Page 3: Personality Insights (if available)
     if (pageSuccess && assessment.personalityInsights) {
+      // Advanced tab should already be active from previous step
       // Switch to personality insights tab
       const personalityTab = document.querySelector('[data-tab="personality"]');
       if (personalityTab) {
+        console.log("PDF Export: Switching to personality tab");
         (personalityTab as HTMLElement).click();
         
         // Wait a moment for the UI to update
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 800));
         
         const personalityCanvas = await captureTab('.personality-content');
         if (personalityCanvas) {
+          console.log("PDF Export: Successfully captured personality tab");
           pageSuccess = safelyAddImage(personalityCanvas, currentPage, "Personality Insights", totalPages);
           currentPage++;
         } else {
-          console.error("Failed to capture personality tab");
+          console.error("PDF Export: Failed to capture personality tab");
         }
       }
     }
     
     // Page 4: Profile Match (if available)
     if (pageSuccess && assessment.profileMatch) {
+      // Advanced tab should already be active from previous steps
       // Switch to profile match tab
       const profileTab = document.querySelector('[data-tab="profile"]');
       if (profileTab) {
+        console.log("PDF Export: Switching to profile match tab");
         (profileTab as HTMLElement).click();
         
         // Wait a moment for the UI to update
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 800));
         
         const profileCanvas = await captureTab('.profile-match-content');
         if (profileCanvas) {
+          console.log("PDF Export: Successfully captured profile match tab");
           pageSuccess = safelyAddImage(profileCanvas, currentPage, "Profile Match", totalPages);
         } else {
-          console.error("Failed to capture profile match tab");
+          console.error("PDF Export: Failed to capture profile match tab");
         }
       }
     }
     
-    // Return to the first tab (overview)
-    const overviewTabElem = document.querySelector('[data-tab="overview"]');
-    if (overviewTabElem) {
-      (overviewTabElem as HTMLElement).click();
+    // Return to the original active tab
+    console.log("PDF Export: Restoring original tab:", activeTabId);
+    const originalTabElem = document.querySelector(`[data-tab="${activeTabId}"]`);
+    if (originalTabElem) {
+      (originalTabElem as HTMLElement).click();
     }
     
     if (pageSuccess) {
+      console.log("PDF Export: Successfully generated PDF with", totalPages, "pages");
       pdf.save(`${filename}.pdf`);
       return true;
     } else {
+      console.error("PDF Export: Failed to generate PDF content properly");
       throw new Error("Failed to generate PDF content properly");
     }
   } catch (error) {
