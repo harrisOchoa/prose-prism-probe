@@ -48,7 +48,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
     setGeneratingSummary
   } = useAssessmentEvaluation(assessmentData, setAssessmentData);
 
-  const { handleExportPdf } = usePdfExport();
+  const { handleExportPdf, exporting } = usePdfExport();
 
   // Log initial assessment data for debugging
   useEffect(() => {
@@ -100,6 +100,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
         handleManualEvaluation={handleManualEvaluation}
         regenerateInsights={regenerateInsights}
         handleExportPdf={handleExportPdfWithData}
+        exporting={exporting}
       />
 
       <CandidateSummaryCard 

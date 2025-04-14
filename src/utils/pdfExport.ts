@@ -2,6 +2,7 @@
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { AssessmentData } from '@/hooks/useAssessmentView';
+import { toast } from '@/hooks/use-toast';
 
 export const exportToPdf = async (elementId: string, filename: string, assessment: AssessmentData) => {
   try {
@@ -55,17 +56,70 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
       pdf.text('HireScribe Assessment Platform', margin, pageHeight - 5);
     };
 
-    // Function to capture and process tabs
+    // Function to safely capture and process tabs
     const captureTab = async (tabSelector: string) => {
-      const tabElement = document.querySelector(tabSelector);
-      if (!tabElement) return null;
-      
-      return await html2canvas(tabElement as HTMLElement, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      });
+      try {
+        const tabElement = document.querySelector(tabSelector);
+        if (!tabElement) {
+          console.warn(`Tab element not found: ${tabSelector}`);
+          return null;
+        }
+        
+        // Enhanced canvas options to improve reliability
+        return await html2canvas(tabElement as HTMLElement, {
+          scale: 1.5, // Reduced from 2 to potentially avoid memory issues
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          allowTaint: true, // Allow cross-origin images
+          removeContainer: true, // Clean up after rendering
+          imageTimeout: 15000, // Increased timeout for image loading
+          onclone: (document) => {
+            // Additional cleanup in cloned document before rendering
+            const clonedElement = document.querySelector(tabSelector);
+            if (clonedElement) {
+              // Remove any potentially problematic elements
+              const imgs = clonedElement.querySelectorAll('img[src=""]');
+              imgs.forEach(img => img.remove());
+            }
+          }
+        });
+      } catch (error) {
+        console.error(`Error capturing tab ${tabSelector}:`, error);
+        return null;
+      }
+    };
+
+    // Safely add image to PDF
+    const safelyAddImage = (canvas: HTMLCanvasElement, pageIndex: number, title: string, totalPages: number) => {
+      try {
+        if (pageIndex > 0) {
+          pdf.addPage();
+        }
+        
+        addHeader(title, pageIndex + 1, totalPages);
+        
+        const imgRatio = canvas.height / canvas.width;
+        const imgWidth = contentWidth;
+        const imgHeight = imgWidth * imgRatio;
+        
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95); // Use JPEG instead of PNG for better compatibility
+        
+        pdf.addImage(
+          dataUrl,
+          'JPEG',
+          margin,
+          20,
+          imgWidth,
+          Math.min(imgHeight, contentHeight - 30)
+        );
+        
+        addFooter();
+        return true;
+      } catch (error) {
+        console.error('Error adding image to PDF:', error);
+        return false;
+      }
     };
 
     // Get the number of pages to generate
@@ -76,127 +130,74 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
     if (assessment.personalityInsights) totalPages++;
     if (assessment.profileMatch) totalPages++;
 
+    let pageSuccess = true;
+
     // Page 1: Overview Tab
     const overviewTab = await captureTab('[data-value="overview"]');
     if (overviewTab) {
-      addHeader("Assessment Overview", 1, totalPages);
-      
-      const imgRatio = overviewTab.height / overviewTab.width;
-      const imgWidth = contentWidth;
-      const imgHeight = imgWidth * imgRatio;
-      
-      pdf.addImage(
-        overviewTab.toDataURL('image/png'),
-        'PNG',
-        margin,
-        20,
-        imgWidth,
-        Math.min(imgHeight, contentHeight - 30) // Ensure it fits on page
-      );
-      
-      addFooter();
+      pageSuccess = safelyAddImage(overviewTab, 0, "Assessment Overview", totalPages);
+    } else {
+      console.error("Failed to capture overview tab");
+      pageSuccess = false;
     }
     
+    let currentPage = 1;
+    
     // Page 2: Writing Analysis (if available)
-    if (assessment.detailedWritingAnalysis) {
+    if (pageSuccess && assessment.detailedWritingAnalysis) {
       // Switch to detailed writing analysis tab
       const writingAnalysisTab = document.querySelector('[data-tab="writing-analysis"]');
       if (writingAnalysisTab) {
         (writingAnalysisTab as HTMLElement).click();
         
         // Wait a moment for the UI to update
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         const writingAnalysisCanvas = await captureTab('.writing-analysis-content');
         if (writingAnalysisCanvas) {
-          pdf.addPage();
-          addHeader("Writing Analysis", 2, totalPages);
-          
-          const imgRatio = writingAnalysisCanvas.height / writingAnalysisCanvas.width;
-          const imgWidth = contentWidth;
-          const imgHeight = imgWidth * imgRatio;
-          
-          pdf.addImage(
-            writingAnalysisCanvas.toDataURL('image/png'),
-            'PNG',
-            margin,
-            20,
-            imgWidth,
-            Math.min(imgHeight, contentHeight - 30)
-          );
-          
-          addFooter();
+          pageSuccess = safelyAddImage(writingAnalysisCanvas, currentPage, "Writing Analysis", totalPages);
+          currentPage++;
+        } else {
+          console.error("Failed to capture writing analysis tab");
         }
       }
     }
     
     // Page 3: Personality Insights (if available)
-    if (assessment.personalityInsights) {
+    if (pageSuccess && assessment.personalityInsights) {
       // Switch to personality insights tab
       const personalityTab = document.querySelector('[data-tab="personality"]');
       if (personalityTab) {
         (personalityTab as HTMLElement).click();
         
         // Wait a moment for the UI to update
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         const personalityCanvas = await captureTab('.personality-content');
         if (personalityCanvas) {
-          pdf.addPage();
-          const pageNum = assessment.detailedWritingAnalysis ? 3 : 2;
-          addHeader("Personality Insights", pageNum, totalPages);
-          
-          const imgRatio = personalityCanvas.height / personalityCanvas.width;
-          const imgWidth = contentWidth;
-          const imgHeight = imgWidth * imgRatio;
-          
-          pdf.addImage(
-            personalityCanvas.toDataURL('image/png'),
-            'PNG',
-            margin,
-            20,
-            imgWidth,
-            Math.min(imgHeight, contentHeight - 30)
-          );
-          
-          addFooter();
+          pageSuccess = safelyAddImage(personalityCanvas, currentPage, "Personality Insights", totalPages);
+          currentPage++;
+        } else {
+          console.error("Failed to capture personality tab");
         }
       }
     }
     
     // Page 4: Profile Match (if available)
-    if (assessment.profileMatch) {
+    if (pageSuccess && assessment.profileMatch) {
       // Switch to profile match tab
       const profileTab = document.querySelector('[data-tab="profile"]');
       if (profileTab) {
         (profileTab as HTMLElement).click();
         
         // Wait a moment for the UI to update
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         const profileCanvas = await captureTab('.profile-match-content');
         if (profileCanvas) {
-          pdf.addPage();
-          let pageNum = 2;
-          if (assessment.detailedWritingAnalysis) pageNum++;
-          if (assessment.personalityInsights) pageNum++;
-          
-          addHeader("Profile Match", pageNum, totalPages);
-          
-          const imgRatio = profileCanvas.height / profileCanvas.width;
-          const imgWidth = contentWidth;
-          const imgHeight = imgWidth * imgRatio;
-          
-          pdf.addImage(
-            profileCanvas.toDataURL('image/png'),
-            'PNG',
-            margin,
-            20,
-            imgWidth,
-            Math.min(imgHeight, contentHeight - 30)
-          );
-          
-          addFooter();
+          pageSuccess = safelyAddImage(profileCanvas, currentPage, "Profile Match", totalPages);
+        } else {
+          console.error("Failed to capture profile match tab");
         }
       }
     }
@@ -207,8 +208,12 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
       (overviewTabElem as HTMLElement).click();
     }
     
-    pdf.save(`${filename}.pdf`);
-    return true;
+    if (pageSuccess) {
+      pdf.save(`${filename}.pdf`);
+      return true;
+    } else {
+      throw new Error("Failed to generate PDF content properly");
+    }
   } catch (error) {
     console.error('Error exporting to PDF:', error);
     return false;
