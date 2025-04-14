@@ -17,12 +17,15 @@ const AdvancedAnalysis = ({
   generatingAnalysis = {}
 }: AdvancedAnalysisProps) => {
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Advanced Analysis</CardTitle>
+    <div className="space-y-6 animate-fade-in">
+      <Card className="border shadow-md overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 border-b">
+          <CardTitle className="flex items-center gap-2 text-gray-800">
+            <BookOpen className="h-5 w-5 text-indigo-600" />
+            Advanced Analysis
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <AdvancedAnalysisContent
             assessmentData={assessmentData}
             getProgressColor={getProgressColor}

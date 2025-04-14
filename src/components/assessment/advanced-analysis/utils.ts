@@ -1,49 +1,49 @@
 
-/**
- * Helper functions for advanced analysis tabs
- */
+// This file was previously created and contains utility functions for the advanced analysis tab
 
-/**
- * Returns a CSS class for confidence badge color based on confidence level
- */
 export const getConfidenceBadgeColor = (confidence: number): string => {
-  if (confidence >= 80) return "bg-green-100 text-green-800 border-green-200";
-  if (confidence >= 60) return "bg-blue-100 text-blue-800 border-blue-200";
-  if (confidence >= 40) return "bg-yellow-100 text-yellow-800 border-yellow-200";
-  if (confidence >= 20) return "bg-orange-100 text-orange-800 border-orange-200";
-  return "bg-red-100 text-red-800 border-red-200";
+  if (confidence >= 90) return "bg-green-100 text-green-800 hover:bg-green-200";
+  if (confidence >= 80) return "bg-emerald-100 text-emerald-800 hover:bg-emerald-200";
+  if (confidence >= 70) return "bg-blue-100 text-blue-800 hover:bg-blue-200";
+  if (confidence >= 60) return "bg-sky-100 text-sky-800 hover:bg-sky-200";
+  if (confidence >= 50) return "bg-amber-100 text-amber-800 hover:bg-amber-200";
+  return "bg-gray-100 text-gray-800 hover:bg-gray-200";
 };
 
-/**
- * Returns a CSS class for category badge color based on category
- */
 export const getCategoryBadgeColor = (category: string): string => {
-  switch(category.toLowerCase()) {
-    case "technical":
-      return "bg-blue-100 text-blue-800 border-blue-200";
-    case "behavioral":
-      return "bg-purple-100 text-purple-800 border-purple-200";
-    case "situational":
-      return "bg-amber-100 text-amber-800 border-amber-200";
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
-  }
+  const categories: Record<string, string> = {
+    "Technical Skills": "bg-indigo-100 text-indigo-800 hover:bg-indigo-200",
+    "Problem Solving": "bg-blue-100 text-blue-800 hover:bg-blue-200",
+    "Leadership": "bg-purple-100 text-purple-800 hover:bg-purple-200",
+    "Communication": "bg-emerald-100 text-emerald-800 hover:bg-emerald-200",
+    "Culture Fit": "bg-teal-100 text-teal-800 hover:bg-teal-200",
+    "Experience": "bg-amber-100 text-amber-800 hover:bg-amber-200",
+    "Behavioral": "bg-cyan-100 text-cyan-800 hover:bg-cyan-200",
+    "Situational": "bg-violet-100 text-violet-800 hover:bg-violet-200"
+  };
+  
+  return categories[category] || "bg-gray-100 text-gray-800 hover:bg-gray-200";
 };
 
-/**
- * Returns an analysis button label based on analysis type and data existence
- */
-export const getAnalysisButtonLabel = (analysisType: string, hasData: boolean): string => {
-  switch(analysisType) {
-    case "writing":
-      return hasData ? "Regenerate Writing Analysis" : "Generate Writing Analysis";
-    case "personality":
-      return hasData ? "Regenerate Personality Insights" : "Generate Personality Insights";
-    case "questions":
-      return hasData ? "Regenerate Interview Questions" : "Generate Interview Questions";
-    case "profile":
-      return hasData ? "Regenerate Profile Comparison" : "Generate Profile Comparison";
-    default:
-      return "Generate Analysis";
-  }
+export const getAnalysisButtonLabel = (analysisType: string, exists: boolean): string => {
+  const labels: Record<string, { new: string, existing: string }> = {
+    "writing": {
+      new: "Generate Writing Analysis",
+      existing: "Regenerate Analysis"
+    },
+    "personality": {
+      new: "Generate Personality Insights",
+      existing: "Regenerate Insights"
+    },
+    "questions": {
+      new: "Generate Interview Questions",
+      existing: "Regenerate Questions"
+    },
+    "profile": {
+      new: "Generate Profile Match",
+      existing: "Regenerate Match"
+    }
+  };
+  
+  return exists ? labels[analysisType].existing : labels[analysisType].new;
 };

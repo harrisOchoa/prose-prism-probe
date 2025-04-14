@@ -134,74 +134,96 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
   };
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-      <TabsList className="grid grid-cols-4 gap-2">
-        <TabsTrigger value="writing" className="flex items-center gap-1">
-          <BookOpen className="h-4 w-4" />
-          <span className="hidden sm:inline">Writing Analysis</span>
-          <span className="sm:hidden">Writing</span>
-        </TabsTrigger>
-        <TabsTrigger value="personality" className="flex items-center gap-1">
-          <Brain className="h-4 w-4" />
-          <span className="hidden sm:inline">Personality</span>
-          <span className="sm:hidden">Traits</span>
-        </TabsTrigger>
-        <TabsTrigger value="questions" className="flex items-center gap-1">
-          <FileQuestion className="h-4 w-4" />
-          <span className="hidden sm:inline">Interview Questions</span>
-          <span className="sm:hidden">Questions</span>
-        </TabsTrigger>
-        <TabsTrigger value="profile" className="flex items-center gap-1">
-          <Target className="h-4 w-4" />
-          <span className="hidden sm:inline">Profile Match</span>
-          <span className="sm:hidden">Match</span>
-        </TabsTrigger>
-      </TabsList>
+    <div className="space-y-6">
+      <Tabs 
+        value={activeTab} 
+        onValueChange={setActiveTab} 
+        className="space-y-6"
+      >
+        <div className="bg-white rounded-lg shadow-sm border">
+          <TabsList className="w-full h-auto p-1 bg-gray-50 rounded-t-lg border-b">
+            <TabsTrigger 
+              value="writing" 
+              className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">Writing Analysis</span>
+              <span className="sm:hidden">Writing</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="personality" 
+              className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <Brain className="h-4 w-4" />
+              <span className="hidden sm:inline">Personality</span>
+              <span className="sm:hidden">Traits</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="questions" 
+              className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <FileQuestion className="h-4 w-4" />
+              <span className="hidden sm:inline">Interview Questions</span>
+              <span className="sm:hidden">Questions</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="profile" 
+              className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <Target className="h-4 w-4" />
+              <span className="hidden sm:inline">Profile Match</span>
+              <span className="sm:hidden">Match</span>
+            </TabsTrigger>
+          </TabsList>
 
-      {/* Writing Analysis Tab */}
-      <TabsContent value="writing">
-        <WritingAnalysisTab 
-          detailedAnalysis={detailedAnalysis}
-          loading={loading.writing}
-          handleGenerateAnalysis={() => handleGenerateAnalysis("writing")}
-          getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!detailedAnalysis)}
-        />
-      </TabsContent>
+          <div className="p-6">
+            {/* Writing Analysis Tab */}
+            <TabsContent value="writing" className="mt-0">
+              <WritingAnalysisTab 
+                detailedAnalysis={detailedAnalysis}
+                loading={loading.writing}
+                handleGenerateAnalysis={() => handleGenerateAnalysis("writing")}
+                getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!detailedAnalysis)}
+              />
+            </TabsContent>
 
-      {/* Personality Insights Tab */}
-      <TabsContent value="personality">
-        <PersonalityInsightsTab 
-          personalityInsights={personalityInsights}
-          loading={loading.personality}
-          handleGenerateAnalysis={() => handleGenerateAnalysis("personality")}
-          getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!personalityInsights)}
-          getConfidenceBadgeColor={getConfidenceBadgeColor}
-          getProgressColor={getProgressColor}
-        />
-      </TabsContent>
+            {/* Personality Insights Tab */}
+            <TabsContent value="personality" className="mt-0">
+              <PersonalityInsightsTab 
+                personalityInsights={personalityInsights}
+                loading={loading.personality}
+                handleGenerateAnalysis={() => handleGenerateAnalysis("personality")}
+                getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!personalityInsights)}
+                getConfidenceBadgeColor={getConfidenceBadgeColor}
+                getProgressColor={getProgressColor}
+              />
+            </TabsContent>
 
-      {/* Interview Questions Tab */}
-      <TabsContent value="questions">
-        <InterviewQuestionsTab 
-          interviewQuestions={interviewQuestions}
-          loading={loading.questions}
-          handleGenerateAnalysis={() => handleGenerateAnalysis("questions")}
-          getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!interviewQuestions)}
-          getCategoryBadgeColor={getCategoryBadgeColor}
-        />
-      </TabsContent>
+            {/* Interview Questions Tab */}
+            <TabsContent value="questions" className="mt-0">
+              <InterviewQuestionsTab 
+                interviewQuestions={interviewQuestions}
+                loading={loading.questions}
+                handleGenerateAnalysis={() => handleGenerateAnalysis("questions")}
+                getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!interviewQuestions)}
+                getCategoryBadgeColor={getCategoryBadgeColor}
+              />
+            </TabsContent>
 
-      {/* Profile Match Tab */}
-      <TabsContent value="profile">
-        <ProfileMatchTab 
-          profileMatch={profileMatch}
-          loading={loading.profile}
-          handleGenerateAnalysis={() => handleGenerateAnalysis("profile")}
-          getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!profileMatch)}
-          getProgressColor={getProgressColor}
-        />
-      </TabsContent>
-    </Tabs>
+            {/* Profile Match Tab */}
+            <TabsContent value="profile" className="mt-0">
+              <ProfileMatchTab 
+                profileMatch={profileMatch}
+                loading={loading.profile}
+                handleGenerateAnalysis={() => handleGenerateAnalysis("profile")}
+                getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!profileMatch)}
+                getProgressColor={getProgressColor}
+              />
+            </TabsContent>
+          </div>
+        </div>
+      </Tabs>
+    </div>
   );
 };
 
