@@ -43,19 +43,25 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
   // Initialize the tab data from assessmentData if available
   useEffect(() => {
     if (assessmentData) {
+      console.log("AdvancedAnalysisContent received updated assessmentData:", assessmentData);
+      
       if (assessmentData.detailedWritingAnalysis) {
+        console.log("Setting detailed analysis from assessmentData:", assessmentData.detailedWritingAnalysis);
         setDetailedAnalysis(assessmentData.detailedWritingAnalysis);
       }
       
       if (assessmentData.personalityInsights) {
+        console.log("Setting personality insights from assessmentData:", assessmentData.personalityInsights);
         setPersonalityInsights(assessmentData.personalityInsights);
       }
       
       if (assessmentData.interviewQuestions) {
+        console.log("Setting interview questions from assessmentData:", assessmentData.interviewQuestions);
         setInterviewQuestions(assessmentData.interviewQuestions);
       }
       
       if (assessmentData.profileMatch) {
+        console.log("Setting profile match from assessmentData:", assessmentData.profileMatch);
         setProfileMatch(assessmentData.profileMatch);
       }
     }
@@ -72,30 +78,6 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
       });
     }
   }, [generatingAnalysis]);
-
-  // Update state after new data comes in
-  useEffect(() => {
-    if (assessmentData.detailedWritingAnalysis && !detailedAnalysis) {
-      setDetailedAnalysis(assessmentData.detailedWritingAnalysis);
-    }
-    
-    if (assessmentData.personalityInsights && !personalityInsights) {
-      setPersonalityInsights(assessmentData.personalityInsights);
-    }
-    
-    if (assessmentData.interviewQuestions && !interviewQuestions) {
-      setInterviewQuestions(assessmentData.interviewQuestions);
-    }
-    
-    if (assessmentData.profileMatch && !profileMatch) {
-      setProfileMatch(assessmentData.profileMatch);
-    }
-  }, [
-    assessmentData.detailedWritingAnalysis, 
-    assessmentData.personalityInsights,
-    assessmentData.interviewQuestions,
-    assessmentData.profileMatch
-  ]);
 
   const handleGenerateAnalysis = async (analysisType: string) => {
     if (!assessmentData.overallWritingScore) {

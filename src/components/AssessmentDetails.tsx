@@ -11,6 +11,7 @@ import AdvancedAnalysisTab from "@/components/assessment/AdvancedAnalysisTab";
 import { useAssessmentCalculations } from "@/hooks/useAssessmentCalculations";
 import { useAssessmentEvaluation } from "@/hooks/useAssessmentEvaluation";
 import { usePdfExport } from "@/hooks/usePdfExport";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface AssessmentDetailsProps {
   assessment: any;
@@ -23,8 +24,17 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
   onBack,
   isGeneratingSummary = false
 }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [assessmentData, setAssessmentData] = useState(assessment);
-  const [activeTab, setActiveTab] = useState("overview");
+  
+  // Get activeTab from URL query parameter or default to "overview"
+  const getInitialTab = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get("tab") || "overview";
+  };
+  
+  const [activeTab, setActiveTab] = useState(getInitialTab());
   
   const calculations = useAssessmentCalculations(assessmentData);
   
@@ -60,7 +70,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
     if (assessmentData.profileMatch) {
       console.log("Profile match data loaded:", assessmentData.profileMatch);
     }
-  }, []);
+  }, [assessmentData]);
 
   // Set initial state for generatingSummary if provided
   useEffect(() => {
@@ -68,6 +78,12 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
       setGeneratingSummary(true);
     }
   }, [isGeneratingSummary, setGeneratingSummary]);
+  
+  // Update URL when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    navigate(`${location.pathname}?tab=${value}`, { replace: true });
+  };
 
   return (
     <div className="space-y-6">
@@ -86,7 +102,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
         getOverallScore={calculations.getOverallScore}
       />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className="w-full bg-muted/50 p-0">
           <TabsTrigger value="overview" className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow">
             Overview

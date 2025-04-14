@@ -55,6 +55,23 @@ export const useAssessmentView = (id: string | undefined) => {
           
           console.log("Assessment data retrieved:", assessmentData);
           
+          // Log advanced analysis data for debugging
+          if (assessmentData.detailedWritingAnalysis) {
+            console.log("Detailed writing analysis found:", assessmentData.detailedWritingAnalysis);
+          }
+          
+          if (assessmentData.personalityInsights) {
+            console.log("Personality insights found:", assessmentData.personalityInsights);
+          }
+          
+          if (assessmentData.interviewQuestions) {
+            console.log("Interview questions found:", assessmentData.interviewQuestions);
+          }
+          
+          if (assessmentData.profileMatch) {
+            console.log("Profile match data found:", assessmentData.profileMatch);
+          }
+          
           if (!assessmentData.writingScores || assessmentData.writingScores.length === 0) {
             console.log("No writing scores found in assessment data");
             toast({
@@ -101,23 +118,6 @@ export const useAssessmentView = (id: string | undefined) => {
               } finally {
                 setGeneratingSummary(false);
               }
-            }
-
-            // Log any advanced analysis data that exists
-            if (assessmentData.detailedWritingAnalysis) {
-              console.log("Detailed writing analysis found in assessment data");
-            }
-            
-            if (assessmentData.personalityInsights) {
-              console.log("Personality insights found in assessment data");
-            }
-            
-            if (assessmentData.interviewQuestions) {
-              console.log("Interview questions found in assessment data");
-            }
-            
-            if (assessmentData.profileMatch) {
-              console.log("Profile match data found in assessment data");
             }
           }
           

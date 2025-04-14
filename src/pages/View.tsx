@@ -1,6 +1,6 @@
 
 import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import AssessmentDetails from "@/components/AssessmentDetails";
 import ViewError from "@/components/assessment/ViewError";
 import ViewLoader from "@/components/assessment/ViewLoader";
@@ -9,7 +9,16 @@ import { useAssessmentView } from "@/hooks/useAssessmentView";
 const View = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { assessment, loading, error, generatingSummary, setAssessment } = useAssessmentView(id);
+  
+  // Get current tab from URL parameters
+  const currentTab = searchParams.get("tab") || "overview";
+
+  const handleBack = () => {
+    // Navigate back to admin while preserving the tab the user was on
+    navigate('/admin');
+  };
 
   if (loading) {
     return <ViewLoader />;
@@ -24,7 +33,7 @@ const View = () => {
       {assessment ? (
         <AssessmentDetails 
           assessment={assessment} 
-          onBack={() => navigate('/admin')} 
+          onBack={handleBack} 
           isGeneratingSummary={generatingSummary}
         />
       ) : (
