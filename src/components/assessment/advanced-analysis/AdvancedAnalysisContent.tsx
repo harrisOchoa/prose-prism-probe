@@ -5,7 +5,7 @@ import WritingAnalysisTab from "./WritingAnalysisTab";
 import PersonalityInsightsTab from "./PersonalityInsightsTab";
 import ProfileMatchTab from "./ProfileMatchTab";
 import InterviewQuestionsTab from "./InterviewQuestionsTab";
-import { getProgressColor, getConfidenceBadgeColor, getAnalysisButtonLabel } from "./utils";
+import { getConfidenceBadgeColor, getCategoryBadgeColor, getAnalysisButtonLabel, getProgressColor } from "./utils";
 
 interface AdvancedAnalysisContentProps {
   assessmentData: any;
@@ -30,6 +30,33 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
   };
 
   const [activeTab, setActiveTab] = useState(getInitialTab());
+
+  // Helper function to determine if analysis exists
+  const analysisExists = (type: string): boolean => {
+    switch(type) {
+      case 'writing':
+        return !!assessmentData.detailedWritingAnalysis;
+      case 'personality':
+        return !!assessmentData.personalityInsights;
+      case 'questions':
+        return !!assessmentData.interviewQuestions;
+      case 'profile':
+        return !!assessmentData.profileMatch;
+      default:
+        return false;
+    }
+  };
+
+  // Wrapper function that adds the exists parameter
+  const getButtonLabel = (analysisType: string): string => {
+    const exists = analysisExists(analysisType);
+    return exists ? `Regenerate ${analysisType === 'writing' ? 'Analysis' : 
+                    analysisType === 'personality' ? 'Insights' : 
+                    analysisType === 'questions' ? 'Questions' : 'Match'}` 
+                  : `Generate ${analysisType === 'writing' ? 'Writing Analysis' : 
+                    analysisType === 'personality' ? 'Personality Insights' : 
+                    analysisType === 'questions' ? 'Interview Questions' : 'Profile Match'}`;
+  };
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -70,7 +97,7 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
             detailedAnalysis={assessmentData.detailedWritingAnalysis}
             loading={generatingAnalysis.writing || false}
             handleGenerateAnalysis={() => generateAdvancedAnalysis('writing')}
-            getAnalysisButtonLabel={getAnalysisButtonLabel}
+            getAnalysisButtonLabel={getButtonLabel}
           />
         </TabsContent>
         
@@ -79,7 +106,7 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
             personalityInsights={assessmentData.personalityInsights}
             loading={generatingAnalysis.personality || false}
             handleGenerateAnalysis={() => generateAdvancedAnalysis('personality')}
-            getAnalysisButtonLabel={getAnalysisButtonLabel}
+            getAnalysisButtonLabel={getButtonLabel}
             getConfidenceBadgeColor={getConfidenceBadgeColor}
             getProgressColor={getProgressColor}
           />
@@ -90,7 +117,7 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
             profileMatch={assessmentData.profileMatch}
             loading={generatingAnalysis.profile || false}
             handleGenerateAnalysis={() => generateAdvancedAnalysis('profile')}
-            getAnalysisButtonLabel={getAnalysisButtonLabel}
+            getAnalysisButtonLabel={getButtonLabel}
             getProgressColor={getProgressColor}
           />
         </TabsContent>
@@ -100,7 +127,8 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
             interviewQuestions={assessmentData.interviewQuestions}
             loading={generatingAnalysis.interview || false}
             handleGenerateAnalysis={() => generateAdvancedAnalysis('interview')}
-            getAnalysisButtonLabel={getAnalysisButtonLabel}
+            getAnalysisButtonLabel={getButtonLabel}
+            getCategoryBadgeColor={getCategoryBadgeColor}
           />
         </TabsContent>
       </div>
