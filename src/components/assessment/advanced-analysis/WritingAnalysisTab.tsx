@@ -19,8 +19,8 @@ const WritingAnalysisTab: React.FC<WritingAnalysisTabProps> = ({
   getAnalysisButtonLabel,
 }) => {
   return (
-    <div className="space-y-6 writing-analysis-content">
-      <div className="flex justify-end pdf-hide">
+    <div className="space-y-6">
+      <div className="flex justify-end">
         <Button 
           onClick={() => handleGenerateAnalysis()}
           disabled={loading}

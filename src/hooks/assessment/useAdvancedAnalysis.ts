@@ -14,9 +14,9 @@ import {
  */
 export const useAdvancedAnalysis = (assessmentData: any, setAssessmentData: (data: any) => void) => {
   const [generatingAnalysis, setGeneratingAnalysis] = useState({
-    writing: false,
+    detailed: false,
     personality: false,
-    interview: false,
+    questions: false,
     profile: false
   });
 
@@ -43,7 +43,7 @@ export const useAdvancedAnalysis = (assessmentData: any, setAssessmentData: (dat
       const updateData: any = {};
       
       switch (analysisType) {
-        case "writing":
+        case "detailed":
           result = await generateDetailedWritingAnalysis(assessmentData);
           updateData.detailedWritingAnalysis = result;
           break;
@@ -51,7 +51,7 @@ export const useAdvancedAnalysis = (assessmentData: any, setAssessmentData: (dat
           result = await generatePersonalityInsights(assessmentData);
           updateData.personalityInsights = result;
           break;
-        case "interview":
+        case "questions":
           result = await generateInterviewQuestions(assessmentData);
           updateData.interviewQuestions = result;
           break;

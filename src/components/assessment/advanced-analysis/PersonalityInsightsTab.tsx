@@ -25,8 +25,8 @@ const PersonalityInsightsTab: React.FC<PersonalityInsightsTabProps> = ({
   getProgressColor
 }) => {
   return (
-    <div className="space-y-6 personality-content">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pdf-hide">
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="text-sm text-gray-500 italic max-w-xl">
           <AlertCircle className="inline-block h-4 w-4 mr-1 text-amber-500" />
           Note: These insights are based on writing style analysis only and should be considered as initial impressions.
@@ -92,7 +92,7 @@ const PersonalityInsightsTab: React.FC<PersonalityInsightsTabProps> = ({
             ))}
           </div>
           
-          <div className="flex justify-center pdf-hide">
+          <div className="flex justify-center">
             <div className="px-4 py-3 bg-blue-50 rounded-md text-blue-700 max-w-3xl text-sm border border-blue-100">
               <p className="flex items-start">
                 <AlertCircle className="h-5 w-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />

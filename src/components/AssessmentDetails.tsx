@@ -48,7 +48,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
     setGeneratingSummary
   } = useAssessmentEvaluation(assessmentData, setAssessmentData);
 
-  const { handleExportPdf, exporting } = usePdfExport();
+  const { handleExportPdf } = usePdfExport();
 
   // Log initial assessment data for debugging
   useEffect(() => {
@@ -85,11 +85,6 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
     navigate(`${location.pathname}?tab=${value}`, { replace: true });
   };
 
-  // Create a function to handle PDF export with assessment data
-  const handleExportPdfWithData = () => {
-    handleExportPdf(assessmentData);
-  };
-
   return (
     <div className="space-y-6">
       <AssessmentHeader 
@@ -99,8 +94,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
         generatingSummary={generatingSummary}
         handleManualEvaluation={handleManualEvaluation}
         regenerateInsights={regenerateInsights}
-        handleExportPdf={handleExportPdfWithData}
-        exporting={exporting}
+        handleExportPdf={handleExportPdf}
       />
 
       <CandidateSummaryCard 
@@ -110,45 +104,25 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className="w-full bg-muted/50 p-0">
-          <TabsTrigger 
-            value="overview" 
-            className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow"
-            data-tab="overview"
-          >
+          <TabsTrigger value="overview" className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow">
             Overview
           </TabsTrigger>
-          <TabsTrigger 
-            value="aptitude" 
-            className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow"
-            data-tab="aptitude"
-          >
+          <TabsTrigger value="aptitude" className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow">
             Aptitude Results
           </TabsTrigger>
-          <TabsTrigger 
-            value="writing" 
-            className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow"
-            data-tab="writing"
-          >
+          <TabsTrigger value="writing" className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow">
             Writing Assessment
           </TabsTrigger>
-          <TabsTrigger 
-            value="advanced" 
-            className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow"
-            data-tab="advanced"
-          >
+          <TabsTrigger value="advanced" className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow">
             Advanced Analysis
           </TabsTrigger>
-          <TabsTrigger 
-            value="comparison" 
-            className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow"
-            data-tab="comparison"
-          >
+          <TabsTrigger value="comparison" className="flex-1 py-3 data-[state=active]:bg-background rounded-none data-[state=active]:shadow">
             Comparison
           </TabsTrigger>
         </TabsList>
         
         <div id="assessment-content">
-          <TabsContent value="overview" className="space-y-6" data-value="overview">
+          <TabsContent value="overview" className="space-y-6">
             <OverviewTab 
               assessmentData={assessmentData}
               generatingSummary={generatingSummary}
@@ -159,14 +133,14 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
             />
           </TabsContent>
           
-          <TabsContent value="aptitude" className="space-y-4" data-value="aptitude">
+          <TabsContent value="aptitude" className="space-y-4">
             <AptitudeTab 
               assessmentData={assessmentData}
               getAptitudeScorePercentage={calculations.getAptitudeScorePercentage}
             />
           </TabsContent>
           
-          <TabsContent value="writing" className="space-y-4" data-value="writing">
+          <TabsContent value="writing" className="space-y-4">
             <WritingTab 
               assessmentData={assessmentData}
               getScoreColor={calculations.getScoreColor}
@@ -175,7 +149,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
             />
           </TabsContent>
           
-          <TabsContent value="advanced" className="space-y-4" data-value="advanced">
+          <TabsContent value="advanced" className="space-y-4">
             <AdvancedAnalysisTab 
               assessmentData={assessmentData}
               getProgressColor={calculations.getProgressColor}
@@ -184,7 +158,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
             />
           </TabsContent>
           
-          <TabsContent value="comparison" className="space-y-4" data-value="comparison">
+          <TabsContent value="comparison" className="space-y-4">
             <CandidateComparison 
               assessmentData={assessmentData}
               getAptitudeScorePercentage={calculations.getAptitudeScorePercentage}

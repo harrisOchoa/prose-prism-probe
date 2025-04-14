@@ -18,7 +18,6 @@ interface AssessmentHeaderProps {
   handleManualEvaluation: () => void;
   regenerateInsights: () => void;
   handleExportPdf?: () => void;
-  exporting?: boolean;
 }
 
 const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
@@ -28,8 +27,7 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
   generatingSummary,
   handleManualEvaluation,
   regenerateInsights,
-  handleExportPdf,
-  exporting = false
+  handleExportPdf
 }) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-lg border shadow-subtle animate-fade-in hover:shadow-elevation-1 transition-all">
@@ -55,23 +53,13 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
           <Button 
             variant="outline"
             onClick={handleExportPdf}
-            disabled={exporting}
             className={cn(
               "flex-1 sm:flex-none shadow-subtle hover:shadow-elevation-1 transition-all",
               "hover:bg-hirescribe-muted"
             )}
           >
-            {exporting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Exporting...
-              </>
-            ) : (
-              <>
-                <FileUp className="mr-2 h-4 w-4" />
-                Export PDF
-              </>
-            )}
+            <FileUp className="mr-2 h-4 w-4" />
+            Export PDF
           </Button>
         )}
         

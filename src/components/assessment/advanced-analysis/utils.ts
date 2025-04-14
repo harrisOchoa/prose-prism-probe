@@ -1,5 +1,5 @@
 
-// This file contains utility functions for the advanced analysis tab
+// This file was previously created and contains utility functions for the advanced analysis tab
 
 export const getConfidenceBadgeColor = (confidence: number): string => {
   if (confidence >= 90) return "bg-green-100 text-green-800 hover:bg-green-200";
@@ -25,7 +25,7 @@ export const getCategoryBadgeColor = (category: string): string => {
   return categories[category] || "bg-gray-100 text-gray-800 hover:bg-gray-200";
 };
 
-export const getAnalysisButtonLabel = (analysisType: string): string => {
+export const getAnalysisButtonLabel = (analysisType: string, exists: boolean): string => {
   const labels: Record<string, { new: string, existing: string }> = {
     "writing": {
       new: "Generate Writing Analysis",
@@ -45,12 +45,5 @@ export const getAnalysisButtonLabel = (analysisType: string): string => {
     }
   };
   
-  return labels[analysisType]?.new || `Generate ${analysisType}`;
-};
-
-// Add the missing getProgressColor function
-export const getProgressColor = (value: number): string => {
-  if (value >= 70) return "#22c55e"; // green
-  if (value >= 50) return "#eab308"; // yellow
-  return "#ef4444"; // red
+  return exists ? labels[analysisType].existing : labels[analysisType].new;
 };
