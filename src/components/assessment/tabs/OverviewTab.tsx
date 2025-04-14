@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -168,7 +167,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
               <div className="flex justify-between mb-1">
                 <span className="text-sm font-medium">Overall ({getOverallScore()}%)</span>
               </div>
-              <Progress value={getProgressColor(getOverallScore())} className="h-2 bg-gray-200"
+              <Progress value={getOverallScore()} className="h-2 bg-gray-200"
                 color={getProgressColor(getOverallScore())}
               />
             </div>
