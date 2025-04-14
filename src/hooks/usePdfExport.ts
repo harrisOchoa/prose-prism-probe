@@ -35,7 +35,7 @@ export const usePdfExport = () => {
       });
       
       // Add a small delay to ensure DOM updates before PDF generation
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const success = await exportToPdf("assessment-content", filename, assessment);
       
@@ -57,7 +57,7 @@ export const usePdfExport = () => {
       } else {
         toast({
           title: "PDF Export Failed",
-          description: "There was an error creating the PDF. Please check the console for details and try again.",
+          description: "There was an error creating the PDF. Please try again or check browser console for details.",
           variant: "destructive",
         });
       }
@@ -65,7 +65,7 @@ export const usePdfExport = () => {
       console.error("Error during PDF export:", error);
       toast({
         title: "PDF Export Failed",
-        description: "There was an unexpected error. Please try again with a different browser or contact support.",
+        description: "There was an unexpected error. Please try using a different browser or contact support.",
         variant: "destructive",
       });
     } finally {

@@ -65,9 +65,11 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
           return null;
         }
         
+        console.log(`Capturing tab: ${tabSelector}`);
+        
         // Enhanced canvas options to improve reliability
         return await html2canvas(tabElement as HTMLElement, {
-          scale: 1.5, // Reduced from 2 to potentially avoid memory issues
+          scale: 1.2, // Lower scale to avoid memory issues
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
@@ -90,7 +92,7 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
       }
     };
 
-    // Safely add image to PDF
+    // Safely add image to PDF with proper error handling
     const safelyAddImage = (canvas: HTMLCanvasElement, pageIndex: number, title: string, totalPages: number) => {
       try {
         if (pageIndex > 0) {
@@ -99,19 +101,22 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
         
         addHeader(title, pageIndex + 1, totalPages);
         
+        // Calculate image dimensions while preserving aspect ratio
         const imgRatio = canvas.height / canvas.width;
         const imgWidth = contentWidth;
         const imgHeight = imgWidth * imgRatio;
         
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.95); // Use JPEG instead of PNG for better compatibility
+        // Use JPEG format for better compatibility
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
         
+        // Add image to PDF
         pdf.addImage(
           dataUrl,
           'JPEG',
           margin,
-          20,
+          20, // Top margin after header
           imgWidth,
-          Math.min(imgHeight, contentHeight - 30)
+          Math.min(imgHeight, contentHeight - 30) // Limit height to fit on page
         );
         
         addFooter();
@@ -134,7 +139,7 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
     
     // Store the currently active tab to restore it later
     const activeTabElement = document.querySelector('[data-tab].active') || 
-                             document.querySelector('[data-state="active"][data-tab]');
+                            document.querySelector('[data-state="active"][data-tab]');
     const activeTabId = activeTabElement ? (activeTabElement as HTMLElement).getAttribute('data-tab') : 'overview';
 
     console.log("PDF Export: Starting export process");
@@ -147,7 +152,7 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
       console.log("PDF Export: Switching to overview tab");
       (overviewTabTrigger as HTMLElement).click();
       // Give the UI time to update
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 800)); // Increased wait time
     }
     
     const overviewTab = await captureTab('[data-value="overview"]');
@@ -169,8 +174,8 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
         console.log("PDF Export: Switching to advanced tab");
         (advancedTabTrigger as HTMLElement).click();
         
-        // Wait for the tab to update
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Wait longer for the tab to update
+        await new Promise(resolve => setTimeout(resolve, 800));
         
         // Now switch to writing analysis tab
         const writingAnalysisTab = document.querySelector('[data-tab="writing-analysis"]');
@@ -178,8 +183,8 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
           console.log("PDF Export: Switching to writing analysis subtab");
           (writingAnalysisTab as HTMLElement).click();
           
-          // Wait a moment for the UI to update
-          await new Promise(resolve => setTimeout(resolve, 800));
+          // Wait longer for the UI to update
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
           const writingAnalysisCanvas = await captureTab('.writing-analysis-content');
           if (writingAnalysisCanvas) {
@@ -202,8 +207,8 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
         console.log("PDF Export: Switching to personality tab");
         (personalityTab as HTMLElement).click();
         
-        // Wait a moment for the UI to update
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // Wait longer for the UI to update
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         const personalityCanvas = await captureTab('.personality-content');
         if (personalityCanvas) {
@@ -225,8 +230,8 @@ export const exportToPdf = async (elementId: string, filename: string, assessmen
         console.log("PDF Export: Switching to profile match tab");
         (profileTab as HTMLElement).click();
         
-        // Wait a moment for the UI to update
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // Wait longer for the UI to update
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         const profileCanvas = await captureTab('.profile-match-content');
         if (profileCanvas) {
