@@ -421,31 +421,36 @@ export const generateDetailedWritingAnalysis = async (assessmentData: any): Prom
     const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
     
     const writingResponses = assessmentData.completedPrompts
-      .map((prompt: WritingPromptItem) => prompt.response)
-      .join("\n\n");
+      .map((prompt: WritingPromptItem) => `Prompt: ${prompt.prompt}\nResponse: ${prompt.response}`)
+      .join("\n\n---\n\n");
     
     const promptTemplate = `
-As an AI writing analyst, provide a detailed analysis of the following writing samples from a job candidate.
+You are an objective writing analyst for job candidate assessments. Your task is to analyze writing samples in a consistent, fair manner without making assumptions about the candidate.
 
-Writing Samples:
-"""
+# WRITING SAMPLES
 ${writingResponses}
-"""
 
-Focus on the following aspects:
-1. Writing style (formal, conversational, technical, etc.)
-2. Vocabulary level (basic, intermediate, advanced)
-3. Critical thinking ability
-4. Specific strength areas (2-3 points)
-5. Areas for improvement (2-3 points)
+# ANALYSIS INSTRUCTIONS
+Analyze only the text provided above. Focus on writing style, vocabulary level, and critical thinking demonstrated in the responses.
 
-Return your analysis as JSON with the following structure:
+Analyze ONLY these specific aspects:
+1. Writing style - formal, technical, conversational, etc.
+2. Vocabulary level - basic, intermediate, advanced
+3. Critical thinking ability - as demonstrated through logical reasoning, analysis, and problem-solving in writing
+4. Three specific strength areas 
+5. Three specific areas for improvement
+
+Be factual and objective. Base ALL analysis on the text samples provided.
+DO NOT make assumptions about the candidate's background, personality, or characteristics that cannot be directly observed in the writing.
+
+# FORMAT
+Return your analysis as a JSON object with this exact structure:
 {
-  "writingStyle": "description of the candidate's writing style",
-  "vocabularyLevel": "assessment of vocabulary level",
-  "criticalThinking": "evaluation of critical thinking ability",
-  "strengthAreas": ["strength 1", "strength 2", "strength 3"],
-  "improvementAreas": ["area for improvement 1", "area for improvement 2", "area for improvement 3"]
+  "writingStyle": "Description of writing style, 1-2 sentences only",
+  "vocabularyLevel": "Assessment of vocabulary level, 1-2 sentences only",
+  "criticalThinking": "Evaluation of critical thinking ability, 1-2 sentences only",
+  "strengthAreas": ["strength 1 - one brief sentence", "strength 2 - one brief sentence", "strength 3 - one brief sentence"],
+  "improvementAreas": ["improvement 1 - one brief sentence", "improvement 2 - one brief sentence", "improvement 3 - one brief sentence"]
 }
 `;
 
@@ -468,7 +473,7 @@ Return your analysis as JSON with the following structure:
             }
           ],
           generationConfig: {
-            temperature: 0.3,
+            temperature: 0.2, // Reduced temperature for more consistent outputs
             topK: 40,
             topP: 0.95,
             maxOutputTokens: 1024,
@@ -539,52 +544,64 @@ export const generateInterviewQuestions = async (assessmentData: any): Promise<I
     const apiKey = "AIzaSyApWiYP8pkZKNMrCDKmdbRJVoiWUCANow0";
     const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
     
-    const aptitudePercentage = assessmentData.aptitudeTotal 
-      ? Math.round((assessmentData.aptitudeScore / assessmentData.aptitudeTotal) * 100) 
-      : 0;
+    // Gather relevant assessment data
+    const position = assessmentData.candidatePosition || "Not specified";
+    const aptitudeScore = assessmentData.aptitudeScore || 0;
+    const aptitudeTotal = assessmentData.aptitudeTotal || 0;
+    const aptitudePercentage = aptitudeTotal > 0 ? Math.round((aptitudeScore / aptitudeTotal) * 100) : 0;
+    const writingScore = assessmentData.overallWritingScore || 0;
+    const writingPercentage = Math.round((writingScore / 5) * 100);
     
-    const writingScorePercentage = assessmentData.overallWritingScore 
-      ? Math.round((assessmentData.overallWritingScore / 5) * 100) 
-      : 0;
-    
-    let writingFeedback = "No writing assessment data available.";
+    // Compile feedback from writing scores if available
+    let writingFeedback = [];
     if (assessmentData.writingScores && assessmentData.writingScores.length > 0) {
       writingFeedback = assessmentData.writingScores
         .filter((score: WritingScore) => score.score > 0)
-        .map((score: WritingScore) => score.feedback)
-        .join(" ");
+        .map((score: WritingScore) => score.feedback);
     }
     
-    let strengths = assessmentData.strengths || [];
-    let weaknesses = assessmentData.weaknesses || [];
+    // Get strengths/weaknesses if available
+    const strengths = assessmentData.strengths || [];
+    const weaknesses = assessmentData.weaknesses || [];
     
     const promptTemplate = `
-As an AI interview assistant, generate 5 targeted interview questions for this candidate based on their assessment results.
+You are an objective interview question generator for job candidate assessments. Your task is to generate fair, relevant interview questions based solely on assessment data.
 
-Candidate: ${assessmentData.candidateName}
-Position: ${assessmentData.candidatePosition}
-Aptitude Score: ${assessmentData.aptitudeScore}/${assessmentData.aptitudeTotal} (${aptitudePercentage}%)
-Writing Score: ${assessmentData.overallWritingScore ? `${assessmentData.overallWritingScore}/5 (${writingScorePercentage}%)` : "Not available"}
-Writing Feedback: ${writingFeedback}
+# CANDIDATE ASSESSMENT DATA
+Position: ${position}
+Aptitude Score: ${aptitudeScore}/${aptitudeTotal} (${aptitudePercentage}%)
+Writing Score: ${writingScore}/5 (${writingPercentage}%)
 
-Identified Strengths: ${strengths.join(", ")}
-Areas for Improvement: ${weaknesses.join(", ")}
+${writingFeedback.length > 0 ? "Writing Feedback:\n- " + writingFeedback.join("\n- ") : "No writing feedback available."}
 
-Generate interview questions that:
-1. Validate the candidate's strengths
-2. Explore areas for improvement
-3. Include a mix of technical, behavioral, and situational questions
-4. Are specific to the position (${assessmentData.candidatePosition})
+${strengths.length > 0 ? "Identified Strengths:\n- " + strengths.join("\n- ") : "No specific strengths identified."}
+${weaknesses.length > 0 ? "Identified Improvement Areas:\n- " + weaknesses.join("\n- ") : "No specific improvement areas identified."}
 
-Return your questions as JSON with the following structure:
+# QUESTION GENERATION INSTRUCTIONS
+Generate exactly 5 interview questions that:
+1. Are directly relevant to the position specified
+2. Help validate the candidate's strengths
+3. Explore potential improvement areas
+4. Include a mix of technical, behavioral, and situational questions appropriate for the position
+5. Are specific and focused, not generic
+
+For each question, provide:
+- The question text (clear, direct, and professional)
+- A brief rationale explaining why this question is important for this specific candidate
+- A category (Technical Skills, Problem Solving, Leadership, Communication, Culture Fit, Experience, Behavioral, or Situational)
+
+DO NOT make assumptions about the candidate's background, personality, or characteristics beyond what is provided in the assessment data.
+
+# FORMAT
+Return your questions as a JSON array with this exact structure:
 {
   "questions": [
     {
-      "question": "question text",
-      "rationale": "why this question is important",
-      "category": "technical/behavioral/situational"
+      "question": "Question text here?",
+      "rationale": "Brief explanation of why this question is relevant",
+      "category": "One of the categories listed above"
     },
-    ... (4 more questions)
+    ... (4 more questions with the same structure)
   ]
 }
 `;
@@ -608,7 +625,7 @@ Return your questions as JSON with the following structure:
             }
           ],
           generationConfig: {
-            temperature: 0.7,
+            temperature: 0.3, // Reduced temperature for more consistent outputs
             topK: 40,
             topP: 0.95,
             maxOutputTokens: 1024,
@@ -681,37 +698,48 @@ export const generatePersonalityInsights = async (assessmentData: any): Promise<
     const apiKey = "AIzaSyApWiYP8pkZKNMrCDKmdbRJVoiWUCANow0";
     const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
     
+    // Gather all writing samples from prompts
     const writingResponses = assessmentData.completedPrompts
-      .map((prompt: WritingPromptItem) => prompt.response)
-      .join("\n\n");
+      .map((prompt: WritingPromptItem) => `Prompt: ${prompt.prompt}\nResponse: ${prompt.response}`)
+      .join("\n\n---\n\n");
     
     const promptTemplate = `
-As an AI personality analyst, analyze the writing style of this candidate to identify personality traits.
+You are an objective writing style analyst for job candidate assessments. Your task is to analyze writing samples to identify communication styles and tendencies shown in the text.
 
-Writing Samples:
-"""
+# WRITING SAMPLES
 ${writingResponses}
-"""
 
-Based on writing style, word choice, and content, identify 5 likely personality traits of the candidate.
-For each trait, provide:
-1. The trait name
-2. A short description of how this trait manifests in their writing
-3. A confidence level (0-100) for this assessment
+# ANALYSIS INSTRUCTIONS
+Analyze ONLY the language patterns and communication tendencies evident in the provided text samples. 
+Focus on identifying 5 key communication traits that are objectively demonstrated in the writing.
 
-Return your analysis as JSON with the following structure:
+For each trait:
+1. Identify a specific communication tendency or style element displayed in the writing
+2. Provide a brief description of how this trait is demonstrated in the text
+3. Assess your confidence level (0-100) based on how consistently this trait appears across all samples
+
+Important guidelines:
+- Analyze ONLY writing and communication styles, NOT personality traits
+- Use neutral, professional language
+- Base ALL insights on text evidence, not assumptions
+- DO NOT attempt to diagnose personality types or make character judgments
+- Provide confidence levels that reflect the evidence strength
+- Focus on communication tendencies relevant to professional contexts
+
+# FORMAT
+Return your analysis as a JSON object with this exact structure:
 {
   "insights": [
     {
-      "trait": "trait name",
-      "description": "description of how this trait manifests",
+      "trait": "Specific communication style element",
+      "description": "Brief description of how this is demonstrated in the text",
       "confidence": confidence score as number between 0-100
     },
-    ... (4 more traits)
+    ... (4 more traits with the same structure)
   ]
 }
 
-Note: This is based solely on writing style analysis and should be considered an initial impression only.
+Note: These insights represent communication tendencies in writing samples only, not comprehensive personality assessment.
 `;
 
     console.log("Sending request to Gemini API for personality insights...");
@@ -733,7 +761,7 @@ Note: This is based solely on writing style analysis and should be considered an
             }
           ],
           generationConfig: {
-            temperature: 0.4,
+            temperature: 0.2, // Reduced temperature for more consistent outputs
             topK: 40,
             topP: 0.95,
             maxOutputTokens: 1024,
@@ -806,124 +834,27 @@ export const compareWithIdealProfile = async (assessmentData: any): Promise<Cand
     const apiKey = "AIzaSyApWiYP8pkZKNMrCDKmdbRJVoiWUCANow0";
     const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
     
-    const aptitudePercentage = assessmentData.aptitudeTotal 
-      ? Math.round((assessmentData.aptitudeScore / assessmentData.aptitudeTotal) * 100) 
-      : 0;
+    // Gather relevant assessment data
+    const position = assessmentData.candidatePosition || "Not specified";
+    const aptitudeScore = assessmentData.aptitudeScore || 0;
+    const aptitudeTotal = assessmentData.aptitudeTotal || 0;
+    const aptitudePercentage = aptitudeTotal > 0 ? Math.round((aptitudeScore / aptitudeTotal) * 100) : 0;
+    const writingScore = assessmentData.overallWritingScore || 0;
+    const writingPercentage = Math.round((writingScore / 5) * 100);
+    const overallScore = Math.round((aptitudePercentage + writingPercentage) / 2);
     
-    const writingScorePercentage = assessmentData.overallWritingScore 
-      ? Math.round((assessmentData.overallWritingScore / 5) * 100) 
-      : 0;
-    
-    const overallScore = assessmentData.overallWritingScore
-      ? Math.round((aptitudePercentage + writingScorePercentage) / 2)
-      : aptitudePercentage;
-    
-    let strengths = assessmentData.strengths || [];
-    let weaknesses = assessmentData.weaknesses || [];
+    // Get strengths/weaknesses if available
+    const strengths = assessmentData.strengths || [];
+    const weaknesses = assessmentData.weaknesses || [];
     
     const promptTemplate = `
-As an AI recruitment assistant, compare this candidate's profile against an ideal candidate for the position.
+You are an objective profile analyst for job candidate assessments. Your task is to compare assessment results against standard role requirements.
 
-Candidate: ${assessmentData.candidateName}
-Position: ${assessmentData.candidatePosition}
-Aptitude Score: ${assessmentData.aptitudeScore}/${assessmentData.aptitudeTotal} (${aptitudePercentage}%)
-Writing Score: ${assessmentData.overallWritingScore ? `${assessmentData.overallWritingScore}/5 (${writingScorePercentage}%)` : "Not available"}
+# CANDIDATE ASSESSMENT DATA
+Position: ${position}
+Aptitude Score: ${aptitudeScore}/${aptitudeTotal} (${aptitudePercentage}%)
+Writing Score: ${writingScore}/5 (${writingPercentage}%)
 Overall Score: ${overallScore}%
 
-Identified Strengths: ${strengths.join(", ")}
-Areas for Improvement: ${weaknesses.join(", ")}
-
-For a typical ${assessmentData.candidatePosition} role, analyze:
-1. Overall match percentage
-2. Key areas where the candidate matches the ideal profile
-3. Key gaps compared to the ideal profile
-
-Return your analysis as JSON with the following structure:
-{
-  "position": "${assessmentData.candidatePosition}",
-  "matchPercentage": match percentage as number between 0-100,
-  "keyMatches": ["match point 1", "match point 2", "match point 3"],
-  "keyGaps": ["gap point 1", "gap point 2", "gap point 3"]
-}
-`;
-
-    console.log("Sending request to Gemini API for profile comparison...");
-    
-    try {
-      const apiResponse = await fetch(`${url}?key=${apiKey}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: promptTemplate
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.3,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          }
-        })
-      });
-      
-      if (!apiResponse.ok) {
-        const errorData = await apiResponse.text();
-        console.error("Gemini API error status:", apiResponse.status);
-        console.error("Error response:", errorData);
-        throw new Error(`API error: ${apiResponse.status} - ${errorData}`);
-      }
-
-      const data = await apiResponse.json();
-      console.log("Gemini API response received for profile comparison");
-      
-      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
-        console.error("Unexpected API response structure:", JSON.stringify(data));
-        throw new Error("Invalid API response structure");
-      }
-      
-      const text = data.candidates[0].content.parts[0].text;
-      console.log("Generated profile comparison raw text:", text);
-      
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      
-      if (!jsonMatch) {
-        console.error("Failed to extract JSON from response");
-        throw new Error("Failed to parse comparison results");
-      }
-      
-      try {
-        const comparisonData = JSON.parse(jsonMatch[0]);
-        console.log("Parsed profile comparison:", comparisonData);
-        
-        return {
-          position: comparisonData.position || assessmentData.candidatePosition,
-          matchPercentage: comparisonData.matchPercentage || 0,
-          keyMatches: comparisonData.keyMatches || ["No specific matches identified"],
-          keyGaps: comparisonData.keyGaps || ["No specific gaps identified"]
-        };
-      } catch (parseError) {
-        console.error("Error parsing JSON:", parseError);
-        throw new Error("Error parsing comparison results");
-      }
-    } catch (fetchError) {
-      console.error("Fetch error:", fetchError);
-      throw new Error(`Network error: ${fetchError.message}`);
-    }
-  } catch (error) {
-    console.error("Error generating profile comparison:", error);
-    return {
-      position: assessmentData.candidatePosition,
-      matchPercentage: 0,
-      keyMatches: ["Unable to identify matches at this time"],
-      keyGaps: ["Unable to identify gaps at this time"]
-    };
-  }
-};
+${strengths.length > 0 ? "Identified Strengths:\n- " + strengths.join("\n- ") : "No specific strengths identified."}
+${weaknesses.length > 0 ? "Identified Improvement Areas:\n- " + weaknesses.join("\n- ")
