@@ -66,6 +66,11 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
         console.log("Setting profile match from assessmentData:", assessmentData.profileMatch);
         setProfileMatch(assessmentData.profileMatch);
       }
+      
+      if (assessmentData.aptitudeAnalysis) {
+        console.log("Setting aptitude analysis from assessmentData:", assessmentData.aptitudeAnalysis);
+        setAptitudeAnalysis(assessmentData.aptitudeAnalysis);
+      }
     }
   }, [assessmentData]);
 

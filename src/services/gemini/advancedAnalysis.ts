@@ -1,6 +1,7 @@
 import { WritingPromptItem } from "@/components/AssessmentManager";
 import { DetailedAnalysis, PersonalityInsight, InterviewQuestion, CandidateProfileMatch, AptitudeAnalysis } from "./types";
 import { makeGeminiRequest, parseJsonResponse } from "./config";
+import { getRandomAptitudeQuestions } from "@/utils/aptitudeQuestions";
 
 export const generateDetailedWritingAnalysis = async (assessmentData: any): Promise<DetailedAnalysis> => {
   try {

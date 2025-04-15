@@ -42,6 +42,10 @@ export const getAnalysisButtonLabel = (analysisType: string, exists: boolean): s
     "profile": {
       new: "Generate Profile Match",
       existing: "Regenerate Match"
+    },
+    "aptitude": {
+      new: "Generate Aptitude Analysis",
+      existing: "Regenerate Analysis"
     }
   };
   
