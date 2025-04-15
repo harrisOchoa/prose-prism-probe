@@ -7,7 +7,7 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from "@/components/ui/tooltip";
-import { scoringCriteria } from "@/services/geminiService";
+import { scoringCriteria } from "@/services/gemini/types";
 
 const ScoringCriteriaTooltip: React.FC = () => {
   return (
@@ -22,7 +22,7 @@ const ScoringCriteriaTooltip: React.FC = () => {
             {Object.entries(scoringCriteria).map(([score, description]) => (
               <li key={score} className="flex gap-2">
                 <span className="font-semibold">{score}:</span>
-                <span>{description}</span>
+                <span>{description as React.ReactNode}</span>
               </li>
             ))}
           </ul>

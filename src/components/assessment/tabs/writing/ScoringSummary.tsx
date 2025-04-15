@@ -1,6 +1,6 @@
 
 import React from "react";
-import { scoringCriteria } from "@/services/geminiService";
+import { scoringCriteria } from "@/services/gemini/types";
 
 interface ScoringSummaryProps {
   overallWritingScore: number;
@@ -36,7 +36,7 @@ const ScoringSummary: React.FC<ScoringSummaryProps> = ({
         <h4 className="font-medium mb-2">What this score means:</h4>
         <p className="text-sm">
           {Object.entries(scoringCriteria)
-            .find(([score]) => Math.floor(overallWritingScore) === parseInt(score))?.[1] ||
+            .find(([score]) => Math.floor(overallWritingScore) === parseInt(score))?.[1] as React.ReactNode ||
             "The response quality is between defined scoring levels."}
         </p>
       </div>
