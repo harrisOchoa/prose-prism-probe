@@ -1,18 +1,19 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Brain, FileQuestion, Target } from "lucide-react";
+import { BookOpen, Brain, FileQuestion, Target, Calculator } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import WritingAnalysisTab from "./WritingAnalysisTab";
 import PersonalityInsightsTab from "./PersonalityInsightsTab";
 import InterviewQuestionsTab from "./InterviewQuestionsTab";
 import ProfileMatchTab from "./ProfileMatchTab";
+import AptitudeAnalysisTab from "./AptitudeAnalysisTab";
 import { getConfidenceBadgeColor, getCategoryBadgeColor, getAnalysisButtonLabel } from "./utils";
 import { 
   PersonalityInsight, 
   InterviewQuestion, 
   DetailedAnalysis,
-  CandidateProfileMatch
+  CandidateProfileMatch,
+  AptitudeAnalysis
 } from "@/services/geminiService";
 
 interface AdvancedAnalysisContentProps {
@@ -33,14 +34,15 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
     writing: false,
     personality: false,
     questions: false,
-    profile: false
+    profile: false,
+    aptitude: false
   });
   const [detailedAnalysis, setDetailedAnalysis] = useState<DetailedAnalysis | null>(null);
   const [personalityInsights, setPersonalityInsights] = useState<PersonalityInsight[] | null>(null);
   const [interviewQuestions, setInterviewQuestions] = useState<InterviewQuestion[] | null>(null);
   const [profileMatch, setProfileMatch] = useState<CandidateProfileMatch | null>(null);
+  const [aptitudeAnalysis, setAptitudeAnalysis] = useState<AptitudeAnalysis | null>(null);
 
-  // Initialize the tab data from assessmentData if available
   useEffect(() => {
     if (assessmentData) {
       console.log("AdvancedAnalysisContent received updated assessmentData:", assessmentData);
@@ -67,14 +69,14 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
     }
   }, [assessmentData]);
 
-  // Update loading states from props
   useEffect(() => {
     if (generatingAnalysis) {
       setLoading({
         writing: generatingAnalysis.detailed || false,
         personality: generatingAnalysis.personality || false,
         questions: generatingAnalysis.questions || false,
-        profile: generatingAnalysis.profile || false
+        profile: generatingAnalysis.profile || false,
+        aptitude: generatingAnalysis.aptitude || false
       });
     }
   }, [generatingAnalysis]);
@@ -108,6 +110,10 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
         case "profile":
           result = await generateAdvancedAnalysis("profile");
           if (result) setProfileMatch(result);
+          break;
+        case "aptitude":
+          result = await generateAdvancedAnalysis("aptitude");
+          if (result) setAptitudeAnalysis(result);
           break;
       }
     } catch (error) {
@@ -156,10 +162,17 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
               <span className="hidden sm:inline">Profile Match</span>
               <span className="sm:hidden">Match</span>
             </TabsTrigger>
+            <TabsTrigger 
+              value="aptitude" 
+              className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <Calculator className="h-4 w-4" />
+              <span className="hidden sm:inline">Aptitude Analysis</span>
+              <span className="sm:hidden">Aptitude</span>
+            </TabsTrigger>
           </TabsList>
 
           <div className="p-6">
-            {/* Writing Analysis Tab */}
             <TabsContent value="writing" className="mt-0">
               <WritingAnalysisTab 
                 detailedAnalysis={detailedAnalysis}
@@ -169,7 +182,6 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
               />
             </TabsContent>
 
-            {/* Personality Insights Tab */}
             <TabsContent value="personality" className="mt-0">
               <PersonalityInsightsTab 
                 personalityInsights={personalityInsights}
@@ -181,7 +193,6 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
               />
             </TabsContent>
 
-            {/* Interview Questions Tab */}
             <TabsContent value="questions" className="mt-0">
               <InterviewQuestionsTab 
                 interviewQuestions={interviewQuestions}
@@ -192,7 +203,6 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
               />
             </TabsContent>
 
-            {/* Profile Match Tab */}
             <TabsContent value="profile" className="mt-0">
               <ProfileMatchTab 
                 profileMatch={profileMatch}
@@ -200,6 +210,15 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
                 handleGenerateAnalysis={() => handleGenerateAnalysis("profile")}
                 getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!profileMatch)}
                 getProgressColor={getProgressColor}
+              />
+            </TabsContent>
+
+            <TabsContent value="aptitude" className="mt-0">
+              <AptitudeAnalysisTab 
+                aptitudeAnalysis={aptitudeAnalysis}
+                loading={loading.aptitude}
+                handleGenerateAnalysis={() => handleGenerateAnalysis("aptitude")}
+                getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!aptitudeAnalysis)}
               />
             </TabsContent>
           </div>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
@@ -6,7 +5,8 @@ import {
   generateDetailedWritingAnalysis,
   generateInterviewQuestions,
   generatePersonalityInsights,
-  compareWithIdealProfile
+  compareWithIdealProfile,
+  generateAptitudeAnalysis
 } from "@/services/geminiService";
 
 /**
@@ -17,7 +17,8 @@ export const useAdvancedAnalysis = (assessmentData: any, setAssessmentData: (dat
     detailed: false,
     personality: false,
     questions: false,
-    profile: false
+    profile: false,
+    aptitude: false
   });
 
   const generateAdvancedAnalysis = async (analysisType: string) => {
@@ -58,6 +59,10 @@ export const useAdvancedAnalysis = (assessmentData: any, setAssessmentData: (dat
         case "profile":
           result = await compareWithIdealProfile(assessmentData);
           updateData.profileMatch = result;
+          break;
+        case "aptitude":
+          result = await generateAptitudeAnalysis(assessmentData);
+          updateData.aptitudeAnalysis = result;
           break;
         default:
           throw new Error("Invalid analysis type");

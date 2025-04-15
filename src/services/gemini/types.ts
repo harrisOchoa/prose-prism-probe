@@ -1,4 +1,3 @@
-
 export type WritingScore = {
   score: number;
   feedback: string;
@@ -32,7 +31,13 @@ export type CandidateProfileMatch = {
   keyGaps: string[];
 };
 
-// Scoring criteria with detailed meanings
+export interface AptitudeAnalysis {
+  strengthCategories: string[];
+  weaknessCategories: string[];
+  recommendations: string[];
+  performance: string;
+}
+
 export const scoringCriteria = {
   1: "Needs Significant Improvement: The response shows limited understanding of the prompt with numerous grammar and structure issues.",
   2: "Basic: The response partially addresses the prompt with several grammatical errors and unclear organization.",
