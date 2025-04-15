@@ -3,11 +3,22 @@ import { toast } from "@/hooks/use-toast";
 import { exportToPdf } from "@/utils/pdfExport";
 
 export const usePdfExport = () => {
-  const handleExportPdf = async () => {
+  const handleExportPdf = async (
+    assessmentData: {
+      candidateName: string;
+      candidatePosition: string;
+    },
+    contentType: "Overview" | "Aptitude" | "Writing" | "WritingAnalysis" | "Personality" | "ProfileMatch" | "InterviewQuestions"
+  ) => {
     toast({
       title: "Preparing PDF",
       description: "Creating a professional report of this assessment...",
     });
+    
+    // Format filename components
+    const formattedName = assessmentData.candidateName.replace(/\s+/g, '');
+    const formattedPosition = assessmentData.candidatePosition.replace(/\s+/g, '');
+    const filename = `${formattedName}_${formattedPosition}_${contentType}_HireScribe`;
     
     // Before generating PDF, add classes to hide/show specific elements in PDF
     document.querySelectorAll('.pdf-hide').forEach((el) => {
@@ -18,7 +29,7 @@ export const usePdfExport = () => {
       el.classList.add('visible-for-pdf');
     });
     
-    const success = await exportToPdf("assessment-content", `Assessment_Report`);
+    const success = await exportToPdf("assessment-content", filename);
     
     // Restore the DOM after PDF generation
     document.querySelectorAll('.hidden-for-pdf').forEach((el) => {
