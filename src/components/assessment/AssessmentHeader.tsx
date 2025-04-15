@@ -17,7 +17,13 @@ interface AssessmentHeaderProps {
   generatingSummary: boolean;
   handleManualEvaluation: () => void;
   regenerateInsights: () => void;
-  handleExportPdf?: () => void;
+  handleExportPdf?: (
+    assessmentData: {
+      candidateName: string;
+      candidatePosition: string;
+    },
+    contentType: "Overview" | "Aptitude" | "Writing" | "WritingAnalysis" | "Personality" | "ProfileMatch" | "InterviewQuestions"
+  ) => Promise<void>;
 }
 
 const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
@@ -52,7 +58,13 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
         {handleExportPdf && (
           <Button 
             variant="outline"
-            onClick={handleExportPdf}
+            onClick={() => handleExportPdf(
+              {
+                candidateName: assessmentData.candidateName,
+                candidatePosition: assessmentData.candidatePosition
+              },
+              "Overview" // Default to Overview, can be made dynamic if needed
+            )}
             className={cn(
               "flex-1 sm:flex-none shadow-subtle hover:shadow-elevation-1 transition-all",
               "hover:bg-hirescribe-muted"

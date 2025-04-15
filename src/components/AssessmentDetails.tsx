@@ -85,6 +85,24 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
     navigate(`${location.pathname}?tab=${value}`, { replace: true });
   };
 
+  // Get the current tab for PDF export
+  const getCurrentTabContentType = (): "Overview" | "Aptitude" | "Writing" | "WritingAnalysis" | "Personality" | "ProfileMatch" | "InterviewQuestions" => {
+    switch (activeTab) {
+      case "aptitude":
+        return "Aptitude";
+      case "writing":
+        return "Writing";
+      case "advanced":
+        // Could be refined further based on sub-tabs if needed
+        return "WritingAnalysis";
+      case "comparison":
+        return "ProfileMatch";
+      case "overview":
+      default:
+        return "Overview";
+    }
+  };
+
   return (
     <div className="space-y-6">
       <AssessmentHeader 
@@ -94,7 +112,9 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
         generatingSummary={generatingSummary}
         handleManualEvaluation={handleManualEvaluation}
         regenerateInsights={regenerateInsights}
-        handleExportPdf={handleExportPdf}
+        handleExportPdf={(data, contentType) => 
+          handleExportPdf(data, contentType || getCurrentTabContentType())
+        }
       />
 
       <CandidateSummaryCard 
