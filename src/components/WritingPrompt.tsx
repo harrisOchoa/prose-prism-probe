@@ -23,7 +23,9 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
   currentQuestion,
   totalQuestions,
 }) => {
-  const [text, setText] = useState(response || "");
+  // Initialize state with empty string, not with response prop 
+  // to avoid carrying over content between questions
+  const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [wordCount, setWordCount] = useState(0);
   
@@ -48,6 +50,11 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
       textareaRef.current.focus();
     }
   }, []);
+
+  // Update text with response only on first mount or currentQuestion change
+  useEffect(() => {
+    setText(response || "");
+  }, [response, currentQuestion]);
 
   const handleSubmit = () => {
     if (wordCount < 50) {
@@ -108,13 +115,13 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
             </div>
             
             {tabSwitches > 0 && (
-              <div className="text-sm text-amber-600">
+              <div className="text-sm text-amber-600 hidden">
                 Tab switches detected: {tabSwitches}
               </div>
             )}
             
             {suspiciousActivity && (
-              <div className="text-sm text-red-500">
+              <div className="text-sm text-red-500 hidden">
                 Suspicious typing pattern detected
               </div>
             )}

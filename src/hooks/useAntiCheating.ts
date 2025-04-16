@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { toast } from "./use-toast";
 
 interface TypingMetrics {
   keystrokes: number;
@@ -22,16 +21,12 @@ export const useAntiCheating = (response: string) => {
   const [tabSwitches, setTabSwitches] = useState(0);
   const [suspiciousActivity, setSuspiciousActivity] = useState(false);
 
-  // Track tab switching
+  // Track tab switching silently (without toast notifications)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setTabSwitches(prev => prev + 1);
-        toast({
-          title: "Tab Switch Detected",
-          description: "Switching tabs during assessment is recorded.",
-          variant: "destructive",
-        });
+        // Removed toast notification to make tab switch tracking silent
       }
     };
 
@@ -66,15 +61,13 @@ export const useAntiCheating = (response: string) => {
 
   const preventCopyPaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    toast({
-      title: "Action Prevented",
-      description: "Copy/paste is not allowed during the assessment.",
-      variant: "destructive",
-    });
+    // Silently prevent copy/paste without notification
   };
 
   const getAssessmentMetrics = () => ({
-    ...typingMetrics,
+    keystrokes: typingMetrics.keystrokes,
+    pauses: typingMetrics.pauses,
+    averageTypingSpeed: typingMetrics.averageTypingSpeed,
     tabSwitches,
     suspiciousActivity,
   });

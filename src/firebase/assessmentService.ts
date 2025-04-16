@@ -1,3 +1,4 @@
+
 import { db } from './config';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData, updateDoc, doc } from 'firebase/firestore';
 import { WritingPromptItem } from '@/components/AssessmentManager';
@@ -26,7 +27,7 @@ interface AssessmentSubmission {
     averageTypingSpeed: number;
     tabSwitches: number;
     suspiciousActivity: boolean;
-  };
+  } | null;
 }
 
 export const saveAssessmentResult = async (
@@ -61,7 +62,8 @@ export const saveAssessmentResult = async (
       completedPrompts,
       wordCount,
       submittedAt: serverTimestamp(),
-      antiCheatingMetrics
+      // Only include antiCheatingMetrics if it's properly defined
+      ...(antiCheatingMetrics ? { antiCheatingMetrics } : { antiCheatingMetrics: null })
     };
 
     if (writingScores && writingScores.length > 0) {

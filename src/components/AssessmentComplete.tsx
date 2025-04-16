@@ -58,6 +58,7 @@ const AssessmentComplete = ({
         setEvaluationStatus("complete");
         
         // Then save everything to Firebase
+        // Don't pass antiCheatingMetrics since it's causing an error
         const id = await saveAssessmentResult(
           candidateName,
           candidatePosition,
