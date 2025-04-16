@@ -1,5 +1,7 @@
 
 import React from "react";
+import { Card } from "@/components/ui/card";
+import { AlertTriangle } from "lucide-react";
 
 interface WritingResponseItemProps {
   prompt: any;
@@ -8,61 +10,55 @@ interface WritingResponseItemProps {
   getScoreBgColor: (score: number) => string;
 }
 
-const WritingResponseItem: React.FC<WritingResponseItemProps> = ({ 
-  prompt, 
-  promptScore, 
-  getScoreColor, 
-  getScoreBgColor 
+const WritingResponseItem: React.FC<WritingResponseItemProps> = ({
+  prompt,
+  promptScore,
+  getScoreColor,
+  getScoreBgColor
 }) => {
+  const aiProbability = promptScore?.aiDetection?.probability || 0;
+  const showAiWarning = aiProbability > 0.7; // 70% threshold for AI detection warning
+
   return (
-    <div className="border rounded-lg overflow-hidden shadow-subtle">
-      <div className="bg-gray-50 p-4 border-b flex justify-between items-start">
-        <h3 className="text-lg font-medium">{prompt.prompt}</h3>
-        
-        {promptScore ? (
-          <div className={`rounded-full px-3 py-1 text-white font-medium ml-2 ${
-            promptScore.score === 0 
-              ? "bg-gray-400" 
-              : getScoreColor(promptScore.score).replace("text-", "bg-")
-          } bg-opacity-90`}>
-            {promptScore.score === 0 ? "Not Evaluated" : `${promptScore.score}/5`}
+    <Card className="p-6">
+      <div className="space-y-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <h4 className="text-lg font-semibold mb-2">Writing Prompt</h4>
+            <p className="text-gray-600">{prompt.prompt}</p>
           </div>
-        ) : (
-          <div className="rounded-full px-3 py-1 text-white font-medium bg-gray-400 bg-opacity-90 ml-2">
-            Not Evaluated
-          </div>
-        )}
-      </div>
-      
-      <div className="p-4">
-        <div className="bg-muted p-4 rounded-md whitespace-pre-wrap text-sm">
-          {prompt.response}
+          {promptScore && (
+            <div className={`px-4 py-2 rounded-full ${getScoreBgColor(promptScore.score)}`}>
+              <span className={`text-lg font-bold ${getScoreColor(promptScore.score)}`}>
+                {promptScore.score.toFixed(1)}
+              </span>
+            </div>
+          )}
         </div>
-        
+
+        <div>
+          <h4 className="text-lg font-semibold mb-2">Response</h4>
+          <p className="whitespace-pre-wrap text-gray-600">{prompt.response}</p>
+        </div>
+
         {promptScore && (
-          <div className={`mt-4 p-3 rounded border ${
-            promptScore.score === 0 
-              ? "bg-gray-50 border-gray-200" 
-              : "bg-blue-50 border-blue-100"
-          }`}>
-            <p className={`text-sm font-medium ${
-              promptScore.score === 0 ? "text-gray-700" : "text-blue-700"
-            }`}>
-              AI Feedback:
-            </p>
-            <p className={`text-sm ${
-              promptScore.score === 0 ? "text-gray-600" : "text-blue-600"
-            }`}>
-              {promptScore.feedback}
-            </p>
+          <div className="space-y-2">
+            <h4 className="text-lg font-semibold">Evaluation Feedback</h4>
+            <p className="text-gray-600">{promptScore.feedback}</p>
+            
+            {showAiWarning && (
+              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                <div className="flex items-center gap-2 text-yellow-700">
+                  <AlertTriangle size={20} />
+                  <span className="font-semibold">Potential AI-Generated Content Detected</span>
+                </div>
+                <p className="mt-2 text-sm text-yellow-600">{promptScore.aiDetection?.notes}</p>
+              </div>
+            )}
           </div>
         )}
-        
-        <div className="mt-4 flex justify-between text-sm text-muted-foreground">
-          <span>Word count: {prompt.wordCount}</span>
-        </div>
       </div>
-    </div>
+    </Card>
   );
 };
 

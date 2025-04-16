@@ -1,8 +1,12 @@
-export type WritingScore = {
+export interface WritingScore {
   score: number;
   feedback: string;
   promptId: number;
-};
+  aiDetection?: {
+    probability: number;
+    notes: string;
+  };
+}
 
 export type PersonalityInsight = {
   trait: string;

@@ -1,4 +1,3 @@
-
 import { WritingPromptItem } from "@/components/AssessmentManager";
 import { WritingScore } from "./types";
 import { makeGeminiRequest, parseJsonResponse } from "./config";
@@ -9,30 +8,35 @@ export const evaluateWritingResponse = async (prompt: string, userResponse: stri
     console.log("Response length:", userResponse.length, "characters");
     
     const promptTemplate = `
-You are an expert writing evaluator for job candidates.
-Evaluate the following writing response based on a 5-point scale where:
-1: Needs Significant Improvement
-2: Basic
-3: Satisfactory
-4: Proficient
-5: Exceptional
+You are an expert writing evaluator for job candidates with expertise in detecting AI-generated text.
+Evaluate the following writing response based on these criteria:
 
-Consider the following aspects:
-- Relevance to the prompt
+1. Writing Quality (1-5 scale where 5 is best)
+- Relevance to prompt
 - Organization and structure
 - Grammar and spelling
 - Vocabulary and language use
 - Critical thinking and depth of analysis
 
+2. AI Detection
+Analyze the text for indicators of AI generation such as:
+- Unnatural writing patterns
+- Overly perfect structure
+- Lack of human writing characteristics (hesitations, self-corrections, informal elements)
+- Repetitive or templated phrases
+- Unusual consistency in style
+
+Return your evaluation as JSON with this structure:
+{
+  "score": [score as a number between 1-5],
+  "feedback": [2-3 sentences explaining the score],
+  "aiProbability": [number between 0-1 indicating likelihood of AI generation],
+  "aiDetectionNotes": [brief explanation of AI detection findings]
+}
+
 Writing Prompt: "${prompt}"
 
 Candidate's Response: "${userResponse}"
-
-Return your evaluation as JSON with the following structure:
-{
-  "score": [score as a number between 1-5],
-  "feedback": [2-3 sentences explaining the score and providing constructive feedback]
-}
 `;
 
     const text = await makeGeminiRequest(promptTemplate, 0.2);
@@ -46,11 +50,23 @@ Return your evaluation as JSON with the following structure:
     return { 
       score,
       feedback: evaluation.feedback || "No feedback provided",
+      aiDetection: {
+        probability: evaluation.aiProbability || 0,
+        notes: evaluation.aiDetectionNotes || "No AI detection notes provided"
+      },
       promptId: 0
     };
   } catch (error) {
     console.error("Error evaluating writing:", error);
-    return { score: 0, feedback: `Error evaluating writing: ${error.message}. Please check manually.`, promptId: 0 };
+    return { 
+      score: 0, 
+      feedback: `Error evaluating writing: ${error.message}. Please check manually.`, 
+      aiDetection: {
+        probability: 0,
+        notes: "AI detection failed"
+      },
+      promptId: 0 
+    };
   }
 };
 
