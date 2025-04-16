@@ -1,4 +1,3 @@
-
 import { db } from './config';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData, updateDoc, doc } from 'firebase/firestore';
 import { WritingPromptItem } from '@/components/AssessmentManager';
@@ -21,6 +20,13 @@ interface AssessmentSubmission {
   personalityInsights?: any[];
   interviewQuestions?: any[];
   profileMatch?: any;
+  antiCheatingMetrics?: {
+    keystrokes: number;
+    pauses: number;
+    averageTypingSpeed: number;
+    tabSwitches: number;
+    suspiciousActivity: boolean;
+  };
 }
 
 export const saveAssessmentResult = async (
@@ -29,20 +35,24 @@ export const saveAssessmentResult = async (
   completedPrompts: WritingPromptItem[],
   aptitudeScore: number,
   aptitudeTotal: number,
-  writingScores?: WritingScore[]
+  writingScores?: WritingScore[],
+  antiCheatingMetrics?: {
+    keystrokes: number;
+    pauses: number;
+    averageTypingSpeed: number;
+    tabSwitches: number;
+    suspiciousActivity: boolean;
+  }
 ): Promise<string> => {
   try {
-    // Calculate the total word count
     const wordCount = completedPrompts.reduce((total, prompt) => total + prompt.wordCount, 0);
     
-    // Calculate the average writing score if scores exist
     let overallWritingScore;
     if (writingScores && writingScores.length > 0) {
       const totalScore = writingScores.reduce((sum, evaluation) => sum + evaluation.score, 0);
       overallWritingScore = Number((totalScore / writingScores.length).toFixed(1));
     }
     
-    // Create the submission object
     const submission: AssessmentSubmission = {
       candidateName,
       candidatePosition,
@@ -50,16 +60,15 @@ export const saveAssessmentResult = async (
       aptitudeTotal,
       completedPrompts,
       wordCount,
-      submittedAt: serverTimestamp()
+      submittedAt: serverTimestamp(),
+      antiCheatingMetrics
     };
 
-    // Add writing scores if available
     if (writingScores && writingScores.length > 0) {
       submission.writingScores = writingScores;
       submission.overallWritingScore = overallWritingScore;
     }
     
-    // Add to Firestore
     const docRef = await addDoc(collection(db, 'assessments'), submission);
     return docRef.id;
   } catch (error) {
