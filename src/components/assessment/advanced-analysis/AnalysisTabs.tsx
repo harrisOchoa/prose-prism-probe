@@ -96,7 +96,7 @@ const AnalysisTabs: React.FC<AnalysisTabsProps> = ({
               detailedAnalysis={detailedAnalysis}
               loading={loading.writing}
               handleGenerateAnalysis={() => handleGenerateAnalysis("writing")}
-              getAnalysisButtonLabel={getAnalysisButtonLabel}
+              getAnalysisButtonLabel={() => getAnalysisButtonLabel("writing")}
             />
           </TabsContent>
 
@@ -105,7 +105,7 @@ const AnalysisTabs: React.FC<AnalysisTabsProps> = ({
               personalityInsights={personalityInsights}
               loading={loading.personality}
               handleGenerateAnalysis={() => handleGenerateAnalysis("personality")}
-              getAnalysisButtonLabel={getAnalysisButtonLabel}
+              getAnalysisButtonLabel={() => getAnalysisButtonLabel("personality")}
               getConfidenceBadgeColor={getConfidenceBadgeColor}
               getProgressColor={getProgressColor}
             />
@@ -116,7 +116,7 @@ const AnalysisTabs: React.FC<AnalysisTabsProps> = ({
               interviewQuestions={interviewQuestions}
               loading={loading.questions}
               handleGenerateAnalysis={() => handleGenerateAnalysis("questions")}
-              getAnalysisButtonLabel={getAnalysisButtonLabel}
+              getAnalysisButtonLabel={() => getAnalysisButtonLabel("questions")}
               getCategoryBadgeColor={getCategoryBadgeColor}
             />
           </TabsContent>
@@ -126,7 +126,7 @@ const AnalysisTabs: React.FC<AnalysisTabsProps> = ({
               profileMatch={profileMatch}
               loading={loading.profile}
               handleGenerateAnalysis={() => handleGenerateAnalysis("profile")}
-              getAnalysisButtonLabel={getAnalysisButtonLabel}
+              getAnalysisButtonLabel={() => getAnalysisButtonLabel("profile")}
               getProgressColor={getProgressColor}
             />
           </TabsContent>
@@ -136,7 +136,7 @@ const AnalysisTabs: React.FC<AnalysisTabsProps> = ({
               aptitudeAnalysis={aptitudeAnalysis}
               loading={loading.aptitude}
               handleGenerateAnalysis={() => handleGenerateAnalysis("aptitude")}
-              getAnalysisButtonLabel={getAnalysisButtonLabel}
+              getAnalysisButtonLabel={() => getAnalysisButtonLabel("aptitude")}
             />
           </TabsContent>
         </div>

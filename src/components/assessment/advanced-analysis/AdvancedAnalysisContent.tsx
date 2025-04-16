@@ -108,13 +108,31 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
     }
   };
 
+  // Create a wrapper function that matches the expected signature in AnalysisTabs
+  const getButtonLabel = (type: string) => {
+    const exists = getExistingAnalysisState(type);
+    return getAnalysisButtonLabel(type, exists);
+  };
+
+  // Helper function to determine if analysis data exists for a specific type
+  const getExistingAnalysisState = (type: string): boolean => {
+    switch (type) {
+      case "writing": return !!detailedAnalysis;
+      case "personality": return !!personalityInsights;
+      case "questions": return !!interviewQuestions;
+      case "profile": return !!profileMatch;
+      case "aptitude": return !!aptitudeAnalysis;
+      default: return false;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <AnalysisTabs 
         assessmentData={assessmentData}
         loading={loading}
         handleGenerateAnalysis={handleGenerateAnalysis}
-        getAnalysisButtonLabel={getAnalysisButtonLabel}
+        getAnalysisButtonLabel={getButtonLabel}
         getProgressColor={getProgressColor}
         getConfidenceBadgeColor={getConfidenceBadgeColor}
         getCategoryBadgeColor={getCategoryBadgeColor}
