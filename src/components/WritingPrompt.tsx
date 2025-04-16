@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import AssessmentTimer from "./AssessmentTimer";
 import { toast } from "@/components/ui/use-toast";
+import { useAntiCheating } from "@/hooks/useAntiCheating";
 
 interface WritingPromptProps {
   prompt: string;
@@ -25,7 +25,14 @@ const WritingPrompt = ({
   const [response, setResponse] = useState(initialResponse);
   const [wordCount, setWordCount] = useState(0);
   
-  // Reset response state when prompt changes
+  const {
+    handleKeyPress,
+    preventCopyPaste,
+    getAssessmentMetrics,
+    tabSwitches,
+    suspiciousActivity,
+  } = useAntiCheating(response);
+  
   useEffect(() => {
     setResponse(initialResponse);
     // Count words for initial response (if any)
@@ -52,7 +59,14 @@ const WritingPrompt = ({
       return;
     }
     
+    // Include anti-cheating metrics with the submission
+    const metrics = getAssessmentMetrics();
     onSubmit(response);
+    
+    // Log suspicious activity
+    if (metrics.suspiciousActivity || metrics.tabSwitches > 3) {
+      console.warn("Suspicious activity detected:", metrics);
+    }
   };
   
   const handleTimeEnd = () => {
@@ -91,6 +105,11 @@ const WritingPrompt = ({
           placeholder="Start writing your response here..."
           value={response}
           onChange={handleResponseChange}
+          onKeyPress={handleKeyPress}
+          onCopy={preventCopyPaste}
+          onPaste={preventCopyPaste}
+          onCut={preventCopyPaste}
+          onContextMenu={(e) => e.preventDefault()}
         />
         <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
           <span>{wordCount} words</span>
