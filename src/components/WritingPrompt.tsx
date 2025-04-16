@@ -78,7 +78,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
             <CardTitle className="text-2xl">
               Writing Assessment ({currentQuestion}/{totalQuestions})
             </CardTitle>
-            <AssessmentTimer timeLimit={timeLimit} onTimeUp={handleSubmit} />
+            <AssessmentTimer duration={timeLimit} onTimeEnd={handleSubmit} />
           </div>
         </CardHeader>
         <CardContent className="pt-6">
