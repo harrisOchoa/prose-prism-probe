@@ -1,12 +1,7 @@
+
 import React, { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Brain, FileQuestion, Target, Calculator } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import WritingAnalysisTab from "./WritingAnalysisTab";
-import PersonalityInsightsTab from "./PersonalityInsightsTab";
-import InterviewQuestionsTab from "./InterviewQuestionsTab";
-import ProfileMatchTab from "./ProfileMatchTab";
-import AptitudeAnalysisTab from "./AptitudeAnalysisTab";
+import AnalysisTabs from "./AnalysisTabs";
 import { getConfidenceBadgeColor, getCategoryBadgeColor, getAnalysisButtonLabel } from "./utils";
 import { 
   PersonalityInsight, 
@@ -29,7 +24,6 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
   generateAdvancedAnalysis,
   generatingAnalysis = {}
 }) => {
-  const [activeTab, setActiveTab] = useState<string>("writing");
   const [loading, setLoading] = useState<{[key: string]: boolean}>({
     writing: false,
     personality: false,
@@ -45,30 +39,19 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
 
   useEffect(() => {
     if (assessmentData) {
-      console.log("AdvancedAnalysisContent received updated assessmentData:", assessmentData);
-      
       if (assessmentData.detailedWritingAnalysis) {
-        console.log("Setting detailed analysis from assessmentData:", assessmentData.detailedWritingAnalysis);
         setDetailedAnalysis(assessmentData.detailedWritingAnalysis);
       }
-      
       if (assessmentData.personalityInsights) {
-        console.log("Setting personality insights from assessmentData:", assessmentData.personalityInsights);
         setPersonalityInsights(assessmentData.personalityInsights);
       }
-      
       if (assessmentData.interviewQuestions) {
-        console.log("Setting interview questions from assessmentData:", assessmentData.interviewQuestions);
         setInterviewQuestions(assessmentData.interviewQuestions);
       }
-      
       if (assessmentData.profileMatch) {
-        console.log("Setting profile match from assessmentData:", assessmentData.profileMatch);
         setProfileMatch(assessmentData.profileMatch);
       }
-      
       if (assessmentData.aptitudeAnalysis) {
-        console.log("Setting aptitude analysis from assessmentData:", assessmentData.aptitudeAnalysis);
         setAptitudeAnalysis(assessmentData.aptitudeAnalysis);
       }
     }
@@ -98,7 +81,6 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
 
     try {
       let result;
-      
       switch(analysisType) {
         case "writing":
           result = await generateAdvancedAnalysis("detailed");
@@ -128,107 +110,20 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
 
   return (
     <div className="space-y-6">
-      <Tabs 
-        value={activeTab} 
-        onValueChange={setActiveTab} 
-        className="space-y-6"
-      >
-        <div className="bg-white rounded-lg shadow-sm border">
-          <TabsList className="w-full h-auto p-1 bg-gray-50 rounded-t-lg border-b">
-            <TabsTrigger 
-              value="writing" 
-              className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              <BookOpen className="h-4 w-4" />
-              <span className="hidden sm:inline">Writing Analysis</span>
-              <span className="sm:hidden">Writing</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="personality" 
-              className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              <Brain className="h-4 w-4" />
-              <span className="hidden sm:inline">Personality</span>
-              <span className="sm:hidden">Traits</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="questions" 
-              className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              <FileQuestion className="h-4 w-4" />
-              <span className="hidden sm:inline">Interview Questions</span>
-              <span className="sm:hidden">Questions</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="profile" 
-              className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              <Target className="h-4 w-4" />
-              <span className="hidden sm:inline">Profile Match</span>
-              <span className="sm:hidden">Match</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="aptitude" 
-              className="flex items-center gap-2 py-3 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              <Calculator className="h-4 w-4" />
-              <span className="hidden sm:inline">Aptitude Analysis</span>
-              <span className="sm:hidden">Aptitude</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <div className="p-6">
-            <TabsContent value="writing" className="mt-0">
-              <WritingAnalysisTab 
-                detailedAnalysis={detailedAnalysis}
-                loading={loading.writing}
-                handleGenerateAnalysis={() => handleGenerateAnalysis("writing")}
-                getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!detailedAnalysis)}
-              />
-            </TabsContent>
-
-            <TabsContent value="personality" className="mt-0">
-              <PersonalityInsightsTab 
-                personalityInsights={personalityInsights}
-                loading={loading.personality}
-                handleGenerateAnalysis={() => handleGenerateAnalysis("personality")}
-                getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!personalityInsights)}
-                getConfidenceBadgeColor={getConfidenceBadgeColor}
-                getProgressColor={getProgressColor}
-              />
-            </TabsContent>
-
-            <TabsContent value="questions" className="mt-0">
-              <InterviewQuestionsTab 
-                interviewQuestions={interviewQuestions}
-                loading={loading.questions}
-                handleGenerateAnalysis={() => handleGenerateAnalysis("questions")}
-                getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!interviewQuestions)}
-                getCategoryBadgeColor={getCategoryBadgeColor}
-              />
-            </TabsContent>
-
-            <TabsContent value="profile" className="mt-0">
-              <ProfileMatchTab 
-                profileMatch={profileMatch}
-                loading={loading.profile}
-                handleGenerateAnalysis={() => handleGenerateAnalysis("profile")}
-                getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!profileMatch)}
-                getProgressColor={getProgressColor}
-              />
-            </TabsContent>
-
-            <TabsContent value="aptitude" className="mt-0">
-              <AptitudeAnalysisTab 
-                aptitudeAnalysis={aptitudeAnalysis}
-                loading={loading.aptitude}
-                handleGenerateAnalysis={() => handleGenerateAnalysis("aptitude")}
-                getAnalysisButtonLabel={(type) => getAnalysisButtonLabel(type, !!aptitudeAnalysis)}
-              />
-            </TabsContent>
-          </div>
-        </div>
-      </Tabs>
+      <AnalysisTabs 
+        assessmentData={assessmentData}
+        loading={loading}
+        handleGenerateAnalysis={handleGenerateAnalysis}
+        getAnalysisButtonLabel={getAnalysisButtonLabel}
+        getProgressColor={getProgressColor}
+        getConfidenceBadgeColor={getConfidenceBadgeColor}
+        getCategoryBadgeColor={getCategoryBadgeColor}
+        detailedAnalysis={detailedAnalysis}
+        personalityInsights={personalityInsights}
+        interviewQuestions={interviewQuestions}
+        profileMatch={profileMatch}
+        aptitudeAnalysis={aptitudeAnalysis}
+      />
     </div>
   );
 };
