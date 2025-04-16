@@ -1,9 +1,9 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sparkles, ThumbsUp, ThumbsDown, AlertCircle, FileCheck, Loader2 } from "lucide-react";
+import AntiCheatingMetrics from "../AntiCheatingMetrics";
 
 interface OverviewTabProps {
   assessmentData: any;
@@ -175,6 +175,10 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
           </CardContent>
         </Card>
       </div>
+
+      {assessmentData.antiCheatingMetrics && (
+        <AntiCheatingMetrics metrics={assessmentData.antiCheatingMetrics} />
+      )}
     </div>
   );
 };
