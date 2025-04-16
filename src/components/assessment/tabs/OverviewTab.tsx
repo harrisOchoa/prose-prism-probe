@@ -1,8 +1,9 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Sparkles, ThumbsUp, ThumbsDown, AlertCircle, FileCheck, Loader2 } from "lucide-react";
+import { Sparkles, ThumbsUp, ThumbsDown, AlertCircle, FileCheck, Loader2, Shield } from "lucide-react";
 import AntiCheatingMetrics from "../AntiCheatingMetrics";
 
 interface OverviewTabProps {
@@ -24,6 +25,39 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 gap-6">
+      {/* Anti-Cheating Metrics Card - Positioned at the top for visibility */}
+      {assessmentData.antiCheatingMetrics ? (
+        <Card className="border border-gray-200 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <Shield className="mr-2 h-5 w-5 text-purple-500" />
+              Assessment Integrity Data
+            </CardTitle>
+            <CardDescription>
+              Monitoring metrics collected during the assessment
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AntiCheatingMetrics metrics={assessmentData.antiCheatingMetrics} />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border border-gray-200 shadow-sm bg-amber-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <Shield className="mr-2 h-5 w-5 text-amber-500" />
+              Assessment Integrity Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center p-4">
+              <AlertCircle className="h-5 w-5 text-amber-500 mr-2" />
+              <p className="text-amber-700">No integrity monitoring data available for this assessment.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
@@ -175,10 +209,6 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
           </CardContent>
         </Card>
       </div>
-
-      {assessmentData.antiCheatingMetrics && (
-        <AntiCheatingMetrics metrics={assessmentData.antiCheatingMetrics} />
-      )}
     </div>
   );
 };

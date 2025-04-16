@@ -1,19 +1,40 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import AssessmentDetails from "@/components/AssessmentDetails";
 import ViewError from "@/components/assessment/ViewError";
 import ViewLoader from "@/components/assessment/ViewLoader";
 import { useAssessmentView } from "@/hooks/useAssessmentView";
+import { toast } from "@/hooks/use-toast";
 
 const View = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { assessment, loading, error, generatingSummary, setAssessment } = useAssessmentView(id);
   
-  // Get current tab from URL parameters
+  // Get current tab from URL parameters or default to "overview"
   const currentTab = searchParams.get("tab") || "overview";
+
+  // Set tab to overview if not specified
+  useEffect(() => {
+    if (!searchParams.get("tab")) {
+      setSearchParams({ tab: "overview" });
+    }
+  }, [searchParams, setSearchParams]);
+
+  // Show toast about anti-cheating metrics if they exist
+  useEffect(() => {
+    if (assessment?.antiCheatingMetrics) {
+      if (assessment.antiCheatingMetrics.tabSwitches > 0 || assessment.antiCheatingMetrics.suspiciousActivity) {
+        toast({
+          title: "Assessment Integrity Note",
+          description: "This assessment has integrity monitoring data available. Check the overview tab.",
+          variant: "default",
+        });
+      }
+    }
+  }, [assessment]);
 
   const handleBack = () => {
     // Navigate back to admin while preserving the tab the user was on
