@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { WritingPromptQuestion, getRandomQuestions } from "@/utils/questionBank";
 import { AptitudeQuestion, getRandomAptitudeQuestions } from "@/utils/aptitudeQuestions";
@@ -18,6 +19,15 @@ export interface WritingPromptItem extends WritingPromptQuestion {
   wordCount: number;
 }
 
+// Define the type for anti-cheating metrics
+export interface AntiCheatingMetrics {
+  keystrokes: number;
+  pauses: number;
+  averageTypingSpeed: number;
+  tabSwitches: number;
+  suspiciousActivity: boolean;
+}
+
 // Number of questions each candidate will receive
 const QUESTIONS_PER_ASSESSMENT = 3;
 const APTITUDE_QUESTIONS_COUNT = 30;
@@ -31,11 +41,12 @@ interface AssessmentManagerProps {
     prompts: WritingPromptItem[];
     aptitudeQuestions: AptitudeQuestion[];
     aptitudeScore: number;
+    antiCheatingMetrics?: AntiCheatingMetrics;
     startAssessment: () => void;
     handleInfoSubmit: (name: string, position: string) => void;
     handleStart: () => void;
     handleAptitudeComplete: (answers: number[], score: number) => void;
-    handlePromptSubmit: (text: string) => void;
+    handlePromptSubmit: (text: string, metrics?: AntiCheatingMetrics) => void;
     restartAssessment: () => void;
   }) => React.ReactNode;
 }
@@ -53,6 +64,9 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
   const [aptitudeQuestions, setAptitudeQuestions] = useState<AptitudeQuestion[]>([]);
   const [aptitudeAnswers, setAptitudeAnswers] = useState<number[]>([]);
   const [aptitudeScore, setAptitudeScore] = useState(0);
+  
+  // State for anti-cheating metrics
+  const [antiCheatingMetrics, setAntiCheatingMetrics] = useState<AntiCheatingMetrics | undefined>(undefined);
   
   // Start the assessment flow
   const startAssessment = () => {
@@ -92,7 +106,7 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
     setStage(Stage.WRITING);
   };
   
-  const handlePromptSubmit = (text: string) => {
+  const handlePromptSubmit = (text: string, metrics?: AntiCheatingMetrics) => {
     // Update the current prompt's response
     const updatedPrompts = [...prompts];
     // Count words
@@ -105,6 +119,12 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
     };
     
     setPrompts(updatedPrompts);
+    
+    // If metrics are provided, update the anti-cheating metrics
+    if (metrics) {
+      console.log("Updating anti-cheating metrics:", metrics);
+      setAntiCheatingMetrics(metrics);
+    }
     
     // Move to next prompt or complete if all prompts are answered
     if (currentPromptIndex < prompts.length - 1) {
@@ -123,6 +143,7 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
     setAptitudeScore(0);
     setCandidateName("");
     setCandidatePosition("");
+    setAntiCheatingMetrics(undefined);
   };
 
   return <>{children({
@@ -133,6 +154,7 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
     prompts,
     aptitudeQuestions,
     aptitudeScore,
+    antiCheatingMetrics,
     startAssessment,
     handleInfoSubmit,
     handleStart,
