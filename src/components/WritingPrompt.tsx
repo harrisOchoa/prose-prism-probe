@@ -23,8 +23,6 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
   currentQuestion,
   totalQuestions,
 }) => {
-  // Initialize state with empty string, not with response prop 
-  // to avoid carrying over content between questions
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [wordCount, setWordCount] = useState(0);
@@ -69,10 +67,8 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
     // Include anti-cheating metrics with the submission
     const metrics = getAssessmentMetrics();
     
-    // Log suspicious activity
-    if (metrics.suspiciousActivity || metrics.tabSwitches > 3) {
-      console.warn("Suspicious activity detected:", metrics);
-    }
+    // Log metrics to ensure they're being captured
+    console.log("Anti-cheating metrics captured:", metrics);
     
     onSubmit(text, metrics);
   };
@@ -113,18 +109,6 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
             <div className={`text-sm ${wordCount < 50 ? 'text-red-500' : 'text-green-500'}`}>
               Word count: {wordCount} {wordCount < 50 && "(minimum 50 words)"}
             </div>
-            
-            {tabSwitches > 0 && (
-              <div className="text-sm text-amber-600 hidden">
-                Tab switches detected: {tabSwitches}
-              </div>
-            )}
-            
-            {suspiciousActivity && (
-              <div className="text-sm text-red-500 hidden">
-                Suspicious typing pattern detected
-              </div>
-            )}
             
             <Button onClick={handleSubmit} size="lg">
               Submit Response

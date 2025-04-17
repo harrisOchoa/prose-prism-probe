@@ -23,7 +23,8 @@ const Index = () => {
         handleStart,
         handleAptitudeComplete,
         handlePromptSubmit,
-        restartAssessment
+        restartAssessment,
+        antiCheatingMetrics // Make sure this is passed down
       }) => (
         <div className="assessment-container min-h-screen py-12">
           {stage === Stage.LANDING && (
@@ -75,6 +76,7 @@ const Index = () => {
               completedPrompts={prompts}
               aptitudeScore={aptitudeScore}
               aptitudeTotal={aptitudeQuestions.length}
+              antiCheatingMetrics={antiCheatingMetrics} // Pass the metrics to AssessmentComplete
             />
           )}
         </div>

@@ -54,6 +54,9 @@ export const saveAssessmentResult = async (
       overallWritingScore = Number((totalScore / writingScores.length).toFixed(1));
     }
     
+    // Log the submission data and metrics before saving
+    console.log("Saving assessment with metrics:", antiCheatingMetrics);
+    
     const submission: AssessmentSubmission = {
       candidateName,
       candidatePosition,
@@ -62,8 +65,7 @@ export const saveAssessmentResult = async (
       completedPrompts,
       wordCount,
       submittedAt: serverTimestamp(),
-      // Only include antiCheatingMetrics if it's properly defined
-      ...(antiCheatingMetrics ? { antiCheatingMetrics } : { antiCheatingMetrics: null })
+      antiCheatingMetrics: antiCheatingMetrics || null
     };
 
     if (writingScores && writingScores.length > 0) {
@@ -71,7 +73,12 @@ export const saveAssessmentResult = async (
       submission.overallWritingScore = overallWritingScore;
     }
     
+    // Log the final submission object
+    console.log("Final submission object:", submission);
+    
     const docRef = await addDoc(collection(db, 'assessments'), submission);
+    console.log("Assessment saved with ID:", docRef.id);
+    
     return docRef.id;
   } catch (error) {
     console.error('Error saving assessment:', error);

@@ -23,6 +23,10 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   getOverallScore,
   getProgressColor
 }) => {
+  // Debug log to see what metrics are present
+  console.log("Overview Tab - Assessment Data:", assessmentData);
+  console.log("Overview Tab - Anti-Cheating Metrics:", assessmentData.antiCheatingMetrics);
+
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Anti-Cheating Metrics Card - Positioned at the top for visibility */}

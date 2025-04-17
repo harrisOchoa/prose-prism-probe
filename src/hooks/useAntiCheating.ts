@@ -14,7 +14,7 @@ export const useAntiCheating = (response: string) => {
     keystrokes: 0,
     pauses: 0,
     averageTypingSpeed: 0,
-    lastKeystrokeTime: 0,
+    lastKeystrokeTime: Date.now(), // Initialize with current time
     totalTypingTime: 0,
   });
 
@@ -26,28 +26,36 @@ export const useAntiCheating = (response: string) => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setTabSwitches(prev => prev + 1);
-        // Removed toast notification to make tab switch tracking silent
+        console.log("Tab switch detected - current count:", tabSwitches + 1);
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
+  }, [tabSwitches]);
 
   // Handle typing metrics
   const handleKeyPress = (e: React.KeyboardEvent) => {
     const currentTime = Date.now();
     
     setTypingMetrics(prev => {
-      const timeSinceLastKeystroke = currentTime - prev.lastKeystrokeTime;
+      const timeSinceLastKeystroke = prev.lastKeystrokeTime > 0 ? currentTime - prev.lastKeystrokeTime : 0;
       const newPauses = timeSinceLastKeystroke > 2000 ? prev.pauses + 1 : prev.pauses;
       
+      const newKeystrokes = prev.keystrokes + 1;
+      const newTotalTypingTime = prev.totalTypingTime + timeSinceLastKeystroke;
+      
+      // Calculate typing speed (characters per second)
+      const newAverageTypingSpeed = newTotalTypingTime > 0 
+        ? newKeystrokes / (newTotalTypingTime / 1000) 
+        : 0;
+      
       const newMetrics = {
-        keystrokes: prev.keystrokes + 1,
+        keystrokes: newKeystrokes,
         pauses: newPauses,
         lastKeystrokeTime: currentTime,
-        totalTypingTime: prev.totalTypingTime + timeSinceLastKeystroke,
-        averageTypingSpeed: (prev.keystrokes + 1) / ((prev.totalTypingTime + timeSinceLastKeystroke) / 1000),
+        totalTypingTime: newTotalTypingTime,
+        averageTypingSpeed: newAverageTypingSpeed,
       };
 
       // Check for suspicious patterns
@@ -61,16 +69,23 @@ export const useAntiCheating = (response: string) => {
 
   const preventCopyPaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    // Silently prevent copy/paste without notification
+    setSuspiciousActivity(true);
+    console.log("Copy/paste attempt detected - marked as suspicious activity");
   };
 
-  const getAssessmentMetrics = () => ({
-    keystrokes: typingMetrics.keystrokes,
-    pauses: typingMetrics.pauses,
-    averageTypingSpeed: typingMetrics.averageTypingSpeed,
-    tabSwitches,
-    suspiciousActivity,
-  });
+  const getAssessmentMetrics = () => {
+    const metrics = {
+      keystrokes: typingMetrics.keystrokes,
+      pauses: typingMetrics.pauses,
+      averageTypingSpeed: typingMetrics.averageTypingSpeed,
+      tabSwitches,
+      suspiciousActivity,
+    };
+    
+    console.log("Current anti-cheating metrics:", metrics);
+    
+    return metrics;
+  };
 
   return {
     handleKeyPress,

@@ -26,7 +26,11 @@ const View = () => {
   // Show toast about anti-cheating metrics if they exist
   useEffect(() => {
     if (assessment?.antiCheatingMetrics) {
-      if (assessment.antiCheatingMetrics.tabSwitches > 0 || assessment.antiCheatingMetrics.suspiciousActivity) {
+      // Check if metrics exist and are not null
+      if (
+        assessment.antiCheatingMetrics.tabSwitches > 0 || 
+        assessment.antiCheatingMetrics.suspiciousActivity
+      ) {
         toast({
           title: "Assessment Integrity Note",
           description: "This assessment has integrity monitoring data available. Check the overview tab.",
@@ -47,6 +51,12 @@ const View = () => {
 
   if (error) {
     return <ViewError error={error} />;
+  }
+
+  // Log assessment data to debug anti-cheating metrics
+  if (assessment) {
+    console.log("Assessment data in View:", assessment);
+    console.log("Anti-cheating metrics:", assessment.antiCheatingMetrics);
   }
 
   return (

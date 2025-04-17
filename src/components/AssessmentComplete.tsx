@@ -16,6 +16,14 @@ interface WritingPromptItem {
   wordCount: number;
 }
 
+interface AntiCheatingMetrics {
+  keystrokes: number;
+  pauses: number;
+  averageTypingSpeed: number;
+  tabSwitches: number;
+  suspiciousActivity: boolean;
+}
+
 interface AssessmentCompleteProps {
   wordCount: number;
   candidateName: string;
@@ -24,6 +32,7 @@ interface AssessmentCompleteProps {
   completedPrompts: WritingPromptItem[];
   aptitudeScore?: number;
   aptitudeTotal?: number;
+  antiCheatingMetrics?: AntiCheatingMetrics;
 }
 
 const AssessmentComplete = ({ 
@@ -33,7 +42,8 @@ const AssessmentComplete = ({
   restartAssessment, 
   completedPrompts,
   aptitudeScore = 0,
-  aptitudeTotal = 0
+  aptitudeTotal = 0,
+  antiCheatingMetrics
 }: AssessmentCompleteProps) => {
   const [isSaving, setIsSaving] = useState(true);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
@@ -57,15 +67,18 @@ const AssessmentComplete = ({
         
         setEvaluationStatus("complete");
         
-        // Then save everything to Firebase
-        // Don't pass antiCheatingMetrics since it's causing an error
+        // Log the anti-cheating metrics before saving
+        console.log("Saving assessment with anti-cheating metrics:", antiCheatingMetrics);
+        
+        // Then save everything to Firebase with properly passed metrics
         const id = await saveAssessmentResult(
           candidateName,
           candidatePosition,
           completedPrompts,
           aptitudeScore,
           aptitudeTotal,
-          scores
+          scores,
+          antiCheatingMetrics
         );
         
         setSubmissionId(id);
@@ -90,7 +103,7 @@ const AssessmentComplete = ({
     };
 
     evaluateAndSave();
-  }, [candidateName, candidatePosition, completedPrompts, aptitudeScore, aptitudeTotal]);
+  }, [candidateName, candidatePosition, completedPrompts, aptitudeScore, aptitudeTotal, antiCheatingMetrics]);
   
   return (
     <div className="assessment-card max-w-4xl mx-auto text-center">
