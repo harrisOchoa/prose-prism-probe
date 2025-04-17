@@ -6,7 +6,7 @@ interface AntiCheatingMetricsProps {
   metrics: {
     keystrokes: number;
     pauses: number;
-    averageTypingSpeed: number;
+    wordsPerMinute: number;
     tabSwitches: number;
     suspiciousActivity: boolean;
   };
@@ -33,7 +33,7 @@ const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics }) =>
         <RefreshCw className="text-purple-500" />
         <div>
           <p className="text-sm text-gray-600">Typing Speed</p>
-          <p className="font-medium">{metrics.averageTypingSpeed.toFixed(2)} chars/sec</p>
+          <p className="font-medium">{metrics.wordsPerMinute.toFixed(0)} WPM</p>
         </div>
       </div>
       <div className="flex items-center gap-3 border p-3 rounded-md">

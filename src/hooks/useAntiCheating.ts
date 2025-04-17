@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 interface TypingMetrics {
   keystrokes: number;
   pauses: number;
-  averageTypingSpeed: number;
+  wordsPerMinute: number;
   lastKeystrokeTime: number;
   totalTypingTime: number;
 }
@@ -13,7 +13,7 @@ export const useAntiCheating = (response: string) => {
   const [typingMetrics, setTypingMetrics] = useState<TypingMetrics>({
     keystrokes: 0,
     pauses: 0,
-    averageTypingSpeed: 0,
+    wordsPerMinute: 0,
     lastKeystrokeTime: Date.now(), // Initialize with current time
     totalTypingTime: 0,
   });
@@ -45,9 +45,10 @@ export const useAntiCheating = (response: string) => {
       const newKeystrokes = prev.keystrokes + 1;
       const newTotalTypingTime = prev.totalTypingTime + timeSinceLastKeystroke;
       
-      // Calculate typing speed (characters per second)
-      const newAverageTypingSpeed = newTotalTypingTime > 0 
-        ? newKeystrokes / (newTotalTypingTime / 1000) 
+      // Calculate words per minute (assuming 5 keystrokes per word on average)
+      // Formula: (keystrokes / 5) / (time in milliseconds / 60000)
+      const newWordsPerMinute = newTotalTypingTime > 0 
+        ? ((newKeystrokes / 5) / (newTotalTypingTime / 60000))
         : 0;
       
       const newMetrics = {
@@ -55,11 +56,13 @@ export const useAntiCheating = (response: string) => {
         pauses: newPauses,
         lastKeystrokeTime: currentTime,
         totalTypingTime: newTotalTypingTime,
-        averageTypingSpeed: newAverageTypingSpeed,
+        wordsPerMinute: newWordsPerMinute,
       };
 
-      // Check for suspicious patterns
-      if (newMetrics.averageTypingSpeed > 7) { // More than 7 characters per second is suspicious
+      // Check for suspicious patterns - adjust threshold for WPM
+      // Average typing speed is 40 WPM, professional typists might hit 80-100 WPM
+      // Anything above 120 might be suspicious
+      if (newMetrics.wordsPerMinute > 120) {
         setSuspiciousActivity(true);
       }
 
@@ -77,7 +80,7 @@ export const useAntiCheating = (response: string) => {
     const metrics = {
       keystrokes: typingMetrics.keystrokes,
       pauses: typingMetrics.pauses,
-      averageTypingSpeed: typingMetrics.averageTypingSpeed,
+      wordsPerMinute: typingMetrics.wordsPerMinute,
       tabSwitches,
       suspiciousActivity,
     };
