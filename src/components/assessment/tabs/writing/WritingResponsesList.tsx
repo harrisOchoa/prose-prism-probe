@@ -18,7 +18,8 @@ const WritingResponsesList: React.FC<WritingResponsesListProps> = ({
 }) => {
   return (
     <div className="space-y-6">
-      <WritingResponsesHeader />
+      <WritingResponsesHeader responsesCount={completedPrompts.length} />
+      
       <div className="space-y-6">
         {completedPrompts.map((prompt, index) => {
           const promptScore = writingScores?.find(

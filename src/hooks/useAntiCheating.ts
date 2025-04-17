@@ -9,19 +9,25 @@ interface TypingMetrics {
   totalTypingTime: number;
 }
 
+/**
+ * Hook to track and analyze user behavior during assessments to detect potential cheating
+ * Monitors typing patterns, tab switching, and copy/paste attempts
+ */
 export const useAntiCheating = (response: string) => {
+  // State for tracking typing metrics
   const [typingMetrics, setTypingMetrics] = useState<TypingMetrics>({
     keystrokes: 0,
     pauses: 0,
     wordsPerMinute: 0,
-    lastKeystrokeTime: Date.now(), // Initialize with current time
+    lastKeystrokeTime: Date.now(),
     totalTypingTime: 0,
   });
 
+  // State for tracking tab switching and suspicious activity
   const [tabSwitches, setTabSwitches] = useState(0);
   const [suspiciousActivity, setSuspiciousActivity] = useState(false);
 
-  // Track tab switching silently (without toast notifications)
+  // Track tab switching
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -34,22 +40,29 @@ export const useAntiCheating = (response: string) => {
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [tabSwitches]);
 
-  // Handle typing metrics
+  /**
+   * Updates typing metrics when a key is pressed
+   */
   const handleKeyPress = (e: React.KeyboardEvent) => {
     const currentTime = Date.now();
     
     setTypingMetrics(prev => {
-      const timeSinceLastKeystroke = prev.lastKeystrokeTime > 0 ? currentTime - prev.lastKeystrokeTime : 0;
-      const newPauses = timeSinceLastKeystroke > 2000 ? prev.pauses + 1 : prev.pauses;
+      // Calculate time since last keystroke
+      const timeSinceLastKeystroke = prev.lastKeystrokeTime > 0 
+        ? currentTime - prev.lastKeystrokeTime 
+        : 0;
       
+      // Count as a pause if more than 2 seconds between keystrokes
+      const newPauses = timeSinceLastKeystroke > 2000 
+        ? prev.pauses + 1 
+        : prev.pauses;
+      
+      // Update keystroke count and total typing time
       const newKeystrokes = prev.keystrokes + 1;
       const newTotalTypingTime = prev.totalTypingTime + timeSinceLastKeystroke;
       
       // Calculate words per minute (assuming 5 keystrokes per word on average)
-      // Formula: (keystrokes / 5) / (time in milliseconds / 60000)
-      const newWordsPerMinute = newTotalTypingTime > 0 
-        ? ((newKeystrokes / 5) / (newTotalTypingTime / 60000))
-        : 0;
+      const newWordsPerMinute = calculateWordsPerMinute(newKeystrokes, newTotalTypingTime);
       
       const newMetrics = {
         keystrokes: newKeystrokes,
@@ -59,23 +72,48 @@ export const useAntiCheating = (response: string) => {
         wordsPerMinute: newWordsPerMinute,
       };
 
-      // Check for suspicious patterns - adjust threshold for WPM
-      // Average typing speed is 40 WPM, professional typists might hit 80-100 WPM
-      // Anything above 120 might be suspicious
-      if (newMetrics.wordsPerMinute > 120) {
-        setSuspiciousActivity(true);
-      }
+      // Check for suspicious typing speed patterns
+      checkForSuspiciousTypingSpeed(newWordsPerMinute);
 
       return newMetrics;
     });
   };
 
+  /**
+   * Calculates words per minute from keystrokes and typing time
+   */
+  const calculateWordsPerMinute = (keystrokes: number, totalTimeMs: number): number => {
+    if (totalTimeMs <= 0) return 0;
+    
+    // Formula: (keystrokes / 5) / (time in milliseconds / 60000)
+    // 5 keystrokes per word is a common approximation
+    return (keystrokes / 5) / (totalTimeMs / 60000);
+  };
+
+  /**
+   * Checks if typing speed is suspiciously fast
+   */
+  const checkForSuspiciousTypingSpeed = (wpm: number) => {
+    // Average typing speed is 40 WPM, professional typists might hit 80-100 WPM
+    // Anything above 120 might be suspicious
+    if (wpm > 120) {
+      setSuspiciousActivity(true);
+      console.log("Suspicious typing speed detected:", wpm, "WPM");
+    }
+  };
+
+  /**
+   * Prevents copy/paste actions and marks as suspicious
+   */
   const preventCopyPaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     setSuspiciousActivity(true);
     console.log("Copy/paste attempt detected - marked as suspicious activity");
   };
 
+  /**
+   * Returns all assessment integrity metrics
+   */
   const getAssessmentMetrics = () => {
     const metrics = {
       keystrokes: typingMetrics.keystrokes,

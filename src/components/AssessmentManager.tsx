@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from "react";
 import { WritingPromptQuestion, getRandomQuestions } from "@/utils/questionBank";
 import { AptitudeQuestion, getRandomAptitudeQuestions } from "@/utils/aptitudeQuestions";
+import { AntiCheatingMetrics } from "@/firebase/assessmentService";
 
 // Assessment stages
 export enum Stage {
@@ -17,15 +17,6 @@ export enum Stage {
 export interface WritingPromptItem extends WritingPromptQuestion {
   response: string;
   wordCount: number;
-}
-
-// Define the type for anti-cheating metrics
-export interface AntiCheatingMetrics {
-  keystrokes: number;
-  pauses: number;
-  averageTypingSpeed: number;
-  tabSwitches: number;
-  suspiciousActivity: boolean;
 }
 
 // Number of questions each candidate will receive

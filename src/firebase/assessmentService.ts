@@ -1,10 +1,17 @@
-
 import { db } from './config';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData, updateDoc, doc } from 'firebase/firestore';
 import { WritingPromptItem } from '@/components/AssessmentManager';
 import { WritingScore } from '@/services/geminiService';
 
-interface AssessmentSubmission {
+export interface AntiCheatingMetrics {
+  keystrokes: number;
+  pauses: number;
+  wordsPerMinute: number;
+  tabSwitches: number;
+  suspiciousActivity: boolean;
+}
+
+export interface AssessmentSubmission {
   candidateName: string;
   candidatePosition: string;
   aptitudeScore: number;
@@ -21,13 +28,7 @@ interface AssessmentSubmission {
   personalityInsights?: any[];
   interviewQuestions?: any[];
   profileMatch?: any;
-  antiCheatingMetrics?: {
-    keystrokes: number;
-    pauses: number;
-    averageTypingSpeed: number;
-    tabSwitches: number;
-    suspiciousActivity: boolean;
-  } | null;
+  antiCheatingMetrics?: AntiCheatingMetrics | null;
 }
 
 export const saveAssessmentResult = async (
@@ -37,13 +38,7 @@ export const saveAssessmentResult = async (
   aptitudeScore: number,
   aptitudeTotal: number,
   writingScores?: WritingScore[],
-  antiCheatingMetrics?: {
-    keystrokes: number;
-    pauses: number;
-    averageTypingSpeed: number;
-    tabSwitches: number;
-    suspiciousActivity: boolean;
-  }
+  antiCheatingMetrics?: AntiCheatingMetrics
 ): Promise<string> => {
   try {
     const wordCount = completedPrompts.reduce((total, prompt) => total + prompt.wordCount, 0);
