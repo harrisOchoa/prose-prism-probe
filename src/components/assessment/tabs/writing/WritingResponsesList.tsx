@@ -1,6 +1,7 @@
 
 import React from "react";
 import WritingResponseItem from "./WritingResponseItem";
+import WritingResponsesHeader from "./WritingResponsesHeader";
 
 interface WritingResponsesListProps {
   completedPrompts: any[];
@@ -17,7 +18,7 @@ const WritingResponsesList: React.FC<WritingResponsesListProps> = ({
 }) => {
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-medium border-b pb-2">Writing Responses</h3>
+      <WritingResponsesHeader />
       <div className="space-y-6">
         {completedPrompts.map((prompt, index) => {
           const promptScore = writingScores?.find(
