@@ -1,0 +1,18 @@
+
+@layer components {
+  .hirescribe-button {
+    @apply bg-hirescribe-primary text-white px-6 py-3 rounded-md font-medium transition-colors hover:bg-hirescribe-accent focus:outline-none focus:ring-2 focus:ring-hirescribe-primary focus:ring-offset-2;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-card-hover;
+  }
+  
+  .glass-effect {
+    @apply bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-sm hover:shadow-md transition-all duration-300;
+  }
+  
+  .input-enhanced {
+    @apply transition-all duration-200 focus:ring-2 focus:ring-hirescribe-primary/50 focus:border-hirescribe-primary;
+  }
+}
