@@ -1,0 +1,29 @@
+
+@tailwind utilities;
+
+@layer utilities {
+  .pulse-cta {
+    @apply animate-pulse-subtle;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-hirescribe-primary to-hirescribe-accent bg-clip-text text-transparent;
+  }
+  
+  @media print {
+    .pdf-hide {
+      display: none !important;
+    }
+    
+    body {
+      font-size: 12pt;
+      line-height: 1.5;
+    }
+    
+    .assessment-container {
+      max-width: 100%;
+      padding: 0;
+      margin: 0;
+    }
+  }
+}
