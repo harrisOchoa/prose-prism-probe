@@ -1,3 +1,4 @@
+
 import { db } from './config';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData, updateDoc, doc } from 'firebase/firestore';
 import { WritingPromptItem } from '@/components/AssessmentManager';
@@ -6,7 +7,7 @@ import { WritingScore } from '@/services/geminiService';
 export interface AntiCheatingMetrics {
   keystrokes: number;
   pauses: number;
-  wordsPerMinute: number;
+  wordsPerMinute: number;  // Consistent naming
   tabSwitches: number;
   suspiciousActivity: boolean;
 }

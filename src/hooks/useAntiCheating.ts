@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from "react";
+import { AntiCheatingMetrics } from "@/firebase/assessmentService";
 
 interface TypingMetrics {
   keystrokes: number;
@@ -114,8 +114,8 @@ export const useAntiCheating = (response: string) => {
   /**
    * Returns all assessment integrity metrics
    */
-  const getAssessmentMetrics = () => {
-    const metrics = {
+  const getAssessmentMetrics = (): AntiCheatingMetrics => {
+    const metrics: AntiCheatingMetrics = {
       keystrokes: typingMetrics.keystrokes,
       pauses: typingMetrics.pauses,
       wordsPerMinute: typingMetrics.wordsPerMinute,

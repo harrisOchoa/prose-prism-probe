@@ -1,7 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { saveAssessmentResult } from "@/firebase/assessmentService";
+import { saveAssessmentResult, AntiCheatingMetrics } from "@/firebase/assessmentService";
 import { toast } from "@/hooks/use-toast";
 import { evaluateAllWritingPrompts, WritingScore } from "@/services/geminiService";
 import SuccessHeader from "./assessment/SuccessHeader";
@@ -14,14 +13,6 @@ interface WritingPromptItem {
   prompt: string;
   response: string;
   wordCount: number;
-}
-
-interface AntiCheatingMetrics {
-  keystrokes: number;
-  pauses: number;
-  averageTypingSpeed: number;
-  tabSwitches: number;
-  suspiciousActivity: boolean;
 }
 
 interface AssessmentCompleteProps {

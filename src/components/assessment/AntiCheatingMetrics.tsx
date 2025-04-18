@@ -1,15 +1,10 @@
 
 import React from "react";
 import { AlertTriangle, Clock, Keyboard, RefreshCw, SwitchCamera } from "lucide-react";
+import { AntiCheatingMetrics as AntiCheatingMetricsType } from "@/firebase/assessmentService";
 
 interface AntiCheatingMetricsProps {
-  metrics: {
-    keystrokes: number;
-    pauses: number;
-    wordsPerMinute: number;
-    tabSwitches: number;
-    suspiciousActivity: boolean;
-  };
+  metrics: AntiCheatingMetricsType;
 }
 
 const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics }) => {
