@@ -11,10 +11,7 @@ const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics }) =>
   // Safe access to properties with fallbacks
   const keystrokes = metrics?.keystrokes ?? 0;
   const pauses = metrics?.pauses ?? 0;
-  
-  // Handle both property names (wordsPerMinute or averageTypingSpeed)
-  const typingSpeed = metrics?.wordsPerMinute ?? metrics?.averageTypingSpeed ?? 0;
-  
+  const typingSpeed = metrics?.wordsPerMinute ?? 0;
   const tabSwitches = metrics?.tabSwitches ?? 0;
   const suspiciousActivity = metrics?.suspiciousActivity ?? false;
 
