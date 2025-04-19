@@ -5,103 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Users, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from "recharts";
-
-interface ComparisonChartProps {
-  comparisonData: any[];
-}
-
-const ComparisonChart: React.FC<ComparisonChartProps> = ({ comparisonData }) => {
-  return (
-    <div className="h-[300px] mt-4">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={comparisonData}
-          margin={{
-            top: 5,
-            right: 30,
-            left: 20,
-            bottom: 5,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis domain={[0, 100]} />
-          <RechartsTooltip formatter={(value) => [`${value}%`, null]} />
-          <Legend />
-          <Bar dataKey="Candidate" fill="#3b82f6" name="This Candidate" />
-          <Bar dataKey="Average" fill="#9ca3af" name="Average Candidate" />
-          <Bar dataKey="Top" fill="#22c55e" name="Top Performer" />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
-
-interface BenchmarkTableProps {
-  assessmentData: any;
-  getAptitudeScorePercentage: () => number;
-  getWritingScorePercentage: () => number;
-  getOverallScore: () => number;
-}
-
-const BenchmarkTable: React.FC<BenchmarkTableProps> = ({
-  assessmentData,
-  getAptitudeScorePercentage,
-  getWritingScorePercentage,
-  getOverallScore
-}) => {
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Metric</TableHead>
-          <TableHead>This Candidate</TableHead>
-          <TableHead>Average</TableHead>
-          <TableHead>Top Performer</TableHead>
-          <TableHead>Percentile</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        <TableRow>
-          <TableCell className="font-medium">Overall Score</TableCell>
-          <TableCell>{getOverallScore()}%</TableCell>
-          <TableCell>72%</TableCell>
-          <TableCell>94%</TableCell>
-          <TableCell>
-            {Math.round((getOverallScore() / 72) * 50)}th
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell className="font-medium">Aptitude</TableCell>
-          <TableCell>{getAptitudeScorePercentage()}%</TableCell>
-          <TableCell>68%</TableCell>
-          <TableCell>92%</TableCell>
-          <TableCell>
-            {Math.round((getAptitudeScorePercentage() / 68) * 50)}th
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell className="font-medium">Writing</TableCell>
-          <TableCell>{getWritingScorePercentage()}%</TableCell>
-          <TableCell>76%</TableCell>
-          <TableCell>96%</TableCell>
-          <TableCell>
-            {Math.round((getWritingScorePercentage() / 76) * 50)}th
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell className="font-medium">Word Count</TableCell>
-          <TableCell>{assessmentData.wordCount} words</TableCell>
-          <TableCell>450 words</TableCell>
-          <TableCell>750 words</TableCell>
-          <TableCell>
-            {Math.round((assessmentData.wordCount / 450) * 50)}th
-          </TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
-  );
-};
+import { useAssessmentCalculations } from "@/hooks/useAssessmentCalculations";
 
 interface CandidateComparisonProps {
   assessmentData: any;
@@ -116,30 +20,45 @@ const CandidateComparison: React.FC<CandidateComparisonProps> = ({
   getWritingScorePercentage,
   getOverallScore 
 }) => {
-  // Mock data - would come from real averages in production
-  const averageScore = 72;
-  const topScore = 94;
-  
+  // Centralize hardcoded averages and top performer scores 
+  const benchmarkData = {
+    averageScore: 72,
+    topScore: 94,
+    averageAptitude: 68,
+    topAptitude: 92,
+    averageWriting: 76,
+    topWriting: 96,
+    averageWordCount: 450,
+    topWordCount: 750
+  };
+
+  // Dynamically generate comparison data
   const comparisonData = [
     {
       name: "Overall Score",
       Candidate: getOverallScore(),
-      Average: averageScore,
-      Top: topScore
+      Average: benchmarkData.averageScore,
+      Top: benchmarkData.topScore
     },
     {
       name: "Writing",
-      Candidate: Math.round((getOverallScore() * 1.1) > 100 ? 100 : (getOverallScore() * 1.1)),
-      Average: Math.round((averageScore * 0.9) > 100 ? 100 : (averageScore * 0.9)),
-      Top: Math.round((topScore * 1.05) > 100 ? 100 : (topScore * 1.05))
+      Candidate: Math.min(getWritingScorePercentage(), 100),
+      Average: benchmarkData.averageWriting,
+      Top: benchmarkData.topWriting
     },
     {
       name: "Aptitude",
-      Candidate: Math.round((getOverallScore() * 0.95) > 100 ? 100 : (getOverallScore() * 0.95)),
-      Average: Math.round((averageScore * 1.1) > 100 ? 100 : (averageScore * 1.1)),
-      Top: Math.round(topScore)
+      Candidate: Math.min(getAptitudeScorePercentage(), 100),
+      Average: benchmarkData.averageAptitude,
+      Top: benchmarkData.topAptitude
     }
   ];
+
+  // Calculate percentiles with more robust calculation
+  const calculatePercentile = (candidateScore: number, avgScore: number) => {
+    const percentile = Math.round((candidateScore / avgScore) * 50);
+    return Math.min(Math.max(percentile, 1), 50);
+  };
 
   return (
     <>
@@ -154,7 +73,7 @@ const CandidateComparison: React.FC<CandidateComparisonProps> = ({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="max-w-xs">
-                    Comparing this candidate against the average score and top performer in your assessment pool.
+                    Comparing this candidate against the average score and top performer in the assessment pool.
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -163,11 +82,32 @@ const CandidateComparison: React.FC<CandidateComparisonProps> = ({
           <Users className="h-5 w-5 text-indigo-500" />
         </CardHeader>
         <CardContent>
-          <ComparisonChart comparisonData={comparisonData} />
+          <div className="h-[300px] mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={comparisonData}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                <RechartsTooltip formatter={(value) => [`${value}%`, null]} />
+                <Legend />
+                <Bar dataKey="Candidate" fill="#3b82f6" name="This Candidate" />
+                <Bar dataKey="Average" fill="#9ca3af" name="Average Candidate" />
+                <Bar dataKey="Top" fill="#22c55e" name="Top Performer" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
-            
-      <Card>
+      
+      <Card className="mt-4">
         <CardHeader>
           <CardTitle>Benchmark Details</CardTitle>
           <CardDescription>
@@ -175,12 +115,55 @@ const CandidateComparison: React.FC<CandidateComparisonProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <BenchmarkTable 
-            assessmentData={assessmentData}
-            getAptitudeScorePercentage={getAptitudeScorePercentage}
-            getWritingScorePercentage={getWritingScorePercentage}
-            getOverallScore={getOverallScore}
-          />
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Metric</TableHead>
+                <TableHead>This Candidate</TableHead>
+                <TableHead>Average</TableHead>
+                <TableHead>Top Performer</TableHead>
+                <TableHead>Percentile</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-medium">Overall Score</TableCell>
+                <TableCell>{getOverallScore()}%</TableCell>
+                <TableCell>{benchmarkData.averageScore}%</TableCell>
+                <TableCell>{benchmarkData.topScore}%</TableCell>
+                <TableCell>
+                  {calculatePercentile(getOverallScore(), benchmarkData.averageScore)}th
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Aptitude</TableCell>
+                <TableCell>{getAptitudeScorePercentage()}%</TableCell>
+                <TableCell>{benchmarkData.averageAptitude}%</TableCell>
+                <TableCell>{benchmarkData.topAptitude}%</TableCell>
+                <TableCell>
+                  {calculatePercentile(getAptitudeScorePercentage(), benchmarkData.averageAptitude)}th
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Writing</TableCell>
+                <TableCell>{getWritingScorePercentage()}%</TableCell>
+                <TableCell>{benchmarkData.averageWriting}%</TableCell>
+                <TableCell>{benchmarkData.topWriting}%</TableCell>
+                <TableCell>
+                  {calculatePercentile(getWritingScorePercentage(), benchmarkData.averageWriting)}th
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Word Count</TableCell>
+                <TableCell>{assessmentData.wordCount || 0} words</TableCell>
+                <TableCell>{benchmarkData.averageWordCount} words</TableCell>
+                <TableCell>{benchmarkData.topWordCount} words</TableCell>
+                <TableCell>
+                  {calculatePercentile(assessmentData.wordCount || 0, benchmarkData.averageWordCount)}th
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </>
