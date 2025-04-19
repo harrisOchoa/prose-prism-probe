@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { getAllAssessments } from "@/firebase/assessmentService";
+import { calculateBenchmarks } from "@/utils/benchmarkCalculations";
 
 export const useAdminDashboard = () => {
   const [assessments, setAssessments] = useState<any[]>([]);
@@ -16,6 +17,10 @@ export const useAdminDashboard = () => {
       try {
         const results = await getAllAssessments();
         setAssessments(results);
+        
+        // Calculate benchmarks from actual assessment data
+        const benchmarks = calculateBenchmarks(results);
+        console.log('Calculated benchmarks:', benchmarks);
       } catch (error) {
         console.error("Error fetching assessments:", error);
       } finally {
