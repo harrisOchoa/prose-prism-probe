@@ -14,9 +14,9 @@ export const getBenchmarkData = (): BenchmarkData => ({
   averageScore: 72,
   topScore: 94,
   averageAptitude: 68,
-  topAptitude: 92,
+  topAptitude: 85, // Reduced from 92 to a more realistic top score
   averageWriting: 76,
-  topWriting: 96,
+  topWriting: 90, // Reduced from 96 to a more realistic top score
   averageWordCount: 450,
   topWordCount: 750
 });
@@ -51,4 +51,3 @@ export const generateComparisonData = (
     Top: benchmarkData.topAptitude
   }
 ];
-
