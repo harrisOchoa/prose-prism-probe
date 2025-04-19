@@ -1,11 +1,10 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Users, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from "recharts";
-import { useAssessmentCalculations } from "@/hooks/useAssessmentCalculations";
+import { getBenchmarkData, calculatePercentile, generateComparisonData } from "@/utils/benchmarkCalculations";
 
 interface CandidateComparisonProps {
   assessmentData: any;
@@ -20,45 +19,14 @@ const CandidateComparison: React.FC<CandidateComparisonProps> = ({
   getWritingScorePercentage,
   getOverallScore 
 }) => {
-  // Centralize hardcoded averages and top performer scores 
-  const benchmarkData = {
-    averageScore: 72,
-    topScore: 94,
-    averageAptitude: 68,
-    topAptitude: 92,
-    averageWriting: 76,
-    topWriting: 96,
-    averageWordCount: 450,
-    topWordCount: 750
-  };
-
-  // Dynamically generate comparison data
-  const comparisonData = [
-    {
-      name: "Overall Score",
-      Candidate: getOverallScore(),
-      Average: benchmarkData.averageScore,
-      Top: benchmarkData.topScore
-    },
-    {
-      name: "Writing",
-      Candidate: Math.min(getWritingScorePercentage(), 100),
-      Average: benchmarkData.averageWriting,
-      Top: benchmarkData.topWriting
-    },
-    {
-      name: "Aptitude",
-      Candidate: Math.min(getAptitudeScorePercentage(), 100),
-      Average: benchmarkData.averageAptitude,
-      Top: benchmarkData.topAptitude
-    }
-  ];
-
-  // Calculate percentiles with more robust calculation
-  const calculatePercentile = (candidateScore: number, avgScore: number) => {
-    const percentile = Math.round((candidateScore / avgScore) * 50);
-    return Math.min(Math.max(percentile, 1), 50);
-  };
+  const benchmarkData = getBenchmarkData();
+  
+  const comparisonData = generateComparisonData(
+    getOverallScore,
+    getWritingScorePercentage,
+    getAptitudeScorePercentage,
+    benchmarkData
+  );
 
   return (
     <>
