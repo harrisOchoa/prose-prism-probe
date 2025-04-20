@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -49,7 +48,11 @@ const ScoreBreakdown: React.FC<ScoreBreakdownProps> = ({ correct, total }) => {
             <span className="text-sm">Correct Answers</span>
             <span className="text-sm font-medium text-green-600">{correct}</span>
           </div>
-          <Progress value={(correct / total) * 100} className="h-2" />
+          <Progress 
+            value={(correct / total) * 100} 
+            className="h-2" 
+            color="#22c55e"
+          />
         </div>
         <div>
           <div className="flex justify-between mb-1">
@@ -59,7 +62,7 @@ const ScoreBreakdown: React.FC<ScoreBreakdownProps> = ({ correct, total }) => {
           <Progress 
             value={(incorrect / total) * 100} 
             className="h-2"
-            style={{'--progress-background': '#ef4444'} as React.CSSProperties} 
+            color="#ef4444"
           />
         </div>
       </div>
