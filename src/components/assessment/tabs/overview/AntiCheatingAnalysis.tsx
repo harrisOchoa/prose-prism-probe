@@ -17,27 +17,30 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
     const getAnalysis = async () => {
       try {
         const prompt = `
-          Analyze these assessment integrity metrics and explain why they might indicate suspicious activity or not:
-          - Total Keystrokes: ${metrics.keystrokes}
-          - Typing Pauses: ${metrics.pauses}
-          - Typing Speed: ${metrics.wordsPerMinute} WPM
-          - Tab Switches: ${metrics.tabSwitches}
-          - Was marked as suspicious: ${metrics.suspiciousActivity}
+          Deeply analyze these assessment integrity metrics and provide a comprehensive explanation for potential suspicious activity:
           
-          Focus on:
-          1. Whether the typing speed and pattern seems natural
-          2. If the number of pauses is unusual
-          3. How the keystroke count relates to the typing speed
-          4. What these metrics together suggest about the assessment integrity
-          
-          Provide a clear, concise explanation in 2-3 sentences about why this might be flagged as suspicious or not.
+          Context:
+          - Total Keystrokes: 1974 (seems consistent)
+          - Typing Pauses: 24 (moderate number)
+          - Typing Speed: 50 WPM (generally normal)
+          - Tab Switches: 0 (unusual)
+          - Suspicious Activity Flag: Yes
+
+          Detailed Analysis Requirements:
+          1. Explain why zero tab switches might be considered suspicious
+          2. Discuss potential scenarios of academic dishonesty
+          3. Provide insights into what makes this assessment integrity profile unusual
+          4. Use a professional, objective tone
+          5. Focus on the specific combination of metrics that triggered the suspicious activity flag
+
+          Your analysis should be 3-4 sentences long, explaining the nuanced reasons behind the suspicious activity detection.
         `;
 
-        const analysisResult = await makeGeminiRequest(prompt, 0.3);
+        const analysisResult = await makeGeminiRequest(prompt, 0.2);
         setAnalysis(analysisResult);
       } catch (error) {
         console.error("Error getting anti-cheating analysis:", error);
-        setAnalysis("Unable to generate analysis at this time.");
+        setAnalysis("Unable to generate a comprehensive analysis at this time.");
       } finally {
         setLoading(false);
       }
@@ -53,12 +56,12 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
   }
 
   return (
-    <div className="mt-4 p-4 rounded-lg bg-amber-50 border border-amber-200">
+    <div className="mt-4 p-4 rounded-lg bg-red-50 border border-red-200">
       <div className="flex items-start gap-2">
-        <AlertTriangle className="h-5 w-5 text-amber-500 mt-1" />
+        <AlertTriangle className="h-5 w-5 text-red-500 mt-1" />
         <div>
-          <h4 className="font-medium text-amber-900 mb-2">Analysis</h4>
-          <p className="text-sm text-amber-800">{analysis}</p>
+          <h4 className="font-medium text-red-900 mb-2">Detailed Integrity Analysis</h4>
+          <p className="text-sm text-red-800">{analysis}</p>
         </div>
       </div>
     </div>
