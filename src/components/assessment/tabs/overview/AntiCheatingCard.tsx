@@ -2,8 +2,9 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Shield, AlertCircle } from "lucide-react";
-import AntiCheatingMetrics from "../../AntiCheatingMetrics";
+import AntiCheatingMetrics from "@/components/assessment/AntiCheatingMetrics";
 import { AntiCheatingMetrics as AntiCheatingMetricsType } from "@/firebase/assessmentService";
+import AntiCheatingAnalysis from "./AntiCheatingAnalysis";
 
 interface AntiCheatingCardProps {
   metrics: AntiCheatingMetricsType | undefined;
@@ -23,6 +24,7 @@ const AntiCheatingCard: React.FC<AntiCheatingCardProps> = ({ metrics }) => {
       </CardHeader>
       <CardContent>
         <AntiCheatingMetrics metrics={metrics} />
+        <AntiCheatingAnalysis metrics={metrics} />
       </CardContent>
     </Card>
   ) : (
