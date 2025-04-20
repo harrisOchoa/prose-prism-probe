@@ -89,6 +89,7 @@ export const useAdminDashboard = () => {
     averageAptitudeScore,
     averageWordCount,
     averageWritingScore,
-    getScoreColor
+    getScoreColor,
+    assessments // Expose assessments data for use in other components
   };
 };

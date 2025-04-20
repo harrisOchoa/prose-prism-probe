@@ -1,10 +1,12 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Users, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from "recharts";
-import { getBenchmarkData, calculatePercentile, generateComparisonData } from "@/utils/benchmarkCalculations";
+import { calculateBenchmarks, calculatePercentile, generateComparisonData } from "@/utils/benchmarkCalculations";
+import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 
 interface CandidateComparisonProps {
   assessmentData: any;
@@ -19,7 +21,11 @@ const CandidateComparison: React.FC<CandidateComparisonProps> = ({
   getWritingScorePercentage,
   getOverallScore 
 }) => {
-  const benchmarkData = getBenchmarkData();
+  // Get all assessment data from the admin dashboard
+  const { assessments } = useAdminDashboard();
+  
+  // Calculate benchmark data from real assessment data
+  const benchmarkData = calculateBenchmarks(assessments || []);
   
   const comparisonData = generateComparisonData(
     getOverallScore,
