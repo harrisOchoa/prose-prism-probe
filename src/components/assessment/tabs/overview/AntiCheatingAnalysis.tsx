@@ -17,30 +17,30 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
     const getAnalysis = async () => {
       try {
         const prompt = `
-          Deeply analyze these assessment integrity metrics and provide a comprehensive explanation for potential suspicious activity:
-          
+          Professional Candidate Assessment Integrity Analysis:
+
           Context:
-          - Total Keystrokes: 1974 (seems consistent)
-          - Typing Pauses: 24 (moderate number)
-          - Typing Speed: 50 WPM (generally normal)
-          - Tab Switches: 0 (unusual)
-          - Suspicious Activity Flag: Yes
+          - Total Keystrokes: ${metrics.keystrokes} (suggests continuous engagement)
+          - Typing Pauses: ${metrics.pauses} (moderate interruption pattern)
+          - Typing Speed: ${metrics.wordsPerMinute} WPM (standard professional typing range)
+          - Tab Switches: ${metrics.tabSwitches} (potential resource checking concern)
+          - Suspicious Activity Flag: ${metrics.suspiciousActivity}
 
           Detailed Analysis Requirements:
-          1. Explain why zero tab switches might be considered suspicious
-          2. Discuss potential scenarios of academic dishonesty
-          3. Provide insights into what makes this assessment integrity profile unusual
-          4. Use a professional, objective tone
-          5. Focus on the specific combination of metrics that triggered the suspicious activity flag
+          1. Assess the potential risks to fair candidate evaluation
+          2. Explain professional concerns about zero tab switches
+          3. Identify potential methods of assessment integrity breach
+          4. Maintain a neutral, objective hiring perspective
+          5. Provide actionable insights for the hiring team
 
-          Your analysis should be 3-4 sentences long, explaining the nuanced reasons behind the suspicious activity detection.
+          Craft a professional, concise analysis explaining the assessment integrity flags, focusing on maintaining a fair evaluation process for all candidates.
         `;
 
         const analysisResult = await makeGeminiRequest(prompt, 0.2);
         setAnalysis(analysisResult);
       } catch (error) {
         console.error("Error getting anti-cheating analysis:", error);
-        setAnalysis("Unable to generate a comprehensive analysis at this time.");
+        setAnalysis("Unable to generate a comprehensive assessment integrity analysis at this time.");
       } finally {
         setLoading(false);
       }
@@ -60,7 +60,7 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
       <div className="flex items-start gap-2">
         <AlertTriangle className="h-5 w-5 text-red-500 mt-1" />
         <div>
-          <h4 className="font-medium text-red-900 mb-2">Detailed Integrity Analysis</h4>
+          <h4 className="font-medium text-red-900 mb-2">Assessment Integrity Review</h4>
           <p className="text-sm text-red-800">{analysis}</p>
         </div>
       </div>
@@ -69,3 +69,4 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
 };
 
 export default AntiCheatingAnalysis;
+
