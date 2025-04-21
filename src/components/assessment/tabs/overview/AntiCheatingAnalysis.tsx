@@ -24,26 +24,30 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
       setError(null);
       try {
         const prompt = `
-          Professional Candidate Assessment Integrity Analysis:
+Candidate Assessment Integrity Review
 
-          Context:
-          - Total Keystrokes: ${metrics.keystrokes} (suggests continuous engagement)
-          - Typing Pauses: ${metrics.pauses} (moderate interruption pattern)
-          - Typing Speed: ${metrics.wordsPerMinute} WPM (standard professional typing range)
-          - Tab Switches: ${metrics.tabSwitches} (potential resource checking concern)
-          - Suspicious Activity Flag: ${metrics.suspiciousActivity}
+Your task is to provide a professional analysis for human reviewers regarding the integrity of a candidate's assessment session, based entirely and only on the provided metrics.
 
-          Please provide a structured analysis with:
-          1. A brief risk assessment summary (2 sentences)
-          2. Three specific integrity concerns
-          3. Three actionable recommendations for the hiring team
+Assessment Metrics:
+- Total Keystrokes: ${metrics.keystrokes}
+- Typing Pauses: ${metrics.pauses}
+- Typing Speed (WPM): ${metrics.wordsPerMinute}
+- Tab Switches: ${metrics.tabSwitches}
+- Suspicious Activity Flag: ${metrics.suspiciousActivity ? "Detected" : "Not Detected"}
 
-          Format the response as JSON without markdown formatting:
-          {
-            "risk": "brief risk assessment",
-            "concerns": ["concern 1", "concern 2", "concern 3"],
-            "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"]
-          }
+Instructions:
+1. Base your interpretation exclusively on these metric values. Do NOT provide concerns or recommendations unless they are warranted by the _actual_ data.
+2. If all metric values are within a reasonable and professional range, clearly state there are no significant integrity risks found.
+3. If any value is unusual or could indicate integrity issues (e.g. extremely high/low typing speed, large number of pauses, suspicious activity is detected, or tab switching rate is atypical), explain specifically what is concerning and why.
+4. Directly relate each concern/recommendation to a metric value—never include boilerplate or template responses.
+5. Avoid making unsupported inferences. For example, if tab switches is 0, only mention this if it actually warrants concern based on the task.
+
+Response Format (output as plain JSON; no markdown or commentary):
+{
+  "risk": "Clear, specific summary based entirely on these values.",
+  "concerns": [ "1...","2...","3..." ],
+  "recommendations": [ "1...","2...","3..." ]
+}
         `;
 
         const result = await makeGeminiRequest(prompt, 0.2);
@@ -71,15 +75,12 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
           }
         }
 
-        // Require all fields from Gemini. If missing, treat as error.
         if (
           !parsedResult ||
           typeof parsedResult !== "object" ||
           typeof parsedResult.risk !== "string" ||
           !Array.isArray(parsedResult.concerns) ||
-          !Array.isArray(parsedResult.recommendations) ||
-          parsedResult.concerns.length === 0 ||
-          parsedResult.recommendations.length === 0
+          !Array.isArray(parsedResult.recommendations)
         ) {
           setError("AI assessment did not return a complete review. Please review assessment data manually.");
           setAnalysis(null);
@@ -187,3 +188,4 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
 };
 
 export default AntiCheatingAnalysis;
+
