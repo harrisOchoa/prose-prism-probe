@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { AntiCheatingMetrics } from "@/firebase/assessmentService";
 
@@ -26,6 +27,7 @@ export const useAntiCheating = (response: string) => {
   // State for tracking tab switching and suspicious activity
   const [tabSwitches, setTabSwitches] = useState(0);
   const [suspiciousActivity, setSuspiciousActivity] = useState(false);
+  const [suspiciousActivityDetail, setSuspiciousActivityDetail] = useState<string | null>(null);
 
   // Track tab switching
   useEffect(() => {
@@ -98,6 +100,7 @@ export const useAntiCheating = (response: string) => {
     // Anything above 120 might be suspicious
     if (wpm > 120) {
       setSuspiciousActivity(true);
+      setSuspiciousActivityDetail(`Unusually fast typing speed detected (${wpm.toFixed(0)} WPM). The average professional typing speed is 65-80 WPM.`);
       console.log("Suspicious typing speed detected:", wpm, "WPM");
     }
   };
@@ -108,20 +111,26 @@ export const useAntiCheating = (response: string) => {
   const preventCopyPaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     setSuspiciousActivity(true);
+    setSuspiciousActivityDetail(`${e.type === 'copy' ? 'Copy' : 'Paste'} attempt detected at ${new Date().toLocaleTimeString()}.`);
     console.log("Copy/paste attempt detected - marked as suspicious activity");
   };
 
   /**
    * Returns all assessment integrity metrics
    */
-  const getAssessmentMetrics = (): AntiCheatingMetrics => {
-    const metrics: AntiCheatingMetrics = {
+  const getAssessmentMetrics = (): AntiCheatingMetrics & { suspiciousActivityDetail?: string } => {
+    const metrics: AntiCheatingMetrics & { suspiciousActivityDetail?: string } = {
       keystrokes: typingMetrics.keystrokes,
       pauses: typingMetrics.pauses,
       wordsPerMinute: typingMetrics.wordsPerMinute,
       tabSwitches,
       suspiciousActivity,
     };
+    
+    // Include details about what triggered the suspicious activity flag
+    if (suspiciousActivity && suspiciousActivityDetail) {
+      metrics.suspiciousActivityDetail = suspiciousActivityDetail;
+    }
     
     console.log("Current anti-cheating metrics:", metrics);
     
@@ -134,5 +143,6 @@ export const useAntiCheating = (response: string) => {
     getAssessmentMetrics,
     tabSwitches,
     suspiciousActivity,
+    suspiciousActivityDetail
   };
 };

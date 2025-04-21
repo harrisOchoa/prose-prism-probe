@@ -23,6 +23,7 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
     const getAnalysis = async () => {
       setError(null);
       try {
+        // Create an enhanced prompt that specifically asks for details about suspicious activity
         const prompt = `
 Candidate Assessment Integrity Review
 
@@ -34,19 +35,22 @@ Assessment Metrics:
 - Typing Speed (WPM): ${metrics.wordsPerMinute}
 - Tab Switches: ${metrics.tabSwitches}
 - Suspicious Activity Flag: ${metrics.suspiciousActivity ? "Detected" : "Not Detected"}
+- Suspicious Activity Detail: ${metrics.suspiciousActivityDetail || "Not specified"}
 
 Instructions:
 1. Base your interpretation exclusively on these metric values. Do NOT provide concerns or recommendations unless they are warranted by the _actual_ data.
 2. If all metric values are within a reasonable and professional range, clearly state there are no significant integrity risks found.
-3. If any value is unusual or could indicate integrity issues (e.g. extremely high/low typing speed, large number of pauses, suspicious activity is detected, or tab switching rate is atypical), explain specifically what is concerning and why.
-4. Directly relate each concern/recommendation to a metric value—never include boilerplate or template responses.
-5. Avoid making unsupported inferences. For example, if tab switches is 0, only mention this if it actually warrants concern based on the task.
+3. If the Suspicious Activity Flag is "Detected", explain EXACTLY what triggered it based on the Suspicious Activity Detail provided. Be specific about what activity was detected and why it's considered suspicious.
+4. For other unusual values (e.g. extremely high/low typing speed, large number of pauses, or tab switching rate is atypical), explain specifically what is concerning and why.
+5. Directly relate each concern/recommendation to a specific metric value—never include boilerplate or template responses.
+6. A value of 0 for tab switches is normal and should NOT be flagged as a concern unless there's a specific reason to expect tab switching in this assessment context.
+7. Only include concerns that are truly warranted by the data. If there are no legitimate concerns, state this clearly and provide an empty concerns array.
 
 Response Format (output as plain JSON; no markdown or commentary):
 {
-  "risk": "Clear, specific summary based entirely on these values.",
-  "concerns": [ "1...","2...","3..." ],
-  "recommendations": [ "1...","2...","3..." ]
+  "risk": "Clear, specific summary based entirely on these values, explaining exactly what suspicious activity was detected if applicable.",
+  "concerns": [ "Specific concern 1 with detailed explanation...", "Specific concern 2 with detailed explanation..." ],
+  "recommendations": [ "Specific recommendation 1...", "Specific recommendation 2..." ]
 }
         `;
 
@@ -125,12 +129,28 @@ Response Format (output as plain JSON; no markdown or commentary):
           Integrity metrics have been collected for this assessment.
           <br />
           Please review raw data for signs of suspicious behavior.
+          {metrics.suspiciousActivity && (
+            <>
+              <br /><br />
+              <strong>Important:</strong> Suspicious activity flag is enabled. 
+              {metrics.suspiciousActivityDetail ? (
+                <div className="mt-2 p-3 bg-amber-100 rounded-md">
+                  <strong>Details:</strong> {metrics.suspiciousActivityDetail}
+                </div>
+              ) : (
+                " No specific details were provided about the nature of the suspicious activity."
+              )}
+            </>
+          )}
         </div>
       </div>
     );
   }
 
   if (!analysis) return null;
+
+  // Special formatting if suspicious activity was detected
+  const hasSpecificSuspiciousActivity = metrics.suspiciousActivity && metrics.suspiciousActivityDetail;
 
   return (
     <div className="mt-4 p-6 rounded-lg bg-red-50 border border-red-200">
@@ -139,6 +159,12 @@ Response Format (output as plain JSON; no markdown or commentary):
         <div>
           <h4 className="font-semibold text-red-900 text-lg mb-2">Assessment Integrity Review</h4>
           <p className="text-sm text-red-800 leading-relaxed">{analysis.risk}</p>
+          
+          {hasSpecificSuspiciousActivity && (
+            <div className="mt-3 p-3 bg-red-100 rounded-md text-sm text-red-800">
+              <strong>Suspicious Activity Details:</strong> {metrics.suspiciousActivityDetail}
+            </div>
+          )}
         </div>
       </div>
 
@@ -159,7 +185,7 @@ Response Format (output as plain JSON; no markdown or commentary):
                 </li>
               ))
             ) : (
-              <li className="text-sm text-red-800">No concerns returned by AI.</li>
+              <li className="text-sm text-red-800">No additional concerns identified beyond the suspicious activity flag.</li>
             )}
           </ul>
         </div>
@@ -178,7 +204,7 @@ Response Format (output as plain JSON; no markdown or commentary):
                 </li>
               ))
             ) : (
-              <li className="text-sm text-red-800">No recommendations returned by AI.</li>
+              <li className="text-sm text-red-800">No specific recommendations provided by AI.</li>
             )}
           </ul>
         </div>
@@ -188,4 +214,3 @@ Response Format (output as plain JSON; no markdown or commentary):
 };
 
 export default AntiCheatingAnalysis;
-
