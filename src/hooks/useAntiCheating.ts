@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AntiCheatingMetrics } from "@/firebase/assessmentService";
 
 interface TypingMetrics {
@@ -10,12 +10,7 @@ interface TypingMetrics {
   totalTypingTime: number;
 }
 
-/**
- * Hook to track and analyze user behavior during assessments to detect potential cheating
- * Monitors typing patterns, tab switching, and copy/paste attempts
- */
 export const useAntiCheating = (response: string) => {
-  // State for tracking typing metrics
   const [typingMetrics, setTypingMetrics] = useState<TypingMetrics>({
     keystrokes: 0,
     pauses: 0,
@@ -24,60 +19,72 @@ export const useAntiCheating = (response: string) => {
     totalTypingTime: 0,
   });
 
-  // State for tracking tab switching and suspicious activity
   const [tabSwitches, setTabSwitches] = useState(0);
+  const [windowBlurs, setWindowBlurs] = useState(0);
+  const [windowFocuses, setWindowFocuses] = useState(0);
+  const [copyAttempts, setCopyAttempts] = useState(0);
+  const [pasteAttempts, setPasteAttempts] = useState(0);
   const [suspiciousActivity, setSuspiciousActivity] = useState(false);
   const [suspiciousActivityDetail, setSuspiciousActivityDetail] = useState<string | null>(null);
 
-  // Track tab switching
+  // Track time spent on prompt
+  const promptStartRef = useRef<number>(Date.now());
+  const [timeSpentMs, setTimeSpentMs] = useState(0);
+
+  // Save simple browser/system info for context
+  const userAgent = navigator?.userAgent || "unknown";
+
+  // Track tab switches, focus/blur events, and time spent
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setTabSwitches(prev => prev + 1);
-        console.log("Tab switch detected - current count:", tabSwitches + 1);
+        setWindowBlurs(prev => prev + 1);
+        setTimeSpentMs(Date.now() - promptStartRef.current);
+        console.log("Tab switch/blur detected - tabSwitches:", tabSwitches + 1, "windowBlurs:", windowBlurs + 1);
+      } else {
+        setWindowFocuses(prev => prev + 1);
+        promptStartRef.current = Date.now();
+        console.log("Window focus detected - focus count:", windowFocuses + 1);
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [tabSwitches]);
+    window.addEventListener("blur", handleVisibilityChange);
+    window.addEventListener("focus", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleVisibilityChange);
+      window.removeEventListener("focus", handleVisibilityChange);
+    };
+    // track by reference values not needed; handled via closure
+    // eslint-disable-next-line
+  }, []);
 
   /**
    * Updates typing metrics when a key is pressed
    */
   const handleKeyPress = (e: React.KeyboardEvent) => {
     const currentTime = Date.now();
-    
     setTypingMetrics(prev => {
-      // Calculate time since last keystroke
-      const timeSinceLastKeystroke = prev.lastKeystrokeTime > 0 
-        ? currentTime - prev.lastKeystrokeTime 
+      const timeSinceLastKeystroke = prev.lastKeystrokeTime > 0
+        ? currentTime - prev.lastKeystrokeTime
         : 0;
-      
-      // Count as a pause if more than 2 seconds between keystrokes
-      const newPauses = timeSinceLastKeystroke > 2000 
-        ? prev.pauses + 1 
-        : prev.pauses;
-      
-      // Update keystroke count and total typing time
+      const newPauses = timeSinceLastKeystroke > 2000 ? prev.pauses + 1 : prev.pauses;
       const newKeystrokes = prev.keystrokes + 1;
       const newTotalTypingTime = prev.totalTypingTime + timeSinceLastKeystroke;
-      
-      // Calculate words per minute (assuming 5 keystrokes per word on average)
       const newWordsPerMinute = calculateWordsPerMinute(newKeystrokes, newTotalTypingTime);
-      
-      const newMetrics = {
+
+      checkForSuspiciousTypingSpeed(newWordsPerMinute);
+
+      return {
         keystrokes: newKeystrokes,
         pauses: newPauses,
         lastKeystrokeTime: currentTime,
         totalTypingTime: newTotalTypingTime,
         wordsPerMinute: newWordsPerMinute,
       };
-
-      // Check for suspicious typing speed patterns
-      checkForSuspiciousTypingSpeed(newWordsPerMinute);
-
-      return newMetrics;
     });
   };
 
@@ -86,9 +93,6 @@ export const useAntiCheating = (response: string) => {
    */
   const calculateWordsPerMinute = (keystrokes: number, totalTimeMs: number): number => {
     if (totalTimeMs <= 0) return 0;
-    
-    // Formula: (keystrokes / 5) / (time in milliseconds / 60000)
-    // 5 keystrokes per word is a common approximation
     return (keystrokes / 5) / (totalTimeMs / 60000);
   };
 
@@ -96,8 +100,6 @@ export const useAntiCheating = (response: string) => {
    * Checks if typing speed is suspiciously fast
    */
   const checkForSuspiciousTypingSpeed = (wpm: number) => {
-    // Average typing speed is 40 WPM, professional typists might hit 80-100 WPM
-    // Anything above 120 might be suspicious
     if (wpm > 120) {
       setSuspiciousActivity(true);
       setSuspiciousActivityDetail(`Unusually fast typing speed detected (${wpm.toFixed(0)} WPM). The average professional typing speed is 65-80 WPM.`);
@@ -106,34 +108,71 @@ export const useAntiCheating = (response: string) => {
   };
 
   /**
-   * Prevents copy/paste actions and marks as suspicious
+   * Prevents copy/paste actions and logs attempts
    */
   const preventCopyPaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    setSuspiciousActivity(true);
-    setSuspiciousActivityDetail(`${e.type === 'copy' ? 'Copy' : 'Paste'} attempt detected at ${new Date().toLocaleTimeString()}.`);
-    console.log("Copy/paste attempt detected - marked as suspicious activity");
+    if (e.type === 'copy') {
+      setCopyAttempts(prev => prev + 1);
+      setSuspiciousActivity(true);
+      setSuspiciousActivityDetail(`Copy attempt detected at ${new Date().toLocaleTimeString()}.`);
+    } else if (e.type === 'paste') {
+      setPasteAttempts(prev => prev + 1);
+      setSuspiciousActivity(true);
+      setSuspiciousActivityDetail(`Paste attempt detected at ${new Date().toLocaleTimeString()}.`);
+    }
+    console.log("Copy/Paste attempt detected");
   };
+
+  // When prompt changes/restarts, reset timer
+  useEffect(() => {
+    promptStartRef.current = Date.now();
+    setTimeSpentMs(0);
+    setTabSwitches(0);
+    setWindowBlurs(0);
+    setWindowFocuses(0);
+    setCopyAttempts(0);
+    setPasteAttempts(0);
+  }, [response]);
 
   /**
    * Returns all assessment integrity metrics
    */
-  const getAssessmentMetrics = (): AntiCheatingMetrics & { suspiciousActivityDetail?: string } => {
-    const metrics: AntiCheatingMetrics & { suspiciousActivityDetail?: string } = {
+  const getAssessmentMetrics = (): AntiCheatingMetrics & {
+    suspiciousActivityDetail?: string;
+    timeSpentMs: number;
+    windowBlurs: number;
+    windowFocuses: number;
+    copyAttempts: number;
+    pasteAttempts: number;
+    userAgent: string;
+  } => {
+    const metrics: AntiCheatingMetrics & {
+      suspiciousActivityDetail?: string;
+      timeSpentMs: number;
+      windowBlurs: number;
+      windowFocuses: number;
+      copyAttempts: number;
+      pasteAttempts: number;
+      userAgent: string;
+    } = {
       keystrokes: typingMetrics.keystrokes,
       pauses: typingMetrics.pauses,
       wordsPerMinute: typingMetrics.wordsPerMinute,
       tabSwitches,
       suspiciousActivity,
+      timeSpentMs: Date.now() - promptStartRef.current + timeSpentMs,
+      windowBlurs,
+      windowFocuses,
+      copyAttempts,
+      pasteAttempts,
+      userAgent,
     };
-    
-    // Include details about what triggered the suspicious activity flag
+
     if (suspiciousActivity && suspiciousActivityDetail) {
       metrics.suspiciousActivityDetail = suspiciousActivityDetail;
     }
-    
-    console.log("Current anti-cheating metrics:", metrics);
-    
+    console.log("Anti-cheating metrics snapshot:", metrics);
     return metrics;
   };
 
@@ -143,6 +182,12 @@ export const useAntiCheating = (response: string) => {
     getAssessmentMetrics,
     tabSwitches,
     suspiciousActivity,
-    suspiciousActivityDetail
+    suspiciousActivityDetail,
+    windowBlurs,
+    windowFocuses,
+    copyAttempts,
+    pasteAttempts,
+    timeSpentMs,
+    userAgent
   };
 };
