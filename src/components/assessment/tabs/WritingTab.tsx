@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { WritingScore } from "@/services/geminiService";
@@ -25,10 +26,7 @@ const getPromptTextById = (id: number) => {
   return question ? question.prompt : `Prompt #${id}`;
 };
 
-const getPromptShortLabel = (fullPrompt: string) => {
-  const words = fullPrompt.split(" ");
-  return words.slice(0, 7).join(" ") + (words.length > 7 ? "..." : "");
-};
+// No more using short prompt, always show full in card now.
 
 const WritingTab: React.FC<WritingTabProps> = ({
   assessmentData,
@@ -41,38 +39,43 @@ const WritingTab: React.FC<WritingTabProps> = ({
     assessmentData?.weaknesses?.length
   );
 
+  // Improved card UI for writing prompt results
   const renderWritingScoreStats = () => {
     if (!assessmentData.writingScores || assessmentData.writingScores.length === 0) return null;
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {assessmentData.writingScores.map((ws: any, idx: number) => {
           const promptText = getPromptTextById(ws.promptId);
-          const shortLabel = getPromptShortLabel(promptText);
 
           return (
             <TooltipProvider key={ws.promptId || idx}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div
-                    className="rounded-xl bg-[#F1F0FB] border border-[#E5DEFF] shadow-sm flex flex-col items-start p-4 gap-2 card-hover cursor-pointer h-full"
+                    className="rounded-xl bg-[#F1F0FB] border border-[#E5DEFF] shadow-sm flex flex-col items-stretch p-5 relative gap-4 card-hover cursor-pointer h-full hover-scale"
                   >
-                    <div className="w-full flex items-center gap-2 mb-2">
-                      <span className="inline-flex items-center justify-center w-8 h-8 text-base font-bold rounded-full bg-hirescribe-primary/90 text-white shadow shrink-0">
-                        Q{ws.promptId}
-                      </span>
-                      <span className="uppercase text-xs text-[#7E69AB] font-semibold tracking-wide">Prompt</span>
-                    </div>
-                    <div className="font-medium text-sm text-gray-800 mb-1 truncate" title={promptText}>
-                      {shortLabel}
-                    </div>
-                    <div className="mt-1 mb-1 text-3xl font-extrabold text-[#8B5CF6]">
-                      {ws.score?.toFixed(1)}
-                      <span className="text-base font-medium text-neutral-400 ml-1">/5</span>
-                    </div>
-                    <div className="text-xs text-[#403E43] opacity-60 text-left">
-                      {ws.feedback && typeof ws.feedback === "string"
-                        ? ws.feedback.slice(0, 54) + (ws.feedback.length > 54 ? "..." : "")
-                        : ""}
+                    {/* Prompt Number Badge */}
+                    <span className="absolute -top-3 left-4 bg-hirescribe-primary/90 text-white rounded-full px-3 py-1 text-xs shadow font-semibold z-10 select-none tracking-wide">
+                      Q{ws.promptId}
+                    </span>
+
+                    <div className="flex flex-col flex-1">
+                      {/* Prompt text */}
+                      <div className="font-semibold text-base text-gray-800 mb-3 mt-4 min-h-[62px]">
+                        {promptText}
+                      </div>
+                      {/* Score */}
+                      <div className="mt-auto flex flex-col gap-1">
+                        <span className="text-3xl font-extrabold text-[#8B5CF6] leading-none">
+                          {ws.score?.toFixed(1)}
+                          <span className="text-base font-medium text-neutral-400 ml-1">/5</span>
+                        </span>
+                        <span className="text-xs text-[#403E43] opacity-80 mt-1 block min-h-[24px]">
+                          {ws.feedback && typeof ws.feedback === "string"
+                            ? ws.feedback.slice(0, 54) + (ws.feedback.length > 54 ? "..." : "")
+                            : ""}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </TooltipTrigger>
