@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WritingScore } from "@/services/geminiService";
 import SkillsRadarChart from "@/components/assessment/SkillsRadarChart";
 import {
@@ -26,8 +26,6 @@ const getPromptTextById = (id: number) => {
   return question ? question.prompt : `Prompt #${id}`;
 };
 
-// No more using short prompt, always show full in card now.
-
 const WritingTab: React.FC<WritingTabProps> = ({
   assessmentData,
   getScoreColor,
@@ -39,57 +37,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
     assessmentData?.weaknesses?.length
   );
 
-  // Improved card UI for writing prompt results
-  const renderWritingScoreStats = () => {
-    if (!assessmentData.writingScores || assessmentData.writingScores.length === 0) return null;
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {assessmentData.writingScores.map((ws: any, idx: number) => {
-          const promptText = getPromptTextById(ws.promptId);
-
-          return (
-            <TooltipProvider key={ws.promptId || idx}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    className="rounded-xl bg-[#F1F0FB] border border-[#E5DEFF] shadow-sm flex flex-col items-stretch p-5 relative gap-4 card-hover cursor-pointer h-full hover-scale"
-                  >
-                    {/* Prompt Number Badge */}
-                    <span className="absolute -top-3 left-4 bg-hirescribe-primary/90 text-white rounded-full px-3 py-1 text-xs shadow font-semibold z-10 select-none tracking-wide">
-                      Q{ws.promptId}
-                    </span>
-
-                    <div className="flex flex-col flex-1">
-                      {/* Prompt text */}
-                      <div className="font-semibold text-base text-gray-800 mb-3 mt-4 min-h-[62px]">
-                        {promptText}
-                      </div>
-                      {/* Score */}
-                      <div className="mt-auto flex flex-col gap-1">
-                        <span className="text-3xl font-extrabold text-[#8B5CF6] leading-none">
-                          {ws.score?.toFixed(1)}
-                          <span className="text-base font-medium text-neutral-400 ml-1">/5</span>
-                        </span>
-                        <span className="text-xs text-[#403E43] opacity-80 mt-1 block min-h-[24px]">
-                          {ws.feedback && typeof ws.feedback === "string"
-                            ? ws.feedback.slice(0, 54) + (ws.feedback.length > 54 ? "..." : "")
-                            : ""}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <div className="text-sm text-gray-800 font-semibold mb-2">Full Prompt</div>
-                  <div className="text-xs text-gray-700">{promptText}</div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          );
-        })}
-      </div>
-    );
-  };
+  // REMOVED: renderWritingScoreStats and all writing card logic
 
   return (
     <Card className="shadow-subtle animate-fade-in">
@@ -113,7 +61,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 getScoreBgColor={getScoreBgColor}
                 getScoreLabel={getScoreLabel}
               />
-              {renderWritingScoreStats()}
+              {/* The writing prompt result cards are removed, so nothing here */}
             </div>
           </>
         ) : (
