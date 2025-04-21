@@ -26,20 +26,6 @@ const getPromptTextById = (id: number) => {
   return question ? question.prompt : `Prompt #${id}`;
 };
 
-const WritingScoreCard: React.FC<{ ws: WritingScore }> = ({ ws }) => {
-  return (
-    <div
-      className="rounded-md border border-gray-200 bg-[#F1F0FB] px-4 py-3 flex flex-col justify-center cursor-default select-none shadow-sm hover:shadow-md transition-shadow duration-200"
-      title={getPromptTextById(ws.promptId)}
-    >
-      <span className="text-sm text-gray-600 font-semibold mb-1">Question {ws.promptId}</span>
-      <span className={`text-xl font-bold ${ws.score >= 4.5 ? 'text-green-600' : ws.score >= 3.5 ? 'text-yellow-600' : ws.score >= 2.5 ? 'text-amber-600' : ws.score >= 1.5 ? 'text-orange-600' : 'text-red-600'}`}>
-        {ws.score.toFixed(1)}/5
-      </span>
-    </div>
-  );
-};
-
 const WritingTab: React.FC<WritingTabProps> = ({
   assessmentData,
   getScoreColor,
@@ -73,18 +59,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 getScoreBgColor={getScoreBgColor}
                 getScoreLabel={getScoreLabel}
               />
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {assessmentData.writingScores && assessmentData.writingScores.map((ws: WritingScore) => (
-                  <WritingScoreCard key={ws.promptId} ws={ws} />
-                ))}
-                <div className="rounded-md border border-gray-200 bg-[#F1F0FB] px-4 py-3 flex flex-col justify-center cursor-default select-none shadow-sm hover:shadow-md transition-shadow duration-200">
-                  <span className="text-sm text-gray-600 font-semibold mb-1">Aptitude Test Score</span>
-                  <span className="text-xl font-bold text-yellow-600">
-                    {assessmentData.aptitudeScore?.toFixed(1) ?? 'N/A'}/
-                    {assessmentData.aptitudeTotal ?? ''}
-                  </span>
-                </div>
-              </div>
+              {/* The writing prompt result cards are removed from here */}
             </div>
           </>
         ) : (
@@ -148,4 +123,3 @@ const WritingTab: React.FC<WritingTabProps> = ({
 };
 
 export default WritingTab;
-

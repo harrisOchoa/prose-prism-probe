@@ -15,12 +15,28 @@ import {
 import { WritingScore } from "@/services/geminiService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Zap } from "lucide-react";
+import { questionBank } from "@/utils/questionBank";
+
+// Helper to get "Question N" style label
+const getQuestionLabel = (promptId: number) => {
+  return `Question ${promptId}`;
+};
 
 interface SkillsRadarChartProps {
   writingScores: WritingScore[];
   aptitudeScore: number;
   aptitudeTotal: number;
 }
+
+const getScoreColorClass = (score: number) => {
+  if (score >= 4.5) return "text-green-600";
+  if (score >= 3.5) return "text-blue-600";
+  if (score >= 2.5) return "text-yellow-600";
+  if (score >= 1.5) return "text-orange-600";
+  return "text-red-600";
+};
+
+const getAptitudeLabel = () => "Aptitude Test Score";
 
 const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({ 
   writingScores, 
@@ -59,15 +75,27 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
     score: Number(((aptitudeScore / aptitudeTotal) * 5).toFixed(1)),
     fullMark: 5
   });
-  
-  const getScoreColor = (score: number) => {
-    if (score >= 4.5) return "#22c55e"; // green
-    if (score >= 3.5) return "#3b82f6"; // blue
-    if (score >= 2.5) return "#eab308"; // yellow
-    if (score >= 1.5) return "#f97316"; // orange
-    return "#ef4444"; // red
-  };
-  
+
+  // For scores bar below chart, show in order by promptId (to match writingScores order)
+  const cardsData = [
+    ...validScores.map(ws => ({
+      key: `ws-${ws.promptId}`,
+      label: getQuestionLabel(ws.promptId),
+      value: ws.score,
+      valueDisplay: `${ws.score.toFixed(1)}/5`,
+      description: questionBank.find(q => q.id === ws.promptId)?.prompt || "",
+      colorClass: getScoreColorClass(ws.score)
+    })),
+    {
+      key: "aptitude",
+      label: getAptitudeLabel(),
+      value: aptitudeScore,
+      valueDisplay: `${aptitudeScore}/${aptitudeTotal ?? ""}`,
+      description: "",
+      colorClass: "text-yellow-600"
+    }
+  ];
+
   return (
     <Card className="border shadow-elevation-1 animate-fade-in overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
@@ -139,23 +167,17 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
             </ChartContainer>
           </div>
           
-          {/* Right side: Score cards */}
+          {/* Right side: NEW card row for writing & aptitude scores */}
           <div className="w-full md:w-1/2 flex flex-col justify-center">
-            <div className="grid grid-cols-2 gap-4">
-              {chartData.map((item, index) => (
-                <div 
-                  key={index} 
-                  className="p-4 rounded-md border bg-indigo-50/80 hover:shadow-md transition-all duration-200"
+            <div className="flex flex-wrap gap-4 justify-start">
+              {cardsData.map(card => (
+                <div
+                  key={card.key}
+                  className="min-w-[140px] bg-[#F1F0FB] border border-gray-200 rounded-lg px-4 py-3 mb-2 flex flex-col shadow-sm"
+                  title={card.description}
                 >
-                  <div className="text-sm font-medium text-gray-600 mb-1 truncate">
-                    {item.fullName || item.category}
-                  </div>
-                  <div 
-                    className="text-xl font-semibold" 
-                    style={{ color: getScoreColor(item.score) }}
-                  >
-                    {item.score}/5
-                  </div>
+                  <span className="text-xs font-semibold text-gray-600 mb-1">{card.label}</span>
+                  <span className={`text-xl font-bold ${card.colorClass}`}>{card.valueDisplay}</span>
                 </div>
               ))}
             </div>
