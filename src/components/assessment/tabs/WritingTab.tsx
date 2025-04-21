@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WritingScore } from "@/services/geminiService";
@@ -52,14 +51,13 @@ const WritingTab: React.FC<WritingTabProps> = ({
       <CardContent className="space-y-10 pt-6">
         {assessmentData.overallWritingScore ? (
           <>
-            <div className="grid md:grid-cols-2 gap-8 mb-4">
+            <div className="w-full mb-4">
               <ScoringSummary
                 overallWritingScore={assessmentData.overallWritingScore}
                 getScoreColor={getScoreColor}
                 getScoreBgColor={getScoreBgColor}
                 getScoreLabel={getScoreLabel}
               />
-              {/* The writing prompt result cards are removed from here */}
             </div>
           </>
         ) : (
