@@ -6,6 +6,7 @@ import AssessmentTimer from "@/components/AssessmentTimer";
 import { useAntiCheating } from "@/hooks/useAntiCheating";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Loader2 } from "lucide-react";
 
 interface WritingPromptProps {
   prompt: string;
@@ -14,6 +15,7 @@ interface WritingPromptProps {
   onSubmit: (text: string, metrics?: any) => void;
   currentQuestion: number;
   totalQuestions: number;
+  isLoading?: boolean;
 }
 
 const WritingPrompt: React.FC<WritingPromptProps> = ({
@@ -23,6 +25,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
   onSubmit,
   currentQuestion,
   totalQuestions,
+  isLoading = false
 }) => {
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -89,7 +92,14 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
         <CardContent className={`${isMobile ? 'p-3 pt-4' : 'p-6 pt-6'}`}>
           <div className={`mb-4 ${isMobile ? 'p-3' : 'p-4'} bg-muted/30 rounded-md`}>
             <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-lg'} mb-2`}>Prompt:</h3>
-            <p className={isMobile ? 'text-sm' : 'text-base'}>{prompt}</p>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+                <p>Generating a position-specific writing prompt...</p>
+              </div>
+            ) : (
+              <p className={isMobile ? 'text-sm' : 'text-base'}>{prompt}</p>
+            )}
           </div>
           
           <div className="mb-4">
@@ -104,6 +114,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
               onCut={preventCopyPaste}
               className={`w-full ${isMobile ? 'h-48' : 'h-64'} p-3 md:p-4 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-sm md:text-base`}
               placeholder="Start typing your response here..."
+              disabled={isLoading}
             />
           </div>
           
@@ -116,6 +127,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
               onClick={handleSubmit} 
               size={isMobile ? "default" : "lg"}
               className="w-full sm:w-auto order-1 sm:order-2"
+              disabled={isLoading}
             >
               Submit Response
             </Button>

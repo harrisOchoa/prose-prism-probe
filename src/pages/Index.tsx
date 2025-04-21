@@ -24,7 +24,7 @@ const Index = () => {
         handleAptitudeComplete,
         handlePromptSubmit,
         restartAssessment,
-        antiCheatingMetrics // Make sure this is passed down
+        antiCheatingMetrics
       }) => (
         <div className="assessment-container min-h-screen py-6 sm:py-12 px-2 sm:px-0">
           {stage === Stage.LANDING && (
@@ -56,14 +56,15 @@ const Index = () => {
             />
           )}
           
-          {stage === Stage.WRITING && prompts.length > 0 && (
+          {stage === Stage.WRITING && (
             <WritingPrompt 
-              prompt={prompts[currentPromptIndex].prompt}
-              response={prompts[currentPromptIndex].response}
+              prompt={prompts[currentPromptIndex]?.prompt || ""}
+              response={prompts[currentPromptIndex]?.response || ""}
               timeLimit={30 * 60} // 30 minutes in seconds
               onSubmit={handlePromptSubmit}
               currentQuestion={currentPromptIndex + 1}
               totalQuestions={prompts.length}
+              isLoading={prompts.length === 0}
             />
           )}
           
@@ -76,7 +77,7 @@ const Index = () => {
               completedPrompts={prompts}
               aptitudeScore={aptitudeScore}
               aptitudeTotal={aptitudeQuestions.length}
-              antiCheatingMetrics={antiCheatingMetrics} // Pass the metrics to AssessmentComplete
+              antiCheatingMetrics={antiCheatingMetrics}
             />
           )}
         </div>
@@ -86,4 +87,3 @@ const Index = () => {
 };
 
 export default Index;
-
