@@ -35,6 +35,15 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
   regenerateInsights,
   handleExportPdf
 }) => {
+  // Check if writing scores exist and if they are valid
+  const hasValidWritingScores = assessmentData.writingScores && 
+    assessmentData.writingScores.length > 0 && 
+    assessmentData.writingScores.some(score => score.score > 0);
+
+  // Log for debugging
+  console.log("Assessment Header - Writing Scores:", assessmentData.writingScores);
+  console.log("Has Valid Writing Scores:", hasValidWritingScores);
+  
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-lg border shadow-subtle animate-fade-in hover:shadow-elevation-1 transition-all">
       <div className="flex items-center gap-3">
@@ -75,7 +84,7 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
           </Button>
         )}
         
-        {assessmentData.writingScores && assessmentData.writingScores.length > 0 ? (
+        {hasValidWritingScores ? (
           <Button 
             variant="secondary" 
             onClick={regenerateInsights} 
@@ -123,3 +132,4 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
 };
 
 export default AssessmentHeader;
+
