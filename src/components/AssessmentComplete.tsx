@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { saveAssessmentResult, AntiCheatingMetrics } from "@/firebase/assessmentService";
@@ -39,7 +40,7 @@ const AssessmentComplete = ({
   const [isSaving, setIsSaving] = useState(true);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [writingScores, setWritingScores] = useState<WritingScore[]>([]);
-  const [evaluationStatus, setEvaluationStatus: React.Dispatch<React.SetStateAction<"loading" | "complete" | "error">>] = useState("loading");
+  const [evaluationStatus, setEvaluationStatus] = useState<"loading" | "complete" | "error">("loading");
 
   useEffect(() => {
     const evaluateAndSave = async () => {
