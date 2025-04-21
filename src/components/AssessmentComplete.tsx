@@ -39,7 +39,7 @@ const AssessmentComplete = ({
   const [isSaving, setIsSaving] = useState(true);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [writingScores, setWritingScores] = useState<WritingScore[]>([]);
-  const [evaluationStatus, setEvaluationStatus] = useState<"loading" | "complete" | "error">("loading");
+  const [evaluationStatus, setEvaluationStatus: React.Dispatch<React.SetStateAction<"loading" | "complete" | "error">>] = useState("loading");
 
   useEffect(() => {
     const evaluateAndSave = async () => {
@@ -97,7 +97,7 @@ const AssessmentComplete = ({
   }, [candidateName, candidatePosition, completedPrompts, aptitudeScore, aptitudeTotal, antiCheatingMetrics]);
   
   return (
-    <div className="assessment-card max-w-4xl mx-auto text-center">
+    <div className="assessment-card max-w-4xl mx-auto text-center px-2 sm:px-4 py-6">
       <SuccessHeader candidateName={candidateName} />
       
       <SubmissionDetails 
@@ -111,12 +111,14 @@ const AssessmentComplete = ({
         candidatePosition={candidatePosition} 
       />
       
-      <Button 
-        className="hirescribe-button"
-        onClick={restartAssessment}
-      >
-        Start New Assessment
-      </Button>
+      <div className="flex flex-col items-center justify-center mt-4">
+        <Button 
+          className="hirescribe-button w-full max-w-xs sm:w-auto"
+          onClick={restartAssessment}
+        >
+          Start New Assessment
+        </Button>
+      </div>
     </div>
   );
 };

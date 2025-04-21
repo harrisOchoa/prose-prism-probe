@@ -12,8 +12,8 @@ const LandingPage = ({ onStart }: LandingPageProps) => {
   const isMobile = useIsMobile();
   
   return (
-    <div className="min-h-[80vh] flex items-center justify-center p-4">
-      <div className="assessment-card max-w-4xl mx-auto text-center space-y-6 md:space-y-8 animate-fade-in">
+    <div className="min-h-[80vh] flex items-center justify-center p-2 sm:p-4">
+      <div className="assessment-card max-w-4xl mx-auto text-center space-y-6 md:space-y-8 animate-fade-in w-full">
         <div className="space-y-4 md:space-y-6">
           <h1 className={`${isMobile ? 'text-3xl' : 'text-4xl md:text-5xl'} font-bold text-hirescribe-primary bg-gradient-to-r from-hirescribe-primary to-hirescribe-accent bg-clip-text text-transparent`}>
             HireScribe
@@ -23,7 +23,7 @@ const LandingPage = ({ onStart }: LandingPageProps) => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+        <div className={`grid gap-4 ${isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3"}`}>
           <div className="glass-effect p-4 md:p-6 rounded-xl hover:shadow-elevation-2 transition-all duration-300">
             <div className="flex flex-col items-center gap-3 md:gap-4">
               <div className="rounded-full bg-hirescribe-primary/10 p-3">
@@ -61,10 +61,10 @@ const LandingPage = ({ onStart }: LandingPageProps) => {
           </div>
         </div>
 
-        <div className="pt-4 md:pt-8">
+        <div className="pt-4 md:pt-8 w-full">
           <Button 
             onClick={onStart}
-            className={`bg-gradient-to-r from-hirescribe-primary to-hirescribe-accent hover:opacity-90 transition-all duration-300 text-white ${isMobile ? 'px-6 py-3 text-sm rounded-lg' : 'px-8 py-6 text-lg rounded-xl'} group`}
+            className={`bg-gradient-to-r from-hirescribe-primary to-hirescribe-accent hover:opacity-90 transition-all duration-300 text-white ${isMobile ? 'px-6 py-3 text-sm rounded-lg w-full' : 'px-8 py-6 text-lg rounded-xl w-auto'} group`}
           >
             Start Assessment
             <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5 transition-transform group-hover:translate-x-1" />

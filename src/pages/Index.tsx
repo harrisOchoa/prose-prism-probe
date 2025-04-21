@@ -26,7 +26,7 @@ const Index = () => {
         restartAssessment,
         antiCheatingMetrics // Make sure this is passed down
       }) => (
-        <div className="assessment-container min-h-screen py-12">
+        <div className="assessment-container min-h-screen py-6 sm:py-12 px-2 sm:px-0">
           {stage === Stage.LANDING && (
             <LandingPage onStart={startAssessment} />
           )}
@@ -86,3 +86,4 @@ const Index = () => {
 };
 
 export default Index;
+

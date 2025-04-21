@@ -32,15 +32,17 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in px-2 md:px-0">
       <DashboardHeader searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
-      <DashboardStats 
-        totalAssessments={totalAssessments}
-        averageAptitudeScore={averageAptitudeScore}
-        averageWordCount={averageWordCount}
-        averageWritingScore={averageWritingScore}
-      />
+      <div className="w-full">
+        <DashboardStats 
+          totalAssessments={totalAssessments}
+          averageAptitudeScore={averageAptitudeScore}
+          averageWordCount={averageWordCount}
+          averageWritingScore={averageWritingScore}
+        />
+      </div>
 
       {loading ? (
         <LoadingState />
