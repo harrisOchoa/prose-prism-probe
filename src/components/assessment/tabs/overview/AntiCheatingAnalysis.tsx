@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState } from "react";
 import { makeGeminiRequest } from "@/services/gemini/config";
-import { Skeleton } from "@/components/ui/skeleton";
 import { AntiCheatingMetrics } from "@/firebase/assessmentService";
-import { AlertTriangle, Flag, ClipboardCheck } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import AntiCheatingSkeleton from "./AntiCheatingSkeleton";
+import AntiCheatingError from "./AntiCheatingError";
+import AntiCheatingReview from "./AntiCheatingReview";
 
 interface AntiCheatingAnalysisProps {
   metrics: AntiCheatingMetrics & { suspiciousActivityDetail?: string };
@@ -23,7 +22,6 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
     const getAnalysis = async () => {
       setError(null);
       try {
-        // Create an enhanced prompt that specifically asks for details about suspicious activity
         const prompt = `
 Candidate Assessment Integrity Review
 
@@ -60,7 +58,6 @@ Response Format (output as plain JSON; no markdown or commentary):
         try {
           parsedResult = JSON.parse(result);
         } catch (parseError) {
-          // Try extracting JSON from markdown (```json ... ```) if present
           const jsonMatch = result.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
           if (jsonMatch && jsonMatch[1]) {
             try {
@@ -111,106 +108,16 @@ Response Format (output as plain JSON; no markdown or commentary):
   }, [metrics]);
 
   if (loading) {
-    return <Skeleton className="h-[400px] w-full" />;
+    return <AntiCheatingSkeleton />;
   }
 
   if (error) {
-    return (
-      <div className="mt-4 p-6 rounded-lg bg-amber-50 border border-amber-200">
-        <div className="flex items-start gap-3 mb-2">
-          <AlertTriangle className="h-6 w-6 text-amber-500 mt-1 flex-shrink-0" />
-          <div>
-            <h4 className="font-semibold text-amber-900 text-lg mb-2">Assessment Integrity Review Unavailable</h4>
-            <p className="text-sm text-amber-800 leading-relaxed">{error}</p>
-          </div>
-        </div>
-        <Separator className="my-4 bg-amber-200" />
-        <div className="text-sm text-amber-800">
-          Integrity metrics have been collected for this assessment.
-          <br />
-          Please review raw data for signs of suspicious behavior.
-          {metrics.suspiciousActivity && (
-            <>
-              <br /><br />
-              <strong>Important:</strong> Suspicious activity flag is enabled. 
-              {metrics.suspiciousActivityDetail ? (
-                <div className="mt-2 p-3 bg-amber-100 rounded-md">
-                  <strong>Details:</strong> {metrics.suspiciousActivityDetail}
-                </div>
-              ) : (
-                " No specific details were provided about the nature of the suspicious activity."
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    );
+    return <AntiCheatingError error={error} metrics={metrics} />;
   }
 
   if (!analysis) return null;
 
-  // Special formatting if suspicious activity was detected
-  const hasSpecificSuspiciousActivity = metrics.suspiciousActivity && metrics.suspiciousActivityDetail;
-
-  return (
-    <div className="mt-4 p-6 rounded-lg bg-red-50 border border-red-200">
-      <div className="flex items-start gap-3 mb-4">
-        <AlertTriangle className="h-6 w-6 text-red-500 mt-1 flex-shrink-0" />
-        <div>
-          <h4 className="font-semibold text-red-900 text-lg mb-2">Assessment Integrity Review</h4>
-          <p className="text-sm text-red-800 leading-relaxed">{analysis.risk}</p>
-          
-          {hasSpecificSuspiciousActivity && (
-            <div className="mt-3 p-3 bg-red-100 rounded-md text-sm text-red-800">
-              <strong>Suspicious Activity Details:</strong> {metrics.suspiciousActivityDetail}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <Separator className="my-4 bg-red-200" />
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-red-900">
-            <Flag className="h-5 w-5" />
-            <h5 className="font-medium">Key Concerns</h5>
-          </div>
-          <ul className="space-y-2">
-            {analysis.concerns && analysis.concerns.length > 0 ? (
-              analysis.concerns.map((concern, index) => (
-                <li key={index} className="text-sm text-red-800 flex gap-2 items-start">
-                  <span className="text-red-400 mt-1">•</span>
-                  <span>{concern}</span>
-                </li>
-              ))
-            ) : (
-              <li className="text-sm text-red-800">No additional concerns identified beyond the suspicious activity flag.</li>
-            )}
-          </ul>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-red-900">
-            <ClipboardCheck className="h-5 w-5" />
-            <h5 className="font-medium">Recommendations</h5>
-          </div>
-          <ul className="space-y-2">
-            {analysis.recommendations && analysis.recommendations.length > 0 ? (
-              analysis.recommendations.map((recommendation, index) => (
-                <li key={index} className="text-sm text-red-800 flex gap-2 items-start">
-                  <span className="text-red-400 mt-1">•</span>
-                  <span>{recommendation}</span>
-                </li>
-              ))
-            ) : (
-              <li className="text-sm text-red-800">No specific recommendations provided by AI.</li>
-            )}
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
+  return <AntiCheatingReview analysis={analysis} metrics={metrics} />;
 };
 
 export default AntiCheatingAnalysis;
