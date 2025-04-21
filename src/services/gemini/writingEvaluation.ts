@@ -1,3 +1,4 @@
+
 import { WritingPromptItem } from "@/components/AssessmentManager";
 import { WritingScore } from "./types";
 import { makeGeminiRequest, parseJsonResponse } from "./config";
@@ -8,10 +9,17 @@ export const evaluateWritingResponse = async (prompt: string, userResponse: stri
     console.log("Response length:", userResponse.length, "characters");
     
     const promptTemplate = `
-You are an expert writing evaluator for job candidates with expertise in detecting AI-generated text.
-Evaluate the following writing response based on these criteria:
+You are an expert writing evaluator for job candidates, with special attention to providing fair but candid feedback and detecting possible AI-generated text. DO NOT use generic, vague, or templated feedback. Each evaluation must be tailored to the specific writing sample and reference unique details.
 
-1. Writing Quality (1-5 scale where 5 is best)
+Your feedback MUST:
+- Reference at least one phrase, sentence, or idea from the candidate’s response.
+- Be honest, constructive, and specific to the individual; do not use canned language.
+- Clearly state one strength observed in the writing and one specific area for improvement, even for high or low scores.
+- Avoid general phrases such as "The response is relevant to the prompt" or "The writing is simplistic" unless you pair them with clear evidence and further explanation.
+
+Evaluate the following writing response:
+
+1. Writing Quality (1-5 scale, 5 = exemplary)
 - Relevance to prompt
 - Organization and structure
 - Grammar and spelling
@@ -19,19 +27,21 @@ Evaluate the following writing response based on these criteria:
 - Critical thinking and depth of analysis
 
 2. AI Detection
-Analyze the text for indicators of AI generation such as:
-- Unnatural writing patterns
-- Overly perfect structure
-- Lack of human writing characteristics (hesitations, self-corrections, informal elements)
-- Repetitive or templated phrases
-- Unusual consistency in style
+Analyze for signs of AI generation, such as:
+- Unnatural patterns, repetition, or generic phrases
+- Lack of authentic human characteristics (hesitations, narrative quirks, informal elements)
+- Suspicious consistency or over-perfection
 
-Return your evaluation as JSON with this structure:
+Return your evaluation as JSON with this exact structure:
 {
-  "score": [score as a number between 1-5],
-  "feedback": [2-3 sentences explaining the score],
-  "aiProbability": [number between 0-1 indicating likelihood of AI generation],
-  "aiDetectionNotes": [brief explanation of AI detection findings]
+  "score": [number between 1-5],
+  "feedback": [
+    "Write 2-4 sentences. Directly quote or summarize part of the candidate’s answer. 
+     Include something the candidate did well, and something they could improve, giving actionable feedback. 
+     Avoid general or repetitive phrasing."
+  ],
+  "aiProbability": [number between 0-1 for AI likelihood],
+  "aiDetectionNotes": [brief explanation of findings, reference specific sentence or quality if possible]
 }
 
 Writing Prompt: "${prompt}"
