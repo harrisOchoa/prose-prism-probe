@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { makeGeminiRequest } from "@/services/gemini/config";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AntiCheatingMetrics } from "@/firebase/assessmentService";
-import { AlertTriangle, Flag, Search, ClipboardCheck } from "lucide-react";
+import { AlertTriangle, Flag, ClipboardCheck } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 interface AntiCheatingAnalysisProps {
@@ -36,7 +36,7 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
           2. Three specific integrity concerns
           3. Three actionable recommendations for the hiring team
 
-          Format the response as JSON:
+          Format the response as JSON without markdown formatting:
           {
             "risk": "brief risk assessment",
             "concerns": ["concern 1", "concern 2", "concern 3"],
@@ -45,7 +45,30 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
         `;
 
         const result = await makeGeminiRequest(prompt, 0.2);
-        const parsedResult = JSON.parse(result);
+        
+        // Handle JSON that might be wrapped in markdown code blocks
+        let parsedResult;
+        try {
+          // First try direct JSON parsing
+          parsedResult = JSON.parse(result);
+        } catch (parseError) {
+          console.log("Direct parsing failed, trying to extract JSON from markdown");
+          
+          // If direct parsing fails, try to extract JSON from markdown code blocks
+          const jsonMatch = result.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+          if (jsonMatch && jsonMatch[1]) {
+            try {
+              parsedResult = JSON.parse(jsonMatch[1]);
+            } catch (nestedError) {
+              console.error("Failed to parse extracted JSON:", nestedError);
+              throw new Error("Invalid JSON format in response");
+            }
+          } else {
+            console.error("Could not extract JSON from response");
+            throw new Error("No valid JSON found in response");
+          }
+        }
+        
         setAnalysis(parsedResult);
       } catch (error) {
         console.error("Error getting anti-cheating analysis:", error);
@@ -87,12 +110,16 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
             <h5 className="font-medium">Key Concerns</h5>
           </div>
           <ul className="space-y-2">
-            {analysis.concerns.map((concern, index) => (
-              <li key={index} className="text-sm text-red-800 flex gap-2 items-start">
-                <span className="text-red-400 mt-1">•</span>
-                <span>{concern}</span>
-              </li>
-            ))}
+            {analysis.concerns && analysis.concerns.length > 0 ? (
+              analysis.concerns.map((concern, index) => (
+                <li key={index} className="text-sm text-red-800 flex gap-2 items-start">
+                  <span className="text-red-400 mt-1">•</span>
+                  <span>{concern}</span>
+                </li>
+              ))
+            ) : (
+              <li className="text-sm text-red-800">No specific concerns identified.</li>
+            )}
           </ul>
         </div>
 
@@ -102,12 +129,16 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
             <h5 className="font-medium">Recommendations</h5>
           </div>
           <ul className="space-y-2">
-            {analysis.recommendations.map((recommendation, index) => (
-              <li key={index} className="text-sm text-red-800 flex gap-2 items-start">
-                <span className="text-red-400 mt-1">•</span>
-                <span>{recommendation}</span>
-              </li>
-            ))}
+            {analysis.recommendations && analysis.recommendations.length > 0 ? (
+              analysis.recommendations.map((recommendation, index) => (
+                <li key={index} className="text-sm text-red-800 flex gap-2 items-start">
+                  <span className="text-red-400 mt-1">•</span>
+                  <span>{recommendation}</span>
+                </li>
+              ))
+            ) : (
+              <li className="text-sm text-red-800">No specific recommendations available.</li>
+            )}
           </ul>
         </div>
       </div>
