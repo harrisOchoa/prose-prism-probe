@@ -15,46 +15,13 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
     risk: string;
     concerns: string[];
     recommendations: string[];
-  }>({ risk: "", concerns: [], recommendations: [] });
+  } | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Generate default concerns based on metrics
-  const generateDefaultConcerns = () => {
-    const concerns: string[] = [];
-    
-    if (metrics.suspiciousActivity) {
-      concerns.push("Suspicious activity flag was triggered during the assessment.");
-    }
-    
-    if (metrics.tabSwitches > 3) {
-      concerns.push(`Candidate switched tabs ${metrics.tabSwitches} times, potentially consulting external resources.`);
-    }
-    
-    if (metrics.wordsPerMinute > 100) {
-      concerns.push(`Unusually high typing speed (${metrics.wordsPerMinute.toFixed(0)} WPM) may indicate copy-pasting content.`);
-    } else if (metrics.wordsPerMinute === 0 && metrics.keystrokes > 50) {
-      concerns.push("Typing speed metrics suggest potential irregularities in response input methods.");
-    }
-    
-    return concerns.length > 0 ? concerns : ["No specific integrity concerns identified based on automated detection."];
-  };
-
-  // Generate default recommendations based on metrics
-  const generateDefaultRecommendations = () => {
-    const recommendations: string[] = [];
-    
-    if (metrics.suspiciousActivity || metrics.tabSwitches > 3) {
-      recommendations.push("Consider a follow-up technical assessment in a controlled environment.");
-      recommendations.push("Validate skills with hands-on exercises during the interview process.");
-    }
-    
-    recommendations.push("Review the candidate's responses for consistency with their claimed experience level.");
-    
-    return recommendations;
-  };
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const getAnalysis = async () => {
+      setError(null);
       try {
         const prompt = `
           Professional Candidate Assessment Integrity Analysis:
@@ -80,54 +47,60 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
         `;
 
         const result = await makeGeminiRequest(prompt, 0.2);
-        
-        // Handle JSON that might be wrapped in markdown code blocks
+
         let parsedResult;
         try {
-          // First try direct JSON parsing
           parsedResult = JSON.parse(result);
         } catch (parseError) {
-          console.log("Direct parsing failed, trying to extract JSON from markdown");
-          
-          // If direct parsing fails, try to extract JSON from markdown code blocks
+          // Try extracting JSON from markdown (```json ... ```) if present
           const jsonMatch = result.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
           if (jsonMatch && jsonMatch[1]) {
             try {
               parsedResult = JSON.parse(jsonMatch[1]);
             } catch (nestedError) {
-              console.error("Failed to parse extracted JSON:", nestedError);
-              throw new Error("Invalid JSON format in response");
+              console.error("Failed to parse Gemini JSON after extraction:", nestedError);
+              setError("Unable to interpret AI response. Please review assessment data manually.");
+              setAnalysis(null);
+              return;
             }
           } else {
-            console.error("Could not extract JSON from response");
-            throw new Error("No valid JSON found in response");
+            console.error("Failed to parse Gemini response and extract JSON.");
+            setError("Unable to interpret AI response. Please review assessment data manually.");
+            setAnalysis(null);
+            return;
           }
         }
-        
-        // Ensure we have concerns and recommendations, use defaults if missing
-        const defaultConcerns = generateDefaultConcerns();
-        const defaultRecommendations = generateDefaultRecommendations();
+
+        // Require all fields from Gemini. If missing, treat as error.
+        if (
+          !parsedResult ||
+          typeof parsedResult !== "object" ||
+          typeof parsedResult.risk !== "string" ||
+          !Array.isArray(parsedResult.concerns) ||
+          !Array.isArray(parsedResult.recommendations) ||
+          parsedResult.concerns.length === 0 ||
+          parsedResult.recommendations.length === 0
+        ) {
+          setError("AI assessment did not return a complete review. Please review assessment data manually.");
+          setAnalysis(null);
+          return;
+        }
 
         setAnalysis({
-          risk: parsedResult.risk || "Assessment integrity analysis shows potential concerns that should be considered during the evaluation process.",
-          concerns: parsedResult.concerns?.length > 0 ? parsedResult.concerns : defaultConcerns,
-          recommendations: parsedResult.recommendations?.length > 0 ? parsedResult.recommendations : defaultRecommendations
+          risk: parsedResult.risk,
+          concerns: parsedResult.concerns,
+          recommendations: parsedResult.recommendations
         });
-      } catch (error) {
-        console.error("Error getting anti-cheating analysis:", error);
-        
-        // Use default values if AI generation fails
-        setAnalysis({
-          risk: "Unable to generate an AI assessment. Review the integrity metrics manually to identify potential concerns.",
-          concerns: generateDefaultConcerns(),
-          recommendations: generateDefaultRecommendations()
-        });
+      } catch (e) {
+        setError("Failed to contact AI reviewer. Please review assessment data manually.");
+        setAnalysis(null);
       } finally {
         setLoading(false);
       }
     };
 
     if (metrics) {
+      setLoading(true);
       getAnalysis();
     }
   }, [metrics]);
@@ -135,6 +108,28 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
   if (loading) {
     return <Skeleton className="h-[400px] w-full" />;
   }
+
+  if (error) {
+    return (
+      <div className="mt-4 p-6 rounded-lg bg-amber-50 border border-amber-200">
+        <div className="flex items-start gap-3 mb-2">
+          <AlertTriangle className="h-6 w-6 text-amber-500 mt-1 flex-shrink-0" />
+          <div>
+            <h4 className="font-semibold text-amber-900 text-lg mb-2">Assessment Integrity Review Unavailable</h4>
+            <p className="text-sm text-amber-800 leading-relaxed">{error}</p>
+          </div>
+        </div>
+        <Separator className="my-4 bg-amber-200" />
+        <div className="text-sm text-amber-800">
+          Integrity metrics have been collected for this assessment.
+          <br />
+          Please review raw data for signs of suspicious behavior.
+        </div>
+      </div>
+    );
+  }
+
+  if (!analysis) return null;
 
   return (
     <div className="mt-4 p-6 rounded-lg bg-red-50 border border-red-200">
@@ -163,7 +158,7 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
                 </li>
               ))
             ) : (
-              <li className="text-sm text-red-800">No specific concerns identified.</li>
+              <li className="text-sm text-red-800">No concerns returned by AI.</li>
             )}
           </ul>
         </div>
@@ -182,7 +177,7 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
                 </li>
               ))
             ) : (
-              <li className="text-sm text-red-800">No specific recommendations available.</li>
+              <li className="text-sm text-red-800">No recommendations returned by AI.</li>
             )}
           </ul>
         </div>
