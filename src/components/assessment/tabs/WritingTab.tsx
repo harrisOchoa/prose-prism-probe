@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { WritingScore } from "@/services/geminiService";
@@ -11,6 +10,8 @@ import {
   ScoringCriteriaTooltip
 } from "./writing";
 import { ThumbsUp, ThumbsDown, Sparkles } from "lucide-react";
+import { questionBank } from "@/utils/questionBank";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 interface WritingTabProps {
   assessmentData: any;
@@ -19,45 +20,70 @@ interface WritingTabProps {
   getScoreLabel: (score: number) => string;
 }
 
+const getPromptTextById = (id: number) => {
+  const question = questionBank.find((q) => q.id === id);
+  return question ? question.prompt : `Prompt #${id}`;
+};
+
+const getPromptShortLabel = (fullPrompt: string) => {
+  const words = fullPrompt.split(" ");
+  return words.slice(0, 7).join(" ") + (words.length > 7 ? "..." : "");
+};
+
 const WritingTab: React.FC<WritingTabProps> = ({
   assessmentData,
   getScoreColor,
   getScoreBgColor,
   getScoreLabel
 }) => {
-  // Helpers to check for insights
   const hasInsights = Boolean(
     assessmentData?.strengths?.length ||
     assessmentData?.weaknesses?.length
   );
 
-  // Helper for improved writing prompt stat cards
   const renderWritingScoreStats = () => {
     if (!assessmentData.writingScores || assessmentData.writingScores.length === 0) return null;
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {assessmentData.writingScores.map((ws: any, idx: number) => (
-          <div
-            key={ws.promptId || idx}
-            className="rounded-xl bg-[#F1F0FB] border border-[#E5DEFF] shadow-sm flex flex-col items-center p-4 hover-scale transition-all duration-200"
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="inline-flex items-center justify-center w-8 h-8 text-lg font-bold rounded-full bg-hirescribe-primary/90 text-white shadow">
-                {ws.promptId}
-              </span>
-              <span className="uppercase text-xs text-[#7E69AB] font-semibold tracking-wide">Prompt</span>
-            </div>
-            <div className="mt-1 mb-2 text-3xl font-extrabold text-[#8B5CF6]">
-              {ws.score?.toFixed(1)}
-              <span className="text-base font-medium text-neutral-400 ml-1">/5</span>
-            </div>
-            <div className="text-xs text-[#403E43] opacity-60 text-center">
-              {ws.feedback && typeof ws.feedback === "string"
-                ? ws.feedback.slice(0, 54) + (ws.feedback.length > 54 ? "..." : "")
-                : ""}
-            </div>
-          </div>
-        ))}
+        {assessmentData.writingScores.map((ws: any, idx: number) => {
+          const promptText = getPromptTextById(ws.promptId);
+          const shortLabel = getPromptShortLabel(promptText);
+
+          return (
+            <TooltipProvider key={ws.promptId || idx}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className="rounded-xl bg-[#F1F0FB] border border-[#E5DEFF] shadow-sm flex flex-col items-start p-4 gap-2 card-hover cursor-pointer h-full"
+                  >
+                    <div className="w-full flex items-center gap-2 mb-2">
+                      <span className="inline-flex items-center justify-center w-8 h-8 text-base font-bold rounded-full bg-hirescribe-primary/90 text-white shadow shrink-0">
+                        Q{ws.promptId}
+                      </span>
+                      <span className="uppercase text-xs text-[#7E69AB] font-semibold tracking-wide">Prompt</span>
+                    </div>
+                    <div className="font-medium text-sm text-gray-800 mb-1 truncate" title={promptText}>
+                      {shortLabel}
+                    </div>
+                    <div className="mt-1 mb-1 text-3xl font-extrabold text-[#8B5CF6]">
+                      {ws.score?.toFixed(1)}
+                      <span className="text-base font-medium text-neutral-400 ml-1">/5</span>
+                    </div>
+                    <div className="text-xs text-[#403E43] opacity-60 text-left">
+                      {ws.feedback && typeof ws.feedback === "string"
+                        ? ws.feedback.slice(0, 54) + (ws.feedback.length > 54 ? "..." : "")
+                        : ""}
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <div className="text-sm text-gray-800 font-semibold mb-2">Full Prompt</div>
+                  <div className="text-xs text-gray-700">{promptText}</div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          );
+        })}
       </div>
     );
   };
@@ -77,7 +103,6 @@ const WritingTab: React.FC<WritingTabProps> = ({
       <CardContent className="space-y-10 pt-6">
         {assessmentData.overallWritingScore ? (
           <>
-            {/* Scores and improved distribution */}
             <div className="grid md:grid-cols-2 gap-8 mb-4">
               <ScoringSummary
                 overallWritingScore={assessmentData.overallWritingScore}
@@ -85,7 +110,6 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 getScoreBgColor={getScoreBgColor}
                 getScoreLabel={getScoreLabel}
               />
-              {/* Replacing ScoreDistribution visuals with enhanced stats cards for writing prompts */}
               {renderWritingScoreStats()}
             </div>
           </>
@@ -93,7 +117,6 @@ const WritingTab: React.FC<WritingTabProps> = ({
           <NoEvaluationMessage />
         )}
 
-        {/* Strengths and Weaknesses section — no Gemini AI badge */}
         {hasInsights && (
           <div className="rounded-xl border bg-[#F1F0FB] p-6 grid md:grid-cols-2 gap-6">
             <div>
@@ -127,7 +150,6 @@ const WritingTab: React.FC<WritingTabProps> = ({
           </div>
         )}
 
-        {/* Skills Radar Chart */}
         {assessmentData.writingScores && assessmentData.writingScores.length > 0 && (
           <div className="mb-8 animate-fade-in">
             <SkillsRadarChart 
@@ -138,7 +160,6 @@ const WritingTab: React.FC<WritingTabProps> = ({
           </div>
         )}
 
-        {/* Writing Responses */}
         <div className="bg-white/70 rounded-lg border p-6 shadow-sm">
           <WritingResponsesList 
             completedPrompts={assessmentData.completedPrompts}
