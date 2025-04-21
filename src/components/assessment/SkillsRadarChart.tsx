@@ -162,9 +162,8 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
               {cardsData.map(card => (
                 <div
                   key={card.key}
-                  className="flex-1 min-w-[150px] max-w-[180px] bg-[#F1F0FB] border border-gray-200 rounded-lg px-4 py-3 mb-2 flex flex-col items-center shadow-sm"
+                  className="flex flex-grow basis-[180px] max-w-[240px] bg-[#F1F0FB] border border-gray-200 rounded-lg px-4 py-3 mb-2 flex flex-col items-center shadow-sm"
                   title={card.description}
-                  style={{ flexBasis: "0", flexGrow: 1 }}
                 >
                   <span className="text-xs font-semibold text-gray-600 mb-1">{card.label}</span>
                   <span className={`text-xl font-bold ${card.colorClass}`}>{card.valueDisplay}</span>
