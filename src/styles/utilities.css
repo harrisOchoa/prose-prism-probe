@@ -11,8 +11,12 @@
   }
   
   @media print {
-    .pdf-hide {
+    .pdf-hide, .hidden-for-pdf {
       display: none !important;
+    }
+    
+    .pdf-show, .visible-for-pdf {
+      display: block !important;
     }
     
     body {

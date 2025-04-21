@@ -12,7 +12,7 @@ interface AntiCheatingCardProps {
 
 const AntiCheatingCard: React.FC<AntiCheatingCardProps> = ({ metrics }) => {
   return metrics ? (
-    <Card className="border border-gray-200 shadow-sm">
+    <Card className="border border-gray-200 shadow-sm pdf-hide">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center">
           <Shield className="mr-2 h-5 w-5 text-purple-500" />
@@ -28,7 +28,7 @@ const AntiCheatingCard: React.FC<AntiCheatingCardProps> = ({ metrics }) => {
       </CardContent>
     </Card>
   ) : (
-    <Card className="border border-gray-200 shadow-sm bg-amber-50">
+    <Card className="border border-gray-200 shadow-sm bg-amber-50 pdf-hide">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center">
           <Shield className="mr-2 h-5 w-5 text-amber-500" />

@@ -1,3 +1,4 @@
+
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -8,11 +9,33 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       throw new Error('Element not found');
     }
     
+    // Add classes for PDF export
+    document.querySelectorAll('.pdf-hide').forEach((el) => {
+      el.classList.add('hidden-for-pdf');
+    });
+    
+    document.querySelectorAll('.pdf-show').forEach((el) => {
+      el.classList.add('visible-for-pdf');
+    });
+    
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      ignoreElements: (element) => {
+        return element.classList.contains('pdf-hide') || 
+               element.classList.contains('hidden-for-pdf');
+      }
+    });
+    
+    // Restore the DOM after capturing
+    document.querySelectorAll('.hidden-for-pdf').forEach((el) => {
+      el.classList.remove('hidden-for-pdf');
+    });
+    
+    document.querySelectorAll('.visible-for-pdf').forEach((el) => {
+      el.classList.remove('visible-for-pdf');
     });
     
     const imgData = canvas.toDataURL('image/png');

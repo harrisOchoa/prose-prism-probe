@@ -25,10 +25,8 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
 
   return (
     <div className="grid grid-cols-1 gap-6">
-      {/* Anti-Cheating Metrics Card - Hidden for PDF exports */}
-      <div className="pdf-hide">
-        <AntiCheatingCard metrics={assessmentData.antiCheatingMetrics} />
-      </div>
+      {/* Anti-Cheating Metrics Card - Will be hidden in PDF exports */}
+      <AntiCheatingCard metrics={assessmentData.antiCheatingMetrics} />
       
       {/* Summary Card with AI insights */}
       <SummaryCard 
@@ -58,4 +56,3 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
 };
 
 export default OverviewTab;
-
