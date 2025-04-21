@@ -48,7 +48,7 @@ const Index = () => {
             <div className="w-full min-h-[40vh] flex flex-col items-center justify-center">
               <div className="flex items-center gap-2">
                 <span className="animate-spin rounded-full h-7 w-7 border-2 border-primary border-t-transparent mr-2"></span>
-                <span className="text-lg font-medium">Generating position-specific writing prompts...</span>
+                <span className="text-lg font-medium">Readying the assessment for you...</span>
               </div>
             </div>
           )}
@@ -109,3 +109,4 @@ const Index = () => {
 };
 
 export default Index;
+
