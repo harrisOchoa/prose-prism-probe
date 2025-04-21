@@ -18,6 +18,41 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
   }>({ risk: "", concerns: [], recommendations: [] });
   const [loading, setLoading] = useState(true);
 
+  // Generate default concerns based on metrics
+  const generateDefaultConcerns = () => {
+    const concerns: string[] = [];
+    
+    if (metrics.suspiciousActivity) {
+      concerns.push("Suspicious activity flag was triggered during the assessment.");
+    }
+    
+    if (metrics.tabSwitches > 3) {
+      concerns.push(`Candidate switched tabs ${metrics.tabSwitches} times, potentially consulting external resources.`);
+    }
+    
+    if (metrics.wordsPerMinute > 100) {
+      concerns.push(`Unusually high typing speed (${metrics.wordsPerMinute.toFixed(0)} WPM) may indicate copy-pasting content.`);
+    } else if (metrics.wordsPerMinute === 0 && metrics.keystrokes > 50) {
+      concerns.push("Typing speed metrics suggest potential irregularities in response input methods.");
+    }
+    
+    return concerns.length > 0 ? concerns : ["No specific integrity concerns identified based on automated detection."];
+  };
+
+  // Generate default recommendations based on metrics
+  const generateDefaultRecommendations = () => {
+    const recommendations: string[] = [];
+    
+    if (metrics.suspiciousActivity || metrics.tabSwitches > 3) {
+      recommendations.push("Consider a follow-up technical assessment in a controlled environment.");
+      recommendations.push("Validate skills with hands-on exercises during the interview process.");
+    }
+    
+    recommendations.push("Review the candidate's responses for consistency with their claimed experience level.");
+    
+    return recommendations;
+  };
+
   useEffect(() => {
     const getAnalysis = async () => {
       try {
@@ -69,13 +104,23 @@ const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) 
           }
         }
         
-        setAnalysis(parsedResult);
+        // Ensure we have concerns and recommendations, use defaults if missing
+        const defaultConcerns = generateDefaultConcerns();
+        const defaultRecommendations = generateDefaultRecommendations();
+
+        setAnalysis({
+          risk: parsedResult.risk || "Assessment integrity analysis shows potential concerns that should be considered during the evaluation process.",
+          concerns: parsedResult.concerns?.length > 0 ? parsedResult.concerns : defaultConcerns,
+          recommendations: parsedResult.recommendations?.length > 0 ? parsedResult.recommendations : defaultRecommendations
+        });
       } catch (error) {
         console.error("Error getting anti-cheating analysis:", error);
+        
+        // Use default values if AI generation fails
         setAnalysis({
-          risk: "Unable to generate a comprehensive assessment integrity analysis at this time.",
-          concerns: [],
-          recommendations: []
+          risk: "Unable to generate an AI assessment. Review the integrity metrics manually to identify potential concerns.",
+          concerns: generateDefaultConcerns(),
+          recommendations: generateDefaultRecommendations()
         });
       } finally {
         setLoading(false);
