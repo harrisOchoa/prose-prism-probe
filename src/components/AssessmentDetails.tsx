@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AssessmentHeader from "@/components/assessment/AssessmentHeader";
@@ -156,6 +157,8 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
             <AptitudeTab 
               assessmentData={assessmentData}
               getAptitudeScorePercentage={calculations.getAptitudeScorePercentage}
+              generateAdvancedAnalysis={generateAdvancedAnalysis}
+              generatingAnalysis={generatingAnalysis}
             />
           </TabsContent>
           

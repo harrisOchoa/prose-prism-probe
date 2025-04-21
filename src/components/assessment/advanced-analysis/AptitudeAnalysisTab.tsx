@@ -1,8 +1,8 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { getRandomAptitudeQuestions } from "@/utils/aptitudeQuestions";
+import { Loader2, Sparkles } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 interface AptitudeAnalysisProps {
   aptitudeAnalysis: {
@@ -25,11 +25,14 @@ const AptitudeAnalysisTab: React.FC<AptitudeAnalysisProps> = ({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Aptitude Analysis</h3>
+        <h3 className="text-lg font-semibold flex items-center">
+          <Sparkles className="mr-2 h-5 w-5 text-purple-500" />
+          Aptitude Insights
+        </h3>
         <Button
           onClick={handleGenerateAnalysis}
           disabled={loading}
-          className="bg-hirescribe-primary hover:bg-hirescribe-accent transition-colors"
+          className="bg-purple-600 hover:bg-purple-700 text-white"
         >
           {loading ? (
             <>
@@ -43,40 +46,40 @@ const AptitudeAnalysisTab: React.FC<AptitudeAnalysisProps> = ({
       </div>
 
       {aptitudeAnalysis ? (
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-lg border shadow-sm">
-            <h4 className="font-medium mb-4">Performance Overview</h4>
-            <p className="text-gray-700">{aptitudeAnalysis.performance}</p>
-          </div>
+        <div className="space-y-6 animate-fade-in">
+          <Card className="p-6 border shadow-sm bg-white">
+            <h4 className="font-medium mb-4 text-purple-700 border-b pb-2">Performance Overview</h4>
+            <p className="text-gray-700 leading-relaxed">{aptitudeAnalysis.performance}</p>
+          </Card>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="bg-white p-6 rounded-lg border shadow-sm">
-              <h4 className="font-medium mb-4">Strong Categories</h4>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card className="p-6 border shadow-sm bg-white">
+              <h4 className="font-medium mb-4 text-green-600 border-b pb-2">Strong Categories</h4>
               <ul className="list-disc list-inside space-y-2">
                 {aptitudeAnalysis.strengthCategories.map((strength, index) => (
                   <li key={index} className="text-gray-700">{strength}</li>
                 ))}
               </ul>
-            </div>
+            </Card>
 
-            <div className="bg-white p-6 rounded-lg border shadow-sm">
-              <h4 className="font-medium mb-4">Areas for Improvement</h4>
+            <Card className="p-6 border shadow-sm bg-white">
+              <h4 className="font-medium mb-4 text-amber-600 border-b pb-2">Areas for Improvement</h4>
               <ul className="list-disc list-inside space-y-2">
                 {aptitudeAnalysis.weaknessCategories.map((weakness, index) => (
                   <li key={index} className="text-gray-700">{weakness}</li>
                 ))}
               </ul>
-            </div>
+            </Card>
           </div>
 
-          <div className="bg-white p-6 rounded-lg border shadow-sm">
-            <h4 className="font-medium mb-4">Recommendations</h4>
+          <Card className="p-6 border shadow-sm bg-white">
+            <h4 className="font-medium mb-4 text-blue-600 border-b pb-2">Recommendations</h4>
             <ul className="list-disc list-inside space-y-2">
               {aptitudeAnalysis.recommendations.map((recommendation, index) => (
                 <li key={index} className="text-gray-700">{recommendation}</li>
               ))}
             </ul>
-          </div>
+          </Card>
         </div>
       ) : (
         <div className="text-center p-8 bg-gray-50 rounded-lg border border-dashed">
