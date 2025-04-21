@@ -24,7 +24,7 @@ const ScoringSummary: React.FC<ScoringSummaryProps> = ({
   return (
     <div className="w-full flex justify-center">
       <div
-        className={`flex flex-col md:flex-row items-stretch w-full max-w-4xl gap-0 rounded-xl border shadow-sm ${getScoreBgColor(overallWritingScore)} bg-white/90`}
+        className={`flex flex-col md:grid md:grid-cols-[min-content_min-content_1fr] items-stretch w-full max-w-4xl rounded-xl border shadow-sm ${getScoreBgColor(overallWritingScore)} bg-white/90`}
       >
         {/* Left: Score & Rating */}
         <div className="flex flex-row items-center justify-center gap-8 px-7 py-7 md:py-10 border-b md:border-b-0 md:border-r md:min-w-[270px]">
@@ -42,7 +42,7 @@ const ScoringSummary: React.FC<ScoringSummaryProps> = ({
           </div>
         </div>
         {/* Right: Explanation */}
-        <div className="flex flex-col justify-center px-6 py-6 md:py-8 flex-1">
+        <div className="flex flex-col justify-center px-10 py-6 md:py-8">
           <h4 className="font-semibold text-gray-900 mb-2 text-base">What this score means:</h4>
           <p className="text-sm text-gray-800 leading-relaxed">{explanation}</p>
         </div>
@@ -52,3 +52,4 @@ const ScoringSummary: React.FC<ScoringSummaryProps> = ({
 };
 
 export default ScoringSummary;
+
