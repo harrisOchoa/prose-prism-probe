@@ -10,6 +10,22 @@
     @apply bg-gradient-to-r from-hirescribe-primary to-hirescribe-accent bg-clip-text text-transparent;
   }
   
+  .responsive-container {
+    @apply w-full px-4 md:px-6 mx-auto;
+  }
+  
+  .responsive-card {
+    @apply w-full p-4 md:p-6;
+  }
+  
+  .mobile-stack {
+    @apply flex flex-col sm:flex-row;
+  }
+  
+  .mobile-full {
+    @apply w-full sm:w-auto;
+  }
+  
   @media print {
     .pdf-hide, .hidden-for-pdf {
       display: none !important;

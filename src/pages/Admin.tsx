@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import AdminDashboard from "@/components/AdminDashboard";
 import { LockKeyhole, Home } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -14,6 +15,7 @@ const Admin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   // Simple admin authentication (in a real app, this would be more secure)
   const handleLogin = async (e: React.FormEvent) => {
@@ -43,13 +45,15 @@ const Admin = () => {
   };
 
   return (
-    <div className="container mx-auto py-10 px-4">
+    <div className={`container mx-auto ${isMobile ? 'py-4 px-3' : 'py-10 px-4'}`}>
       {!isAuthenticated ? (
         <div className="flex justify-center items-center min-h-[80vh]">
           <Card className="w-full max-w-md shadow-elevation-1 animate-fade-in">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl text-center gradient-text">HireScribe Admin</CardTitle>
-              <CardDescription className="text-center">
+              <CardTitle className={`${isMobile ? 'text-xl' : 'text-2xl'} text-center gradient-text`}>
+                HireScribe Admin
+              </CardTitle>
+              <CardDescription className={`text-center ${isMobile ? 'text-xs' : 'text-sm'}`}>
                 Enter your password to access the admin dashboard
               </CardDescription>
             </CardHeader>

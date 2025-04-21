@@ -6,12 +6,14 @@ import ViewError from "@/components/assessment/ViewError";
 import ViewLoader from "@/components/assessment/ViewLoader";
 import { useAssessmentView } from "@/hooks/useAssessmentView";
 import { toast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const View = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { assessment, loading, error, generatingSummary, setAssessment } = useAssessmentView(id);
+  const isMobile = useIsMobile();
   
   // Get current tab from URL parameters or default to "overview"
   const currentTab = searchParams.get("tab") || "overview";
@@ -53,14 +55,8 @@ const View = () => {
     return <ViewError error={error} />;
   }
 
-  // Log assessment data to debug anti-cheating metrics
-  if (assessment) {
-    console.log("Assessment data in View:", assessment);
-    console.log("Anti-cheating metrics:", assessment.antiCheatingMetrics);
-  }
-
   return (
-    <div className="container mx-auto py-10 px-4">
+    <div className={`container mx-auto ${isMobile ? 'py-4 px-2' : 'py-10 px-4'}`}>
       {assessment ? (
         <AssessmentDetails 
           assessment={assessment} 

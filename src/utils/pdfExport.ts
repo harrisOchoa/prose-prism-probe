@@ -18,8 +18,12 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       el.classList.add('visible-for-pdf');
     });
 
+    // Use a higher scale for better quality, but detect mobile and adjust if needed
+    const isMobile = window.innerWidth < 768;
+    const scale = isMobile ? 1.5 : 2;
+
     const canvas = await html2canvas(element, {
-      scale: 2,
+      scale: scale,
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
@@ -51,10 +55,10 @@ export const exportToPdf = async (elementId: string, filename: string) => {
 
     // Header/Footer sizes and spacing management
     const headerHeight = 18;
-    const footerHeight = 10;
+    const footerHeight = 15; // Increased footer height
     const margin = 10;
     const contentTop = headerHeight + margin;
-    const contentBottom = pageHeight - footerHeight - margin;
+    const contentBottom = pageHeight - footerHeight - margin * 2; // Add extra margin for footer
     const availableHeight = contentBottom - contentTop;
 
     // Scale image to fit width and max height
@@ -95,13 +99,13 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       imgHeight
     );
 
-    // Footer
+    // Footer with padding above to prevent overlap
     pdf.setFillColor(255, 255, 255);
     pdf.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
     pdf.setFontSize(8);
     pdf.setTextColor(156, 163, 175);
-    pdf.text('HireScribe Assessment Platform', margin, pageHeight - 3.5);
-    pdf.text('Page 1 of 1', pageWidth - 30, pageHeight - 3.5);
+    pdf.text('HireScribe Assessment Platform', margin, pageHeight - 5);
+    pdf.text('Page 1 of 1', pageWidth - 30, pageHeight - 5);
 
     pdf.save(`${filename}.pdf`);
     return true;
