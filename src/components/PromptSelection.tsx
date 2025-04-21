@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Square, SquareCheck } from "lucide-react";
+import { Square, SquareCheck } from "lucide-react";
 
 interface Prompt {
   id: number;
@@ -43,62 +43,74 @@ const PromptSelection: React.FC<PromptSelectionProps> = ({
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-hirescribe-muted to-white/60 dark:from-hirescribe-dark/80 dark:to-background px-2 py-8 transition-all">
       <div className="w-full max-w-3xl bg-white/90 dark:bg-hirescribe-dark/80 glass-effect rounded-2xl shadow-elevation-2 p-0 md:p-7 animate-fade-in">
         {/* Header with Icon */}
-        <div className="sticky top-0 z-10 bg-inherit rounded-t-2xl px-4 pt-6 md:pt-0 flex flex-col items-center">
-          <div className="flex items-center gap-3 mb-2">
-            <Pen className="text-hirescribe-primary h-8 w-8 drop-shadow" strokeWidth={2.2} />
-            <h1 className="assessment-title text-2xl md:text-3xl !font-semibold">Writing Prompts</h1>
+        <div className="sticky top-0 z-10 bg-inherit rounded-t-2xl px-4 pt-7 pb-1 flex flex-col items-center">
+          <div className="flex items-center gap-3 mb-1.5">
+            <Pen className="text-hirescribe-primary h-7 w-7 drop-shadow-sm" strokeWidth={2.2} />
+            <h1 className="assessment-title text-2xl md:text-[1.8rem] font-semibold tracking-tight">
+              Writing Questions
+            </h1>
           </div>
-          <p className="assessment-subtitle text-center text-base text-gray-700 dark:text-gray-300 px-2 mb-1">
-            Choose <span className="text-hirescribe-primary font-bold">{minSelect}</span> or more prompts below that you feel most confident answering.
+          <p className="assessment-subtitle text-center max-w-xl mx-auto text-base md:text-[1.12rem] text-gray-800 dark:text-gray-200 px-2 mb-1 font-medium leading-snug">
+            Choose as many questions as you can to showcase your experience.<br />
+            <span className="text-hirescribe-primary font-bold">Answering all three will give us a better understanding of your expertise.</span>
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Your selection is private and helps us tailor your assessment experience. </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 mt-0.5 italic">
+            Don’t worry—pick the ones you feel you can answer best!
+          </p>
         </div>
 
-        {/* Prompts */}
-        <div className="flex flex-col gap-7 py-4 pb-6 md:py-8">
+        {/* Questions */}
+        <div className="flex flex-col gap-6 py-4 pb-6 md:py-8">
           {availablePrompts.map(({ id, prompt }) => {
             const checked = selected.includes(id);
             return (
               <div
                 key={id}
                 className={`
-                  cursor-pointer rounded-xl relative
-                  border bg-white/80 dark:bg-hirescribe-dark/70 transition-all duration-200
+                  cursor-pointer group rounded-xl relative
+                  border bg-white dark:bg-hirescribe-dark/70 transition-all duration-200
                   hover:shadow-card-hover shadow-md
-                  ${checked ? "border-hirescribe-primary ring-2 ring-hirescribe-primary bg-hirescribe-muted/70 dark:bg-hirescribe-accent/10" : "border-gray-200 dark:border-hirescribe-secondary"}
+                  ${checked 
+                    ? "border-hirescribe-primary ring-2 ring-hirescribe-primary/60 bg-hirescribe-muted/60 dark:bg-hirescribe-accent/10 scale-[1.016]" 
+                    : "border-gray-200 dark:border-hirescribe-secondary"}
                   animate-fade-in
-                  group
+                  outline-none focus-visible:ring-2 focus-visible:ring-hirescribe-primary/80
                 `}
                 onClick={() => handleToggle(id)}
                 tabIndex={0}
                 aria-pressed={checked}
                 role="button"
-                style={{ minHeight: 90 }}
+                style={{ minHeight: 88 }}
               >
-                <div className="flex items-start gap-2 p-5">
+                <div className="flex items-start gap-3 p-5">
                   {/* Custom checkbox with icon */}
                   <span
                     className={`
                       mr-3 mt-1 transition-transform duration-100
-                      ${checked ? "scale-110 text-hirescribe-primary" : "opacity-70 group-hover:text-hirescribe-primary"}
+                      ${checked 
+                        ? "scale-110 text-hirescribe-primary" 
+                        : "opacity-70 group-hover:text-hirescribe-primary"}
                     `}
                     onClick={e => {
                       e.stopPropagation();
                       handleToggle(id);
                     }}
-                    aria-label={checked ? "Deselect" : "Select"}
+                    aria-label={checked ? "Deselect question" : "Select question"}
                   >
-                    {checked ? <SquareCheck size={22} strokeWidth={2.3} /> : <Square size={22} strokeWidth={2.1} />}
+                    {checked 
+                      ? <SquareCheck size={23} strokeWidth={2.3} /> 
+                      : <Square size={23} strokeWidth={2.1} />
+                    }
                   </span>
                   <label 
-                    htmlFor={`prompt-${id}`} 
-                    className="font-medium text-base leading-relaxed select-none cursor-pointer"
+                    htmlFor={`question-${id}`} 
+                    className="font-medium text-[1.01rem] leading-relaxed select-none cursor-pointer"
                   >
                     {prompt}
                   </label>
                 </div>
                 {checked && (
-                  <span className="absolute top-3 right-4 rounded px-2 py-0.5 bg-hirescribe-primary text-white text-xs font-bold tracking-wide shadow-elevation-2 animate-scale-in">
+                  <span className="absolute top-3 right-4 rounded px-2.5 py-0.5 bg-hirescribe-primary text-white text-xs font-semibold shadow-elevation-2 animate-scale-in">
                     Selected
                   </span>
                 )}
@@ -121,14 +133,14 @@ const PromptSelection: React.FC<PromptSelectionProps> = ({
               }
             `}
           >
-            {selected.length >= minSelect ? "Start Writing" : "Select prompts to proceed"}
+            {selected.length >= minSelect ? "Start Writing" : "Select questions to proceed"}
             <span className="ml-2 text-base font-medium">
               ({selected.length} {selected.length === 1 ? "selected" : "selected"})
             </span>
           </Button>
           {selected.length < minSelect && (
             <p className="mt-3 text-sm text-red-500 text-center animate-fade-in">
-              Please select at least {minSelect} prompt{minSelect > 1 ? "s" : ""} to continue.
+              Please select at least {minSelect} question{minSelect > 1 ? "s" : ""} to continue.
             </p>
           )}
         </div>
@@ -139,16 +151,12 @@ const PromptSelection: React.FC<PromptSelectionProps> = ({
 
 // Lucide icon used above for header
 function Pen(props: React.ComponentProps<"svg">) {
-  return <PenIcon {...props} />;
-}
-
-// Minimal local copy for the pen icon from lucide-react
-function PenIcon({ className = "", ...props }: any) {
+  // Use "pencil" icon as per allowed icons and visual consistency
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
-      className={`lucide lucide-pen ${className}`} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m16.2 6.3 1.5-1.6a2.1 2.1 0 1 1 3 3l-1.6 1.6"></path>
-      <path d="M17.5 7.5 6.3 18.7c-.7.7-1.5 1.2-2.5 1.3l-2.4.2.2-2.4c.1-1 .6-1.8 1.3-2.5L16.5 6.5"></path>
+      className={`lucide lucide-pencil ${props.className || ""}`} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M18.988 3.512c.656-.656 1.72-.183 1.72.736v0c0 .355-.147.696-.4.95l-1.808 1.809-2.252-2.252 1.81-1.81a1.06 1.06 0 0 1 1.93.577Z"/>
+      <path d="m16.5 6 1.5-1.488m-7.347 12.347L4 20l3.141-6.653M19 7l-8.753 8.754m-.001.001c-.544.544-1.282.673-1.945.729l-2.425.201.202-2.426c.057-.663.185-1.401.73-1.945m0 0L17 5"/>
     </svg>
   );
 }
