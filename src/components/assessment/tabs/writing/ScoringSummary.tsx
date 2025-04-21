@@ -23,27 +23,27 @@ const ScoringSummary: React.FC<ScoringSummaryProps> = ({
 
   return (
     <div className="w-full flex justify-center">
-      <div className="flex flex-col md:flex-row md:items-center gap-6 w-full max-w-3xl">
-        {/* Left: Score and Rating */}
-        <div className="flex-1 flex flex-row items-center gap-10 justify-center md:justify-start">
-          <div>
-            <h3 className="text-base font-medium mb-1 text-gray-900">Overall Score</h3>
+      <div
+        className={`flex flex-col md:flex-row items-stretch w-full max-w-4xl gap-0 rounded-xl border shadow-sm ${getScoreBgColor(overallWritingScore)} bg-white/90`}
+      >
+        {/* Left: Score & Rating */}
+        <div className="flex flex-row items-center justify-center gap-8 px-7 py-7 md:py-10 border-b md:border-b-0 md:border-r md:min-w-[270px]">
+          <div className="flex flex-col items-center md:items-start">
+            <h3 className="text-sm font-medium mb-1 text-gray-900">Overall Score</h3>
             <p className={`text-3xl md:text-4xl font-extrabold ${getScoreColor(overallWritingScore)}`}>
               {overallWritingScore}/5
             </p>
           </div>
-          <div className="border-l pl-6">
-            <h3 className="text-base font-medium mb-1 text-gray-900">Rating</h3>
+          <div className="flex flex-col items-center md:items-start pl-6 border-l h-full">
+            <h3 className="text-sm font-medium mb-1 text-gray-900">Rating</h3>
             <p className={`text-xl md:text-2xl font-semibold ${getScoreColor(overallWritingScore)}`}>
               {getScoreLabel(overallWritingScore)}
             </p>
           </div>
         </div>
         {/* Right: Explanation */}
-        <div
-          className={`flex-1 md:max-w-[420px] p-5 border rounded-lg ${getScoreBgColor(overallWritingScore)} bg-white/70 shadow-md`}
-        >
-          <h4 className="font-semibold text-gray-900 mb-2">What this score means:</h4>
+        <div className="flex flex-col justify-center px-6 py-6 md:py-8 flex-1">
+          <h4 className="font-semibold text-gray-900 mb-2 text-base">What this score means:</h4>
           <p className="text-sm text-gray-800 leading-relaxed">{explanation}</p>
         </div>
       </div>
