@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { WritingScore } from "@/services/geminiService";
 import SkillsRadarChart from "@/components/assessment/SkillsRadarChart";
 import {
@@ -10,6 +10,7 @@ import {
   WritingResponsesList,
   ScoringCriteriaTooltip
 } from "./writing";
+import { ThumbsUp, ThumbsDown, Sparkles } from "lucide-react";
 
 interface WritingTabProps {
   assessmentData: any;
@@ -24,36 +25,83 @@ const WritingTab: React.FC<WritingTabProps> = ({
   getScoreBgColor,
   getScoreLabel
 }) => {
+  // Helpers to check for insights
+  const hasInsights = Boolean(
+    assessmentData?.strengths?.length ||
+    assessmentData?.weaknesses?.length
+  );
+
   return (
-    <Card className="shadow-subtle">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
+    <Card className="shadow-subtle animate-fade-in">
+      <CardHeader className="flex flex-row items-center justify-between pb-2 bg-gradient-to-r from-indigo-50 to-violet-50 rounded-t-md border-b">
         <div className="flex items-center gap-2">
-          <CardTitle>Writing Assessment</CardTitle>
+          <CardTitle className="text-xl font-semibold flex items-center gap-2 text-hirescribe-primary">
+            <Sparkles className="h-6 w-6 text-indigo-400" />
+            Writing Assessment
+          </CardTitle>
           <ScoringCriteriaTooltip />
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-10">
+      <CardContent className="space-y-10 pt-6">
         {assessmentData.overallWritingScore ? (
-          <div className="grid md:grid-cols-2 gap-6">
-            <ScoringSummary
-              overallWritingScore={assessmentData.overallWritingScore}
-              getScoreColor={getScoreColor}
-              getScoreBgColor={getScoreBgColor}
-              getScoreLabel={getScoreLabel}
-            />
-            
-            {assessmentData.writingScores && assessmentData.writingScores.length > 0 && (
-              <ScoreDistribution writingScores={assessmentData.writingScores} />
-            )}
-          </div>
+          <>
+            {/* Scores and distribution */}
+            <div className="grid md:grid-cols-2 gap-8 mb-4">
+              <ScoringSummary
+                overallWritingScore={assessmentData.overallWritingScore}
+                getScoreColor={getScoreColor}
+                getScoreBgColor={getScoreBgColor}
+                getScoreLabel={getScoreLabel}
+              />            
+              {assessmentData.writingScores && assessmentData.writingScores.length > 0 && (
+                <ScoreDistribution writingScores={assessmentData.writingScores} />
+              )}
+            </div>
+          </>
         ) : (
           <NoEvaluationMessage />
         )}
-        
-        {/* Skills Radar Chart as a standalone section with clean spacing */}
+
+        {/* Gemini AI - Strengths and Weaknesses block */}
+        {hasInsights && (
+          <div className="rounded-lg border bg-indigo-50/80 p-6 grid md:grid-cols-2 gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <ThumbsUp className="h-5 w-5 text-green-500" />
+                <span className="font-medium text-green-700">Key Strengths</span>
+                <span className="ml-2 px-2 py-0.5 text-xs bg-gradient-to-r from-indigo-200 to-emerald-100 rounded text-gray-500 font-semibold">Gemini AI</span>
+              </div>
+              <ul className="list-disc list-inside space-y-2 ml-2">
+                {assessmentData.strengths?.map((strength: string, idx: number) => (
+                  <li key={idx} className="text-sm text-gray-700">{strength}</li>
+                ))}
+                {!assessmentData.strengths?.length && (
+                  <li className="text-xs text-gray-400">No strengths identified.</li>
+                )}
+              </ul>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <ThumbsDown className="h-5 w-5 text-amber-500" />
+                <span className="font-medium text-amber-700">Areas for Improvement</span>
+                <span className="ml-2 px-2 py-0.5 text-xs bg-gradient-to-r from-indigo-100 to-amber-100 rounded text-gray-500 font-semibold">Gemini AI</span>
+              </div>
+              <ul className="list-disc list-inside space-y-2 ml-2">
+                {assessmentData.weaknesses?.map((weakness: string, idx: number) => (
+                  <li key={idx} className="text-sm text-gray-700">{weakness}</li>
+                ))}
+                {!assessmentData.weaknesses?.length && (
+                  <li className="text-xs text-gray-400">No weaknesses identified.</li>
+                )}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* Skills Radar Chart */}
         {assessmentData.writingScores && assessmentData.writingScores.length > 0 && (
-          <div className="mb-8">
+          <div className="mb-8 animate-fade-in">
             <SkillsRadarChart 
               writingScores={assessmentData.writingScores} 
               aptitudeScore={assessmentData.aptitudeScore}
@@ -61,9 +109,9 @@ const WritingTab: React.FC<WritingTabProps> = ({
             />
           </div>
         )}
-        
-        {/* Writing Responses with clean separation */}
-        <div>
+
+        {/* Writing Responses */}
+        <div className="bg-white/70 rounded-lg border p-6 shadow-sm">
           <WritingResponsesList 
             completedPrompts={assessmentData.completedPrompts}
             writingScores={assessmentData.writingScores}
@@ -77,3 +125,4 @@ const WritingTab: React.FC<WritingTabProps> = ({
 };
 
 export default WritingTab;
+
