@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Radar,
@@ -17,7 +16,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Zap } from "lucide-react";
 import { questionBank } from "@/utils/questionBank";
 
-// Helper to get "Question N" style label
 const getQuestionLabel = (promptId: number) => {
   return `Question ${promptId}`;
 };
@@ -45,10 +43,8 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
 }) => {
   const validScores = writingScores?.filter(score => score.score > 0) || [];
   
-  // Group writing scores by criteria
   const categorizedScores: Record<string, number[]> = {};
   validScores.forEach(score => {
-    // Use the promptId as a fallback category if no category exists
     const category = score.promptId || "General Writing";
     if (!categorizedScores[category]) {
       categorizedScores[category] = [];
@@ -56,10 +52,8 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
     categorizedScores[category].push(score.score);
   });
   
-  // Average scores by category
   const chartData = Object.entries(categorizedScores).map(([category, scores]) => {
     const avgScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
-    // Truncate category names that are too long
     return {
       category: category.length > 10 ? category.substring(0, 10) + "..." : category,
       fullName: category,
@@ -68,7 +62,6 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
     };
   });
   
-  // Add aptitude score
   chartData.push({
     category: "Aptitude",
     fullName: "Aptitude Test Score",
@@ -76,7 +69,6 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
     fullMark: 5
   });
 
-  // For scores bar below chart, show in order by promptId (to match writingScores order)
   const cardsData = [
     ...validScores.map(ws => ({
       key: `ws-${ws.promptId}`,
@@ -104,7 +96,6 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
       </CardHeader>
       <CardContent className="pt-6">
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Left side: Radar chart */}
           <div className="w-full md:w-1/2 h-[320px]">
             <ChartContainer 
               config={{
@@ -166,15 +157,14 @@ const SkillsRadarChart: React.FC<SkillsRadarChartProps> = ({
               </ResponsiveContainer>
             </ChartContainer>
           </div>
-          
-          {/* Right side: NEW card row for writing & aptitude scores */}
           <div className="w-full md:w-1/2 flex flex-col justify-center">
-            <div className="flex flex-wrap gap-4 justify-start">
+            <div className="flex flex-row flex-wrap gap-4 justify-start items-stretch">
               {cardsData.map(card => (
                 <div
                   key={card.key}
-                  className="min-w-[140px] bg-[#F1F0FB] border border-gray-200 rounded-lg px-4 py-3 mb-2 flex flex-col shadow-sm"
+                  className="flex-1 min-w-[150px] max-w-[180px] bg-[#F1F0FB] border border-gray-200 rounded-lg px-4 py-3 mb-2 flex flex-col items-center shadow-sm"
                   title={card.description}
+                  style={{ flexBasis: "0", flexGrow: 1 }}
                 >
                   <span className="text-xs font-semibold text-gray-600 mb-1">{card.label}</span>
                   <span className={`text-xl font-bold ${card.colorClass}`}>{card.valueDisplay}</span>

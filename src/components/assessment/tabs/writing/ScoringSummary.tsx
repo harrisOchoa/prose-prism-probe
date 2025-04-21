@@ -16,23 +16,26 @@ const ScoringSummary: React.FC<ScoringSummaryProps> = ({
   getScoreLabel
 }) => {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-medium">Overall Score</h3>
-          <p className={`text-3xl font-bold ${getScoreColor(overallWritingScore)}`}>
-            {overallWritingScore}/5
-          </p>
-        </div>
-        <div>
-          <h3 className="text-lg font-medium">Rating</h3>
-          <p className={`text-xl font-bold ${getScoreColor(overallWritingScore)}`}>
-            {getScoreLabel(overallWritingScore)}
-          </p>
+    <div className="w-full flex flex-col md:flex-row gap-6 md:items-stretch">
+      {/* Left: Score and Rating */}
+      <div className="flex-1 flex flex-col justify-between">
+        <div className="flex flex-row items-start gap-10">
+          <div>
+            <h3 className="text-lg font-medium">Overall Score</h3>
+            <p className={`text-3xl font-bold ${getScoreColor(overallWritingScore)}`}>
+              {overallWritingScore}/5
+            </p>
+          </div>
+          <div>
+            <h3 className="text-lg font-medium">Rating</h3>
+            <p className={`text-xl font-bold ${getScoreColor(overallWritingScore)}`}>
+              {getScoreLabel(overallWritingScore)}
+            </p>
+          </div>
         </div>
       </div>
-      
-      <div className={`p-4 rounded-md ${getScoreBgColor(overallWritingScore)} border`}>
+      {/* Right: Explanation */}
+      <div className={`flex-1 p-4 rounded-md ${getScoreBgColor(overallWritingScore)} border md:max-w-[375px]`}>
         <h4 className="font-medium mb-2">What this score means:</h4>
         <p className="text-sm">
           {Object.entries(scoringCriteria)
