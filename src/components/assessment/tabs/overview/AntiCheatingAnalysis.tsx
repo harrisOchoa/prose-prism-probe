@@ -7,7 +7,7 @@ import { AlertTriangle, Flag, ClipboardCheck } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 interface AntiCheatingAnalysisProps {
-  metrics: AntiCheatingMetrics;
+  metrics: AntiCheatingMetrics & { suspiciousActivityDetail?: string };
 }
 
 const AntiCheatingAnalysis: React.FC<AntiCheatingAnalysisProps> = ({ metrics }) => {
