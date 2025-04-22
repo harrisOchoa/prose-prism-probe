@@ -45,6 +45,12 @@ export interface AptitudeAnalysis {
   performance: string;
 }
 
+export interface AptitudeData {
+  answers: number[];
+  questions: any[];
+  correctAnswers: number;
+}
+
 export const scoringCriteria = {
   1: "Needs Significant Improvement: The response shows limited understanding of the prompt with numerous grammar and structure issues.",
   2: "Basic: The response partially addresses the prompt with several grammatical errors and unclear organization.",

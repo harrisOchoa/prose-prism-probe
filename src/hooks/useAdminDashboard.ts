@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { getAllAssessments } from "@/firebase/assessmentService";
 import { calculateBenchmarks } from "@/utils/benchmarkCalculations";
@@ -20,18 +19,45 @@ export const useAdminDashboard = () => {
         // Log the raw data from Firebase to see if aptitude scores are present
         console.log("Raw assessment data from Firebase:", results);
         
-        // Make sure aptitudeScore and aptitudeTotal have proper values
+        // Process each assessment to ensure aptitude scores are properly set
         const processedResults = results.map(assessment => {
-          // Set default values if they don't exist
-          if (assessment.aptitudeScore === undefined || assessment.aptitudeScore === null) {
-            console.log(`Assessment ${assessment.id} has missing aptitude score`);
+          // For assessments with existing aptitude score, keep it
+          if (assessment.aptitudeScore !== undefined && assessment.aptitudeScore !== null) {
+            console.log(`Assessment ${assessment.id} has aptitude score: ${assessment.aptitudeScore}`);
+            return assessment;
+          }
+          
+          // Try to recover aptitude score from aptitudeAnswers if available
+          if (assessment.aptitudeAnswers && Array.isArray(assessment.aptitudeAnswers)) {
+            console.log(`Assessment ${assessment.id} has aptitude answers array of length: ${assessment.aptitudeAnswers.length}`);
+            // Count correct answers (non-zero entries in the array)
+            const recoveredScore = assessment.aptitudeAnswers.filter(a => a !== 0).length;
+            console.log(`Recovered score for ${assessment.id}: ${recoveredScore}`);
+            
             return {
               ...assessment,
-              aptitudeScore: 0,
+              aptitudeScore: recoveredScore,
               aptitudeTotal: assessment.aptitudeTotal || 30
             };
           }
-          return assessment;
+          
+          // If no score or answers, check if there's any aptitude data
+          if (assessment.aptitudeData && assessment.aptitudeData.correctAnswers !== undefined) {
+            console.log(`Assessment ${assessment.id} has aptitude data with correct answers: ${assessment.aptitudeData.correctAnswers}`);
+            return {
+              ...assessment,
+              aptitudeScore: assessment.aptitudeData.correctAnswers,
+              aptitudeTotal: assessment.aptitudeTotal || 30
+            };
+          }
+          
+          // Set default values as last resort
+          console.log(`Assessment ${assessment.id} has missing aptitude score and no recoverable data`);
+          return {
+            ...assessment,
+            aptitudeScore: 0,
+            aptitudeTotal: assessment.aptitudeTotal || 30
+          };
         });
         
         setAssessments(processedResults);

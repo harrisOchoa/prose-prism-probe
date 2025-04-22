@@ -41,8 +41,15 @@ const AssessmentTable: React.FC<AssessmentTableProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
-  // Debug the assessments data to see actual aptitude scores
-  console.log("Assessments data in table:", assessments);
+  // Helper function to get color for aptitude score
+  const getAptitudeScoreColor = (score: number, total: number) => {
+    const percentage = (score / total) * 100;
+    if (percentage >= 80) return "bg-green-500";
+    if (percentage >= 60) return "bg-blue-500";
+    if (percentage >= 40) return "bg-yellow-500";
+    if (percentage >= 20) return "bg-orange-500";
+    return "bg-red-500";
+  };
 
   // Render mobile card view for small screens
   const renderMobileView = () => {
@@ -74,7 +81,7 @@ const AssessmentTable: React.FC<AssessmentTableProps> = ({
                       <div className="flex items-center mt-1">
                         <div className="mr-2 h-2 w-12 bg-gray-200 rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-hirescribe-primary rounded-full" 
+                            className={`h-full ${getAptitudeScoreColor(assessment.aptitudeScore, assessment.aptitudeTotal)} rounded-full`}
                             style={{ width: `${Math.round((assessment.aptitudeScore / assessment.aptitudeTotal) * 100)}%` }}
                           ></div>
                         </div>
@@ -145,7 +152,7 @@ const AssessmentTable: React.FC<AssessmentTableProps> = ({
                     <div className="flex items-center">
                       <div className="mr-2 h-2 w-full max-w-[60px] bg-gray-200 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-hirescribe-primary rounded-full" 
+                          className={`h-full ${getAptitudeScoreColor(assessment.aptitudeScore, assessment.aptitudeTotal)} rounded-full`}
                           style={{ width: `${Math.round((assessment.aptitudeScore / assessment.aptitudeTotal) * 100)}%` }}
                         ></div>
                       </div>

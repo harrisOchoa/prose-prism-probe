@@ -25,6 +25,12 @@ export interface AssessmentData {
   personalityInsights?: any[];
   interviewQuestions?: any[];
   profileMatch?: any;
+  aptitudeAnswers?: number[];
+  aptitudeData?: {
+    answers: number[];
+    questions: any[];
+    correctAnswers: number;
+  };
   [key: string]: any;
 }
 
@@ -54,18 +60,36 @@ export const useAssessmentView = (id: string | undefined) => {
           } as AssessmentData;
           
           console.log("Assessment data retrieved:", assessmentData);
-          console.log("Aptitude score from database:", assessmentData.aptitudeScore, "/", assessmentData.aptitudeTotal);
           
-          // Make sure aptitude score is properly set
+          // Recovery of aptitude score if it's missing
           if (assessmentData.aptitudeScore === undefined || assessmentData.aptitudeScore === null) {
-            console.log("Warning: Missing aptitude score in assessment data");
-            assessmentData.aptitudeScore = 0;
+            console.log("Attempting to recover aptitude score...");
+            
+            // Try to recover from aptitudeAnswers if available
+            if (assessmentData.aptitudeAnswers && Array.isArray(assessmentData.aptitudeAnswers)) {
+              const recoveredScore = assessmentData.aptitudeAnswers.filter(a => a !== 0).length;
+              console.log(`Recovered aptitude score from answers: ${recoveredScore}`);
+              assessmentData.aptitudeScore = recoveredScore;
+            }
+            // Try to recover from aptitudeData if available
+            else if (assessmentData.aptitudeData && assessmentData.aptitudeData.correctAnswers !== undefined) {
+              console.log(`Recovered aptitude score from aptitudeData: ${assessmentData.aptitudeData.correctAnswers}`);
+              assessmentData.aptitudeScore = assessmentData.aptitudeData.correctAnswers;
+            }
+            // Default to 0 if no recovery is possible
+            else {
+              console.log("No aptitude data available for recovery, defaulting to 0");
+              assessmentData.aptitudeScore = 0;
+            }
           }
           
+          // Ensure aptitudeTotal is set
           if (assessmentData.aptitudeTotal === undefined || assessmentData.aptitudeTotal === null) {
-            console.log("Warning: Missing aptitude total in assessment data");
-            assessmentData.aptitudeTotal = 30; // Default to 30 questions
+            console.log("Setting default aptitude total to 30");
+            assessmentData.aptitudeTotal = 30;
           }
+          
+          console.log("Final aptitude score:", assessmentData.aptitudeScore, "/", assessmentData.aptitudeTotal);
           
           // Log advanced analysis data for debugging
           if (assessmentData.detailedWritingAnalysis) {
