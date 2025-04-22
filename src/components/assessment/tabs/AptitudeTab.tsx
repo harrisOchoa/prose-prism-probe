@@ -14,7 +14,7 @@ interface CategoryBreakdownProps {
 
 const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ categories = [] }) => {
   // Log received categories
-  console.log('Received Categories:', categories);
+  console.log('CategoryBreakdown - Received Categories:', categories);
 
   // If no categories data, generate sample data with clear attribution
   const displayCategories = categories.length > 0 
@@ -38,7 +38,7 @@ const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({ categories = [] }
             <div className="flex justify-between mb-1">
               <span className="text-sm">
                 {category.name} 
-                {category.source && <span className="text-xs text-gray-500 ml-2">(Sample Data)</span>}
+                {category.source && <span className="text-xs text-gray-500 ml-2">({category.source})</span>}
               </span>
               <span className="text-sm font-medium">
                 {category.correct}/{category.total} 
@@ -169,6 +169,9 @@ const AptitudeTab: React.FC<AptitudeTabProps> = ({
             </div>
           </div>
         </div>
+        
+        {/* Category breakdown */}
+        <CategoryBreakdown categories={categories} />
       </div>
     </div>
   );

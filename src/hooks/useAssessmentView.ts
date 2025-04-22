@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
@@ -31,6 +30,12 @@ export interface AssessmentData {
     questions: any[];
     correctAnswers: number;
   };
+  aptitudeCategories?: Array<{
+    name: string;
+    correct: number;
+    total: number;
+    source?: string;
+  }>;
   [key: string]: any;
 }
 
@@ -60,20 +65,38 @@ export const useAssessmentView = (id: string | undefined) => {
           } as AssessmentData;
           
           console.log("Assessment data retrieved:", assessmentData);
+          console.log("Raw aptitude data:", {
+            aptitudeScore: assessmentData.aptitudeScore,
+            aptitudeTotal: assessmentData.aptitudeTotal,
+            aptitudeAnswers: assessmentData.aptitudeAnswers,
+            aptitudeData: assessmentData.aptitudeData
+          });
           
           // Recovery of aptitude score if it's missing
           if (assessmentData.aptitudeScore === undefined || assessmentData.aptitudeScore === null) {
-            console.log("Attempting to recover aptitude score...");
+            console.log("Aptitude score is missing, attempting recovery...");
             
             // Try to recover from aptitudeAnswers if available
             if (assessmentData.aptitudeAnswers && Array.isArray(assessmentData.aptitudeAnswers)) {
-              const recoveredScore = assessmentData.aptitudeAnswers.filter(a => a !== 0).length;
-              console.log(`Recovered aptitude score from answers: ${recoveredScore}`);
-              assessmentData.aptitudeScore = recoveredScore;
+              console.log("Recovery attempt from aptitudeAnswers:", assessmentData.aptitudeAnswers);
+              const correctAnswerIndices = assessmentData.aptitudeData?.correctAnswers; 
+              
+              if (correctAnswerIndices) {
+                // If we have the count of correct answers
+                console.log(`Using provided correct answers count: ${correctAnswerIndices}`);
+                const recoveredScore = correctAnswerIndices;
+                assessmentData.aptitudeScore = recoveredScore;
+              } else {
+                // Otherwise calculate based on non-zero entries (works for old data format)
+                const recoveredScore = assessmentData.aptitudeAnswers.filter(a => a !== 0).length;
+                console.log(`Calculated score from non-zero answers: ${recoveredScore}`);
+                assessmentData.aptitudeScore = recoveredScore;
+              }
+              console.log(`Recovered aptitude score from answers: ${assessmentData.aptitudeScore}`);
             }
             // Try to recover from aptitudeData if available
             else if (assessmentData.aptitudeData && assessmentData.aptitudeData.correctAnswers !== undefined) {
-              console.log(`Recovered aptitude score from aptitudeData: ${assessmentData.aptitudeData.correctAnswers}`);
+              console.log(`Recovering aptitude score from aptitudeData.correctAnswers:`, assessmentData.aptitudeData.correctAnswers);
               assessmentData.aptitudeScore = assessmentData.aptitudeData.correctAnswers;
             }
             // Default to 0 if no recovery is possible
@@ -81,12 +104,42 @@ export const useAssessmentView = (id: string | undefined) => {
               console.log("No aptitude data available for recovery, defaulting to 0");
               assessmentData.aptitudeScore = 0;
             }
+          } else {
+            console.log("Aptitude score already exists:", assessmentData.aptitudeScore);
           }
           
           // Ensure aptitudeTotal is set
           if (assessmentData.aptitudeTotal === undefined || assessmentData.aptitudeTotal === null) {
-            console.log("Setting default aptitude total to 30");
-            assessmentData.aptitudeTotal = 30;
+            console.log("Aptitude total is missing, setting default value");
+            assessmentData.aptitudeTotal = 30; // Default to 30 questions
+          } else {
+            console.log("Aptitude total already exists:", assessmentData.aptitudeTotal);
+          }
+          
+          // Generate aptitude categories if they don't exist
+          if (!assessmentData.aptitudeCategories || !Array.isArray(assessmentData.aptitudeCategories) || assessmentData.aptitudeCategories.length === 0) {
+            console.log("Generating aptitude categories...");
+            
+            // Create sample categories based on aptitude score
+            const totalQuestions = assessmentData.aptitudeTotal;
+            const correctAnswers = assessmentData.aptitudeScore;
+            
+            // Simple algorithm to distribute scores across categories
+            const logicalCorrect = Math.floor(correctAnswers * 0.3);
+            const numericalCorrect = Math.floor(correctAnswers * 0.25);
+            const verbalCorrect = Math.floor(correctAnswers * 0.25);
+            const problemSolvingCorrect = correctAnswers - logicalCorrect - numericalCorrect - verbalCorrect;
+            
+            assessmentData.aptitudeCategories = [
+              { name: "Logical Reasoning", correct: logicalCorrect, total: Math.ceil(totalQuestions * 0.3), source: "Generated" },
+              { name: "Numerical Analysis", correct: numericalCorrect, total: Math.ceil(totalQuestions * 0.25), source: "Generated" },
+              { name: "Verbal Comprehension", correct: verbalCorrect, total: Math.ceil(totalQuestions * 0.25), source: "Generated" },
+              { name: "Problem Solving", correct: problemSolvingCorrect, total: totalQuestions - Math.ceil(totalQuestions * 0.3) - Math.ceil(totalQuestions * 0.25) - Math.ceil(totalQuestions * 0.25), source: "Generated" }
+            ];
+            
+            console.log("Generated aptitude categories:", assessmentData.aptitudeCategories);
+          } else {
+            console.log("Using existing aptitude categories:", assessmentData.aptitudeCategories);
           }
           
           console.log("Final aptitude score:", assessmentData.aptitudeScore, "/", assessmentData.aptitudeTotal);
