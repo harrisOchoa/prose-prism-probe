@@ -32,6 +32,7 @@ const faqItems: FAQItem[] = [
 
 const FAQSection = () => {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const isMobile = useIsMobile();
   
   const toggleFaq = (id: string) => {
     if (expanded === id) {
@@ -42,18 +43,20 @@ const FAQSection = () => {
   };
 
   return (
-    <div className="mb-8">
-      <h2 className="text-xl font-semibold mb-4">Frequently Asked Questions</h2>
+    <div className={`mb-8 ${isMobile ? 'px-2' : ''}`}>
+      <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold mb-4`}>
+        Frequently Asked Questions
+      </h2>
       <div className="space-y-3">
         {faqItems.map((item) => (
           <div key={item.id} className="border rounded-md overflow-hidden">
             <button 
-              className="w-full text-left p-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
+              className={`w-full text-left p-3 md:p-4 flex justify-between items-center hover:bg-gray-50 transition-colors ${isMobile ? 'text-sm' : 'text-base'}`}
               onClick={() => toggleFaq(item.id)}
             >
-              <span className="font-medium">{item.question}</span>
+              <span className="font-medium pr-2">{item.question}</span>
               <svg 
-                className={`w-5 h-5 transform transition-transform ${expanded === item.id ? 'rotate-180' : ''}`}
+                className={`w-5 h-5 flex-shrink-0 transform transition-transform ${expanded === item.id ? 'rotate-180' : ''}`}
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24" 
@@ -63,8 +66,10 @@ const FAQSection = () => {
               </svg>
             </button>
             {expanded === item.id && (
-              <div className="p-4 bg-gray-50 border-t animate-slide-up">
-                <p className="text-gray-700">{item.answer}</p>
+              <div className="p-3 md:p-4 bg-gray-50 border-t">
+                <p className={`text-gray-700 ${isMobile ? 'text-sm' : 'text-base'}`}>
+                  {item.answer}
+                </p>
               </div>
             )}
           </div>
