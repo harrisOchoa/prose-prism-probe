@@ -117,6 +117,10 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
       }
     }
 
+    // Log the score and answer information before submitting
+    console.log("Submitting aptitude test with score:", score, "out of", randomizedQuestions.length);
+    console.log("Selected answers:", selectedOptions);
+    
     onComplete(selectedOptions, score, getAptitudeAntiCheatingMetrics());
   };
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { WritingPromptQuestion, getRandomQuestions } from "@/utils/questionBank";
 import { AptitudeQuestion, getRandomAptitudeQuestions } from "@/utils/aptitudeQuestions";
@@ -39,7 +40,7 @@ interface AssessmentManagerProps {
     startAssessment: () => void;
     handleInfoSubmit: (name: string, position: string, skills: string) => void;
     handleStart: () => void;
-    handleAptitudeComplete: (answers: number[], score: number) => void;
+    handleAptitudeComplete: (answers: number[], score: number, metrics?: AntiCheatingMetrics) => void;
     handlePromptSubmit: (text: string, metrics?: AntiCheatingMetrics) => void;
     handlePromptSelection: (selectedPromptIds: number[]) => void;
     restartAssessment: () => void;
@@ -100,7 +101,19 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
     setStage(Stage.APTITUDE);
   };
 
-  const handleAptitudeComplete = () => {
+  const handleAptitudeComplete = (answers: number[], score: number, metrics?: AntiCheatingMetrics) => {
+    // Store the answers and score
+    setAptitudeAnswers(answers);
+    setAptitudeScore(score);
+    
+    // Log the score to verify it's being saved
+    console.log("Aptitude test completed with score:", score, "out of", aptitudeQuestions.length);
+    
+    // Save anti-cheating metrics if provided
+    if (metrics) {
+      setAntiCheatingMetrics(metrics);
+    }
+    
     setStage(Stage.SELECT_PROMPTS);
     setPrompts([]);
     setSelectedPromptIds([]);

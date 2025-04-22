@@ -113,7 +113,11 @@ const Index = () => {
           {stage === Stage.APTITUDE && aptitudeQuestions.length > 0 && (
             <AptitudeTest 
               questions={aptitudeQuestions}
-              onComplete={handleAptitudeComplete}
+              onComplete={(answers, score, metrics) => {
+                console.log("Aptitude test completed with score:", score, "out of", aptitudeQuestions.length);
+                handleStageTransition(Stage.SELECT_PROMPTS);
+                handleAptitudeComplete(answers, score, metrics);
+              }}
               timeLimit={30 * 60} // 30 minutes in seconds
             />
           )}
@@ -121,7 +125,10 @@ const Index = () => {
           {stage === Stage.SELECT_PROMPTS && availablePrompts.length > 0 && (
             <PromptSelection
               availablePrompts={availablePrompts}
-              onSelection={handlePromptSelection}
+              onSelection={(selectedIds) => {
+                handleStageTransition(Stage.WRITING);
+                handlePromptSelection(selectedIds);
+              }}
               minSelect={1}
               maxSelect={availablePrompts.length}
             />
@@ -132,7 +139,13 @@ const Index = () => {
               prompt={prompts[currentPromptIndex]?.prompt || ""}
               response={prompts[currentPromptIndex]?.response || ""}
               timeLimit={30 * 60} // 30 minutes in seconds
-              onSubmit={handlePromptSubmit}
+              onSubmit={(text, metrics) => {
+                const isLastPrompt = currentPromptIndex === prompts.length - 1;
+                if (isLastPrompt) {
+                  handleStageTransition(Stage.COMPLETE);
+                }
+                handlePromptSubmit(text, metrics);
+              }}
               currentQuestion={currentPromptIndex + 1}
               totalQuestions={prompts.length}
               isLoading={prompts.length === 0}
