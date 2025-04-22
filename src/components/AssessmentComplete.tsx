@@ -16,6 +16,7 @@ interface AssessmentCompleteProps {
   aptitudeTotal: number;
   restartAssessment: () => void;
   antiCheatingMetrics?: AntiCheatingMetrics;
+  wordCount: number; // Added wordCount prop
 }
 
 const AssessmentComplete = ({
@@ -25,7 +26,8 @@ const AssessmentComplete = ({
   aptitudeScore,
   aptitudeTotal,
   restartAssessment,
-  antiCheatingMetrics
+  antiCheatingMetrics,
+  wordCount // Added to destructuring
 }: AssessmentCompleteProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
