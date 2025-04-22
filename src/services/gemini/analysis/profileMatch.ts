@@ -1,7 +1,8 @@
 
 import { CandidateProfileMatch } from "../types";
 import { makeGeminiRequest, parseJsonResponse } from "../config";
-import { WritingPromptItem, WritingScore } from "@/types";
+import { WritingPromptItem } from "@/components/AssessmentManager";
+import { WritingScore } from "@/services/gemini/types";
 
 export const compareWithIdealProfile = async (assessmentData: any): Promise<CandidateProfileMatch> => {
   try {
