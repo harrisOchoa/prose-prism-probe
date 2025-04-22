@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -6,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { AptitudeQuestion } from "@/utils/aptitudeQuestions";
 import AssessmentTimer from "./AssessmentTimer";
 import useAptitudeAntiCheating from "@/hooks/useAptitudeAntiCheating";
+import ProgressIndicator from "./assessment/ProgressIndicator";
 
 interface AptitudeTestProps {
   questions: AptitudeQuestion[];
@@ -141,9 +141,17 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
 
   return (
     <div className="assessment-card max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="assessment-title">Aptitude Test</h1>
-        <AssessmentTimer duration={timeLimit} onTimeEnd={handleTimeEnd} />
+      <div className="space-y-4 mb-6">
+        <div className="flex justify-between items-center">
+          <h1 className="assessment-title">Aptitude Test</h1>
+          <AssessmentTimer duration={timeLimit} onTimeEnd={handleTimeEnd} />
+        </div>
+        
+        <ProgressIndicator 
+          currentStep={currentQuestionIndex + 1} 
+          totalSteps={randomizedQuestions.length}
+          label="Aptitude Progress"
+        />
       </div>
 
       <div className="flex items-center mb-4 text-sm font-medium text-assessment-accent">

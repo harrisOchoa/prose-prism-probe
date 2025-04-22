@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { useAntiCheating } from "@/hooks/useAntiCheating";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Loader2 } from "lucide-react";
+import ProgressIndicator from "./assessment/ProgressIndicator";
 
 interface WritingPromptProps {
   prompt: string;
@@ -32,7 +32,6 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
   const [wordCount, setWordCount] = useState(0);
   const isMobile = useIsMobile();
   
-  // Initialize anti-cheating hooks
   const {
     handleKeyPress,
     preventCopyPaste,
@@ -41,20 +40,17 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
     suspiciousActivity
   } = useAntiCheating(text);
 
-  // Update word count when text changes
   useEffect(() => {
     const words = text.trim().split(/\s+/).filter(word => word !== "");
     setWordCount(words.length);
   }, [text]);
 
-  // Focus the textarea on component mount
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.focus();
     }
   }, []);
 
-  // Update text with response only on first mount or currentQuestion change
   useEffect(() => {
     setText(response || "");
   }, [response, currentQuestion]);
@@ -69,10 +65,8 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
       return;
     }
     
-    // Include anti-cheating metrics with the submission
     const metrics = getAssessmentMetrics();
     
-    // Log metrics to ensure they're being captured
     console.log("Anti-cheating metrics captured:", metrics);
     
     onSubmit(text, metrics);
@@ -82,11 +76,18 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
     <div className="container max-w-4xl mx-auto py-3 md:py-6 px-3 md:px-0">
       <Card className="border shadow">
         <CardHeader className={`bg-muted/50 ${isMobile ? 'p-3' : 'p-6'}`}>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <CardTitle className={`${isMobile ? 'text-lg' : 'text-2xl'}`}>
-              Writing ({currentQuestion}/{totalQuestions})
-            </CardTitle>
-            <AssessmentTimer duration={timeLimit} onTimeEnd={handleSubmit} />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <CardTitle className={`${isMobile ? 'text-lg' : 'text-2xl'}`}>
+                Writing Assessment
+              </CardTitle>
+              <AssessmentTimer duration={timeLimit} onTimeEnd={handleSubmit} />
+            </div>
+            <ProgressIndicator 
+              currentStep={currentQuestion} 
+              totalSteps={totalQuestions}
+              label="Writing Progress"
+            />
           </div>
         </CardHeader>
         <CardContent className={`${isMobile ? 'p-3 pt-4' : 'p-6 pt-6'}`}>
