@@ -1,11 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { WritingPromptQuestion, getRandomQuestions } from "@/utils/questionBank";
 import { AptitudeQuestion, getRandomAptitudeQuestions } from "@/utils/aptitudeQuestions";
 import { AntiCheatingMetrics } from "@/firebase/assessmentService";
 import { generatePositionSpecificPrompts } from "@/services/gemini/positionPrompts";
 
-// Assessment stages
 export enum Stage {
   LANDING,  // Landing page
   INFO,     // Name/position collection
@@ -17,7 +15,6 @@ export enum Stage {
   COMPLETE  // Thank you page
 }
 
-// Define the type for a writing prompt with response
 export interface WritingPromptItem extends WritingPromptQuestion {
   response: string;
   wordCount: number;
@@ -31,6 +28,7 @@ interface AssessmentManagerProps {
     stage: Stage;
     candidateName: string;
     candidatePosition: string;
+    candidateSkills: string;
     currentPromptIndex: number;
     prompts: WritingPromptItem[];
     availablePrompts: WritingPromptQuestion[];
@@ -39,7 +37,7 @@ interface AssessmentManagerProps {
     aptitudeScore: number;
     antiCheatingMetrics?: AntiCheatingMetrics;
     startAssessment: () => void;
-    handleInfoSubmit: (name: string, position: string) => void;
+    handleInfoSubmit: (name: string, position: string, skills: string) => void;
     handleStart: () => void;
     handleAptitudeComplete: (answers: number[], score: number) => void;
     handlePromptSubmit: (text: string, metrics?: AntiCheatingMetrics) => void;
@@ -52,43 +50,37 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
   const [stage, setStage] = useState<Stage>(Stage.LANDING);
   const [candidateName, setCandidateName] = useState("");
   const [candidatePosition, setCandidatePosition] = useState("");
+  const [candidateSkills, setCandidateSkills] = useState("");
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [usePositionPrompts] = useState(true);
 
-  // * Available prompts to pick from (shown on selection page)
   const [availablePrompts, setAvailablePrompts] = useState<WritingPromptQuestion[]>([]);
-  // * Prompts the candidate decided to answer
   const [prompts, setPrompts] = useState<WritingPromptItem[]>([]);
-  // * Store selected prompt ids for highlighting in UI
   const [selectedPromptIds, setSelectedPromptIds] = useState<number[]>([]);
 
-  // State for aptitude test
   const [aptitudeQuestions, setAptitudeQuestions] = useState<AptitudeQuestion[]>([]);
   const [aptitudeAnswers, setAptitudeAnswers] = useState<number[]>([]);
   const [aptitudeScore, setAptitudeScore] = useState(0);
 
-  // State for generating prompts
   const [isGeneratingPrompts, setIsGeneratingPrompts] = useState(false);
 
-  // State for anti-cheating metrics
   const [antiCheatingMetrics, setAntiCheatingMetrics] = useState<AntiCheatingMetrics | undefined>(undefined);
 
-  // Start the assessment flow
   const startAssessment = () => {
     setStage(Stage.INFO);
   };
 
-  // Generate position-specific prompts when candidate info is submitted
-  const handleInfoSubmit = async (name: string, position: string) => {
+  const handleInfoSubmit = async (name: string, position: string, skills: string) => {
     setCandidateName(name);
     setCandidatePosition(position);
+    setCandidateSkills(skills);
 
     setStage(Stage.GENERATING_PROMPTS);
     setIsGeneratingPrompts(true);
     try {
       let questions: WritingPromptQuestion[];
       if (usePositionPrompts && position) {
-        questions = await generatePositionSpecificPrompts(position, QUESTIONS_PER_ASSESSMENT);
+        questions = await generatePositionSpecificPrompts(position, QUESTIONS_PER_ASSESSMENT, skills);
       } else {
         questions = getRandomQuestions(QUESTIONS_PER_ASSESSMENT);
       }
@@ -102,14 +94,12 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
   };
 
   const handleStart = () => {
-    // Initialize the aptitude questions
     const selectedAptitudeQuestions = getRandomAptitudeQuestions(APTITUDE_QUESTIONS_COUNT);
     setAptitudeQuestions(selectedAptitudeQuestions);
 
     setStage(Stage.APTITUDE);
   };
 
-  // After aptitude test, show candidate the prompt selection page
   const handleAptitudeComplete = () => {
     setStage(Stage.SELECT_PROMPTS);
     setPrompts([]);
@@ -117,10 +107,8 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
     setCurrentPromptIndex(0);
   };
 
-  // Candidate selects which prompts to answer (at least one)
   const handlePromptSelection = (chosenPromptIds: number[]) => {
     const selectedQuestions = availablePrompts.filter(q => chosenPromptIds.includes(q.id));
-    // Initialize prompts with empty responses and word count for each selection
     const initialPrompts: WritingPromptItem[] = selectedQuestions.map(q => ({
       ...q,
       response: "",
@@ -147,7 +135,6 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
       setAntiCheatingMetrics(metrics);
     }
 
-    // Move to next selected prompt or finish
     if (currentPromptIndex < prompts.length - 1) {
       setCurrentPromptIndex(currentPromptIndex + 1);
     } else {
@@ -166,6 +153,7 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
     setAptitudeScore(0);
     setCandidateName("");
     setCandidatePosition("");
+    setCandidateSkills("");
     setAntiCheatingMetrics(undefined);
   };
 
@@ -173,6 +161,7 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
     stage,
     candidateName,
     candidatePosition,
+    candidateSkills,
     currentPromptIndex,
     prompts,
     availablePrompts,

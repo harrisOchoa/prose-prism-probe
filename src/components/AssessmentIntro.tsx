@@ -1,13 +1,15 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 
 interface AssessmentIntroProps {
   step: "info" | "instructions";
   candidateName: string;
   candidatePosition?: string;
-  onInfoSubmit?: (name: string, position: string) => void;
+  onInfoSubmit?: (name: string, position: string, skills: string) => void;
   onStart?: () => void;
 }
 
@@ -21,6 +23,7 @@ const AssessmentIntro = ({
   const [expanded, setExpanded] = useState<string | null>(null);
   const [name, setName] = useState(candidateName);
   const [position, setPosition] = useState(candidatePosition);
+  const [skills, setSkills] = useState("");
   const [formError, setFormError] = useState(false);
   
   const faqItems = [
@@ -55,13 +58,13 @@ const AssessmentIntro = ({
   };
   
   const handleInfoSubmit = () => {
-    if (name.trim() === "" || position.trim() === "") {
+    if (name.trim() === "" || position.trim() === "" || skills.trim() === "") {
       setFormError(true);
       return;
     }
     
     setFormError(false);
-    onInfoSubmit?.(name, position);
+    onInfoSubmit?.(name, position, skills);
   };
 
   if (step === "info") {
@@ -102,6 +105,22 @@ const AssessmentIntro = ({
               {formError && position.trim() === "" && (
                 <p className="text-assessment-danger text-sm mt-1">Please enter the position</p>
               )}
+            </div>
+            <div>
+              <Label htmlFor="skills">Relevant Skills & Experience</Label>
+              <Textarea
+                id="skills"
+                placeholder="Describe your key skills, experience, and expertise relevant to this position"
+                value={skills}
+                onChange={(e) => setSkills(e.target.value)}
+                className={`min-h-[120px] ${formError && skills.trim() === "" ? "border-assessment-danger" : ""}`}
+              />
+              {formError && skills.trim() === "" && (
+                <p className="text-assessment-danger text-sm mt-1">Please describe your relevant skills and experience</p>
+              )}
+              <p className="text-sm text-muted-foreground mt-2">
+                This helps us generate questions tailored to your experience level and expertise
+              </p>
             </div>
           </div>
         </div>

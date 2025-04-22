@@ -1,34 +1,29 @@
-
 import { WritingPromptQuestion } from "@/utils/questionBank";
 import { makeGeminiRequest, parseJsonResponse } from "./config";
 
-/**
- * Generates position-specific writing prompts based on the candidate's position
- * @param position The position the candidate is applying for
- * @param count The number of prompts to generate
- * @returns Array of position-specific writing prompts
- */
 export const generatePositionSpecificPrompts = async (
   position: string,
-  count: number = 3
+  count: number = 3,
+  skills?: string
 ): Promise<WritingPromptQuestion[]> => {
   try {
-    console.log(`Generating ${count} prompts for position: ${position}`);
+    console.log(`Generating ${count} prompts for position: ${position} with skills: ${skills}`);
     
     const promptTemplate = `
 You are an expert hiring manager creating writing assessment prompts for job candidates.
 
-Your task is to create ${count} writing prompts that are highly specific to this position: "${position}".
+Position: "${position}"
+${skills ? `Candidate's Skills & Experience: "${skills}"` : ''}
 
-Each prompt should:
-1. Be relevant to daily responsibilities and challenges in ${position}
-2. Test both domain knowledge AND communication skills
-3. Reveal the candidate's problem-solving approaches and real-world experience
-4. Be answerable in 300-500 words
-5. Be open-ended enough to allow different approaches
+Your task is to create ${count} writing prompts that are:
+1. Highly specific to this position AND the candidate's expertise level
+2. Aligned with the skills and experience they've described
+3. Designed to test both domain knowledge AND communication skills
+4. Crafted to reveal problem-solving approaches and real-world experience
+5. Answerable in 300-500 words
+6. Open-ended enough to allow different approaches
 
-Do NOT create generic prompts that could apply to any position.
-The prompts should specifically test knowledge and skills directly related to ${position}.
+The prompts should specifically test knowledge and skills directly related to ${position} while staying within the scope of the candidate's described experience level.
 
 Return exactly ${count} prompts as a JSON array with this structure:
 {
@@ -56,10 +51,9 @@ Return exactly ${count} prompts as a JSON array with this structure:
       throw new Error("Invalid response format from Gemini");
     }
     
-    // Map the response to our WritingPromptQuestion format
     const prompts: WritingPromptQuestion[] = parsedResponse.prompts.map(
       (item: any, index: number) => ({
-        id: index + 1, // Use sequential IDs starting from 1
+        id: index + 1,
         prompt: item.prompt
       })
     );
@@ -69,7 +63,6 @@ Return exactly ${count} prompts as a JSON array with this structure:
   } catch (error) {
     console.error("Error generating position-specific prompts:", error);
     
-    // Fallback to basic position-related questions if Gemini fails
     return [
       {
         id: 1,
