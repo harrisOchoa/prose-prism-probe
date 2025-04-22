@@ -76,22 +76,28 @@ const AptitudeTab: React.FC<AptitudeTabProps> = ({
   generateAdvancedAnalysis,
   generatingAnalysis = {}
 }) => {
-  // Log analysis request state and assessment data
-  console.log('AptitudeTab - Assessment Data:', assessmentData);
+  // Enhanced logging
+  console.log('AptitudeTab - Full Assessment Data:', JSON.stringify(assessmentData, null, 2));
+  console.log('AptitudeTab - Aptitude Score:', assessmentData.aptitudeScore);
+  console.log('AptitudeTab - Aptitude Total:', assessmentData.aptitudeTotal);
   
   // Extract aptitude results or initialize to empty arrays
   const aptitudeResults = assessmentData?.aptitudeResults || [];
   const categories = assessmentData?.aptitudeCategories || [];
   
-  // Determine if we have category data for breakdown
-  const hasCategoryData = categories.length > 0;
-  
-  // Calculate scores
-  const totalQuestions = aptitudeResults.length;
-  const correctAnswers = aptitudeResults.filter((q: any) => q.isCorrect).length;
+  // Ensure aptitude score calculation uses correct values
+  const totalQuestions = assessmentData.aptitudeTotal || 30;
+  const correctAnswers = assessmentData.aptitudeScore || 0;
   const scoreFraction = totalQuestions > 0 ? correctAnswers / totalQuestions : 0;
   const scorePercentage = Math.round(scoreFraction * 100);
   
+  console.log('Calculated Metrics:', {
+    totalQuestions,
+    correctAnswers,
+    scoreFraction,
+    scorePercentage
+  });
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -114,7 +120,7 @@ const AptitudeTab: React.FC<AptitudeTabProps> = ({
               }
             />
             
-            {aptitudeResults.length > 0 ? (
+            {totalQuestions > 0 ? (
               <div className="space-y-2 mt-4">
                 <p className="text-sm text-gray-500">
                   The candidate answered {correctAnswers} out of {totalQuestions} 
@@ -163,9 +169,6 @@ const AptitudeTab: React.FC<AptitudeTabProps> = ({
             </div>
           </div>
         </div>
-        
-        {/* Category breakdown */}
-        <CategoryBreakdown categories={categories} />
       </div>
     </div>
   );
