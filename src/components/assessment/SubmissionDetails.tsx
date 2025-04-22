@@ -6,16 +6,22 @@ interface SubmissionDetailsProps {
   isSaving: boolean;
   submissionId: string | null;
   evaluationStatus: "loading" | "complete" | "error";
+  savingMessage: string;
 }
 
-const SubmissionDetails = ({ isSaving, submissionId, evaluationStatus }: SubmissionDetailsProps) => {
+const SubmissionDetails = ({ 
+  isSaving, 
+  submissionId, 
+  evaluationStatus,
+  savingMessage 
+}: SubmissionDetailsProps) => {
   return (
     <Card className="mb-8 p-6 bg-gray-50">
       {isSaving ? (
-        <div className="flex flex-col items-center justify-center py-6">
+        <div className="flex flex-col items-center justify-center py-6 animate-fade-in">
           <Loader2 className="h-8 w-8 animate-spin text-hirescribe-primary mb-2" />
           <p className="text-hirescribe-primary">
-            {evaluationStatus === "loading" ? "Processing your assessment..." : "Saving your assessment..."}
+            {savingMessage}
           </p>
         </div>
       ) : (

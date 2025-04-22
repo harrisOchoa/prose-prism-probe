@@ -7,6 +7,7 @@ import AptitudeTest from "@/components/AptitudeTest";
 import LandingPage from "@/components/LandingPage";
 import AssessmentManager, { Stage } from "@/components/AssessmentManager";
 import PromptSelection from "@/components/PromptSelection";
+import StepTransition from "@/components/assessment/StepTransition";
 
 const loadingMessages = [
   "Preparing your assessment\u2026",
@@ -16,18 +17,38 @@ const loadingMessages = [
 
 const Index = () => {
   const [loadingIndex, setLoadingIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionMessage, setTransitionMessage] = useState("");
 
   useEffect(() => {
-    // Only run the cycling if on the GENERATING_PROMPTS stage
-    // but since we don't have access to stage here outside children function,
-    // we just cycle the messages with interval while the component is mounted.
-    // It will reset when the component remounts.
     const interval = setInterval(() => {
       setLoadingIndex((prev) => (prev + 1) % loadingMessages.length);
-    }, 2000); // Change message every 2 seconds
+    }, 2000);
 
     return () => clearInterval(interval);
   }, []);
+
+  const handleStageTransition = (newStage: Stage) => {
+    setIsTransitioning(true);
+    let message = "";
+    
+    switch (newStage) {
+      case Stage.APTITUDE:
+        message = "Preparing aptitude test...";
+        break;
+      case Stage.WRITING:
+        message = "Setting up writing assessment...";
+        break;
+      case Stage.COMPLETE:
+        message = "Finalizing your assessment...";
+        break;
+      default:
+        message = "Loading next section...";
+    }
+    
+    setTransitionMessage(message);
+    setTimeout(() => setIsTransitioning(false), 1000);
+  };
 
   return (
     <AssessmentManager>
@@ -51,8 +72,13 @@ const Index = () => {
         antiCheatingMetrics
       }) => (
         <div className="assessment-container min-h-screen py-6 sm:py-12 px-2 sm:px-0">
+          <StepTransition loading={isTransitioning} message={transitionMessage} />
+
           {stage === Stage.LANDING && (
-            <LandingPage onStart={startAssessment} />
+            <LandingPage onStart={() => {
+              handleStageTransition(Stage.INFO);
+              startAssessment();
+            }} />
           )}
 
           {stage === Stage.INFO && (
@@ -60,7 +86,10 @@ const Index = () => {
               step="info" 
               candidateName={candidateName}
               candidatePosition={candidatePosition}
-              onInfoSubmit={handleInfoSubmit} 
+              onInfoSubmit={(name, position, skills) => {
+                handleStageTransition(Stage.GENERATING_PROMPTS);
+                handleInfoSubmit(name, position, skills);
+              }} 
             />
           )}
 
@@ -129,4 +158,3 @@ const Index = () => {
 };
 
 export default Index;
-

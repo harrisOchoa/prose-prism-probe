@@ -41,16 +41,16 @@ const AssessmentComplete = ({
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [writingScores, setWritingScores] = useState<WritingScore[]>([]);
   const [evaluationStatus, setEvaluationStatus] = useState<"loading" | "complete" | "error">("loading");
+  const [savingStep, setSavingStep] = useState<"evaluating" | "saving" | "complete">("evaluating");
 
   useEffect(() => {
     const evaluateAndSave = async () => {
       try {
-        // First evaluate the writing responses (still do this in the background)
+        setSavingStep("evaluating");
         setEvaluationStatus("loading");
         const scores = await evaluateAllWritingPrompts(completedPrompts);
         setWritingScores(scores);
         
-        // Calculate overall score (for internal storage only)
         let avgScore = 0;
         if (scores.length > 0) {
           const totalScore = scores.reduce((sum, evaluation) => sum + evaluation.score, 0);
@@ -58,11 +58,10 @@ const AssessmentComplete = ({
         }
         
         setEvaluationStatus("complete");
+        setSavingStep("saving");
         
-        // Log the anti-cheating metrics before saving
         console.log("Saving assessment with anti-cheating metrics:", antiCheatingMetrics);
         
-        // Then save everything to Firebase with properly passed metrics
         const id = await saveAssessmentResult(
           candidateName,
           candidatePosition,
@@ -75,6 +74,7 @@ const AssessmentComplete = ({
         
         setSubmissionId(id);
         setIsSaving(false);
+        setSavingStep("complete");
         
         toast({
           title: "Assessment Saved",
@@ -85,6 +85,7 @@ const AssessmentComplete = ({
         console.error("Error saving assessment:", error);
         setIsSaving(false);
         setEvaluationStatus("error");
+        setSavingStep("complete");
         
         toast({
           title: "Error Saving Assessment",
@@ -96,15 +97,29 @@ const AssessmentComplete = ({
 
     evaluateAndSave();
   }, [candidateName, candidatePosition, completedPrompts, aptitudeScore, aptitudeTotal, antiCheatingMetrics]);
+
+  const getSavingMessage = () => {
+    switch (savingStep) {
+      case "evaluating":
+        return "Evaluating your responses...";
+      case "saving":
+        return "Saving your assessment...";
+      case "complete":
+        return "Assessment complete!";
+      default:
+        return "Processing...";
+    }
+  };
   
   return (
-    <div className="assessment-card max-w-4xl mx-auto text-center px-2 sm:px-4 py-6">
+    <div className="assessment-card max-w-4xl mx-auto text-center px-2 sm:px-4 py-6 animate-fade-in">
       <SuccessHeader candidateName={candidateName} />
       
       <SubmissionDetails 
         isSaving={isSaving} 
         submissionId={submissionId} 
-        evaluationStatus={evaluationStatus} 
+        evaluationStatus={evaluationStatus}
+        savingMessage={getSavingMessage()}
       />
       
       <CandidateInformation 
@@ -116,6 +131,7 @@ const AssessmentComplete = ({
         <Button 
           className="hirescribe-button w-full max-w-xs sm:w-auto"
           onClick={restartAssessment}
+          disabled={isSaving}
         >
           Start New Assessment
         </Button>
