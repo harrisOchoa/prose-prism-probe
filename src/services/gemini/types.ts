@@ -1,3 +1,4 @@
+
 export interface WritingScore {
   score: number;
   feedback: string;
@@ -6,6 +7,8 @@ export interface WritingScore {
     probability: number;
     notes: string;
   };
+  strengths?: string[];
+  weaknesses?: string[];
 }
 
 export type PersonalityInsight = {

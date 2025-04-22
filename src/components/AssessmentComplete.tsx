@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { saveAssessmentResult } from "@/firebase/assessmentService";
 import { toast } from "@/components/ui/use-toast";
 import { WritingPromptItem } from "./AssessmentManager";
-import { evaluateWriting, WritingScore } from "@/services/geminiService";
+import { evaluateAllWritingPrompts, WritingScore } from "@/services/geminiService";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { AntiCheatingMetrics } from "@/firebase/assessmentService";
@@ -99,27 +100,40 @@ const AssessmentComplete = ({
             promptId: prompt.id,
             score: 0,
             feedback: "No response provided",
-            strengths: [],
-            weaknesses: []
+            aiDetection: {
+              probability: 0,
+              notes: "No content to analyze"
+            }
           });
           setEvaluationProgress(((i + 1) / completedPrompts.length) * 100);
           continue;
         }
         
         try {
-          const evaluation = await evaluateWriting(prompt.prompt, prompt.response);
-          scores.push({
-            promptId: prompt.id,
-            ...evaluation
-          });
+          const evaluation = await evaluateAllWritingPrompts([prompt]);
+          if (evaluation && evaluation.length > 0) {
+            scores.push(evaluation[0]);
+          } else {
+            scores.push({
+              promptId: prompt.id,
+              score: 0,
+              feedback: "Error during evaluation",
+              aiDetection: {
+                probability: 0,
+                notes: "Evaluation failed"
+              }
+            });
+          }
         } catch (evalError) {
           console.error(`Error evaluating prompt ${prompt.id}:`, evalError);
           scores.push({
             promptId: prompt.id,
             score: 0,
             feedback: "Error evaluating response",
-            strengths: [],
-            weaknesses: []
+            aiDetection: {
+              probability: 0,
+              notes: "Evaluation error"
+            }
           });
         }
         

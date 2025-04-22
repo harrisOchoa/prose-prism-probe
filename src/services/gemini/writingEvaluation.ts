@@ -12,7 +12,7 @@ export const evaluateWritingResponse = async (prompt: string, userResponse: stri
 You are an expert writing evaluator for job candidates, with special attention to providing fair but candid feedback and detecting possible AI-generated text. DO NOT use generic, vague, or templated feedback. Each evaluation must be tailored to the specific writing sample and reference unique details.
 
 Your feedback MUST:
-- Reference at least one phrase, sentence, or idea from the candidate’s response.
+- Reference at least one phrase, sentence, or idea from the candidate's response.
 - Be honest, constructive, and specific to the individual; do not use canned language.
 - Clearly state one strength observed in the writing and one specific area for improvement, even for high or low scores.
 - Avoid general phrases such as "The response is relevant to the prompt" or "The writing is simplistic" unless you pair them with clear evidence and further explanation.
@@ -36,12 +36,14 @@ Return your evaluation as JSON with this exact structure:
 {
   "score": [number between 1-5],
   "feedback": [
-    "Write 2-4 sentences. Directly quote or summarize part of the candidate’s answer. 
+    "Write 2-4 sentences. Directly quote or summarize part of the candidate's answer. 
      Include something the candidate did well, and something they could improve, giving actionable feedback. 
      Avoid general or repetitive phrasing."
   ],
   "aiProbability": [number between 0-1 for AI likelihood],
-  "aiDetectionNotes": [brief explanation of findings, reference specific sentence or quality if possible]
+  "aiDetectionNotes": [brief explanation of findings, reference specific sentence or quality if possible],
+  "strengths": ["Strength 1", "Strength 2"],
+  "weaknesses": ["Weakness 1", "Weakness 2"]
 }
 
 Writing Prompt: "${prompt}"
@@ -64,6 +66,8 @@ Candidate's Response: "${userResponse}"
         probability: evaluation.aiProbability || 0,
         notes: evaluation.aiDetectionNotes || "No AI detection notes provided"
       },
+      strengths: evaluation.strengths || [],
+      weaknesses: evaluation.weaknesses || [],
       promptId: 0
     };
   } catch (error) {
@@ -101,6 +105,10 @@ export const evaluateAllWritingPrompts = async (prompts: WritingPromptItem[]): P
           return { 
             score: 0, 
             feedback: `Evaluation failed: ${error.message}. Please check manually.`, 
+            aiDetection: {
+              probability: 0,
+              notes: "Evaluation failed"
+            },
             promptId: prompt.id 
           };
         });
