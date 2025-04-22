@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 
 export interface AptitudeAntiCheatingMetrics {
@@ -13,6 +12,8 @@ export interface AptitudeAntiCheatingMetrics {
   suspiciousActivityDetail?: string;
   timeSpentMs: number;
   userAgent: string;
+  windowBlurDuration: number;
+  windowBlurCount: number;
 }
 
 /**
@@ -36,20 +37,38 @@ const useAptitudeAntiCheating = () => {
 
   // Track if we're capturing screenshot attempts (for native screenshot APIs)
   const [screenshotAttempts, setScreenshotAttempts] = useState(0);
+  const [windowBlurCount, setWindowBlurCount] = useState(0);
+  const [windowBlurDuration, setWindowBlurDuration] = useState(0);
+  const blurStartTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
+        // Record blur start time
+        blurStartTimeRef.current = Date.now();
         setTabSwitches((prev) => prev + 1);
         setWindowBlurs((prev) => prev + 1);
         setTimeSpentMs(Date.now() - promptStartRef.current);
+        setWindowBlurCount(prev => prev + 1);
         
         // Flag as suspicious if tab is switched too many times
         if (tabSwitches >= 2) {
           setSuspiciousActivity(true);
           setSuspiciousActivityDetail(`Frequent tab switching (${tabSwitches + 1} times) detected during aptitude test.`);
         }
+
+        // Flag as suspicious if window is blurred frequently
+        if (windowBlurCount >= 2) {
+          setSuspiciousActivity(true);
+          setSuspiciousActivityDetail(`Frequent window blur detected (${windowBlurCount + 1} times) during aptitude test.`);
+        }
       } else {
+        // Calculate blur duration when window comes back into focus
+        if (blurStartTimeRef.current) {
+          const blurDuration = Date.now() - blurStartTimeRef.current;
+          setWindowBlurDuration(prev => prev + blurDuration);
+          blurStartTimeRef.current = null;
+        }
         setWindowFocuses((prev) => prev + 1);
         promptStartRef.current = Date.now();
       }
@@ -105,7 +124,7 @@ const useAptitudeAntiCheating = () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("contextmenu", handleContextMenu);
     };
-  }, [tabSwitches, rightClickAttempts, keyboardShortcuts]);
+  }, [tabSwitches, rightClickAttempts, keyboardShortcuts, windowBlurCount]);
 
   // For copying prevention, handler needs to be exposed
   const preventCopy = (e: React.ClipboardEvent | Event) => {
@@ -135,6 +154,8 @@ const useAptitudeAntiCheating = () => {
     suspiciousActivityDetail: suspiciousActivityDetail ?? undefined,
     timeSpentMs: Date.now() - promptStartRef.current + timeSpentMs,
     userAgent,
+    windowBlurDuration,
+    windowBlurCount,
   });
 
   // Allow parent to reset if needed
