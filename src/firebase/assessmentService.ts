@@ -1,4 +1,3 @@
-
 import { db } from './config';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData, updateDoc, doc } from 'firebase/firestore';
 import { WritingPromptItem } from '@/components/AssessmentManager';
@@ -49,8 +48,6 @@ export const saveAssessmentResult = async (
   antiCheatingMetrics?: AntiCheatingMetrics
 ): Promise<string> => {
   try {
-    // First, check if a very similar submission already exists within the last minute
-    // This helps prevent accidental double-submissions
     const recentSubmissionsQuery = query(
       collection(db, 'assessments'),
       where('candidateName', '==', candidateName),
@@ -60,10 +57,9 @@ export const saveAssessmentResult = async (
     const querySnapshot = await getDocs(recentSubmissionsQuery);
     const recentSubmissions = querySnapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data() as DocumentData
+      ...doc.data() as AssessmentSubmission
     }));
     
-    // Check for submissions in the last 60 seconds with the same name and position
     const now = new Date();
     const potentialDuplicates = recentSubmissions.filter(submission => {
       if (submission.submittedAt && submission.submittedAt.toDate) {
@@ -76,7 +72,6 @@ export const saveAssessmentResult = async (
       return false;
     });
     
-    // If a potential duplicate exists, return its ID instead of creating a new record
     if (potentialDuplicates.length > 0) {
       console.log("Potential duplicate submission detected, using existing record ID:", potentialDuplicates[0].id);
       return potentialDuplicates[0].id;
@@ -90,7 +85,6 @@ export const saveAssessmentResult = async (
       overallWritingScore = Number((totalScore / writingScores.length).toFixed(1));
     }
     
-    // Log the submission data and metrics before saving
     console.log("Saving assessment with aptitude score:", aptitudeScore);
     console.log("Saving assessment with metrics:", antiCheatingMetrics);
     
@@ -110,7 +104,6 @@ export const saveAssessmentResult = async (
       submission.overallWritingScore = overallWritingScore;
     }
     
-    // Log the final submission object
     console.log("Final submission object:", submission);
     
     const docRef = await addDoc(collection(db, 'assessments'), submission);
@@ -156,7 +149,6 @@ export const getAllAssessments = async (): Promise<DocumentData[]> => {
   try {
     const querySnapshot = await getDocs(collection(db, 'assessments'));
     
-    // Log each document as it's retrieved to check aptitude scores
     const assessments = querySnapshot.docs.map(doc => {
       const data = doc.data();
       console.log(`Assessment ${doc.id} aptitude score: ${data.aptitudeScore}/${data.aptitudeTotal}`);

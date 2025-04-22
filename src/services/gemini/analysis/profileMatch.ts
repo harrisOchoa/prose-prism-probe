@@ -1,6 +1,7 @@
 
 import { CandidateProfileMatch } from "../types";
 import { makeGeminiRequest, parseJsonResponse } from "../config";
+import { WritingPromptItem, WritingScore } from "@/types";
 
 export const compareWithIdealProfile = async (assessmentData: any): Promise<CandidateProfileMatch> => {
   try {
@@ -10,37 +11,55 @@ export const compareWithIdealProfile = async (assessmentData: any): Promise<Cand
     const aptitudeScore = assessmentData.aptitudeScore || 0;
     const aptitudeTotal = assessmentData.aptitudeTotal || 0;
     const aptitudePercentage = aptitudeTotal > 0 ? Math.round((aptitudeScore / aptitudeTotal) * 100) : 0;
-    const writingScore = assessmentData.overallWritingScore || 0;
-    const writingPercentage = Math.round((writingScore / 5) * 100);
+    
+    const writingScores = assessmentData.writingScores || [];
+    const overallWritingScore = assessmentData.overallWritingScore || 0;
+    const writingPercentage = Math.round((overallWritingScore / 5) * 100);
+
+    // Calculate overall score with equal weight to aptitude and writing
     const overallScore = Math.round((aptitudePercentage + writingPercentage) / 2);
     
-    const strengths = assessmentData.strengths || [];
-    const weaknesses = assessmentData.weaknesses || [];
+    // Get completed writing prompts for analysis
+    const writingPrompts = assessmentData.completedPrompts || [];
     
     const promptTemplate = `
-You are an objective profile analyst for job candidate assessments. Your task is to compare assessment results against standard role requirements.
+You are an objective profile analyst for job candidate assessments. Analyze both cognitive aptitude and writing ability to determine role fit.
 
 # CANDIDATE ASSESSMENT DATA
 Position: ${position}
-Aptitude Score: ${aptitudeScore}/${aptitudeTotal} (${aptitudePercentage}%)
-Writing Score: ${writingScore}/5 (${writingPercentage}%)
-Overall Score: ${overallScore}%
+Aptitude Performance: ${aptitudeScore}/${aptitudeTotal} (${aptitudePercentage}%)
+Writing Score: ${overallWritingScore}/5 (${writingPercentage}%)
+Overall Match: ${overallScore}%
 
-${strengths.length > 0 ? "Identified Strengths:\n- " + strengths.join("\n- ") : "No specific strengths identified."}
-${weaknesses.length > 0 ? "Identified Improvement Areas:\n- " + weaknesses.join("\n- ") : "No specific improvement areas identified."}
+Writing Samples Analysis:
+${writingPrompts.map((prompt: WritingPromptItem, index: number) => `
+Question ${index + 1}: ${prompt.prompt}
+Response: ${prompt.response}
+${writingScores[index] ? `Score: ${writingScores[index].score}/5
+Feedback: ${writingScores[index].feedback}` : 'Not evaluated'}
+`).join('\n')}
 
 # ANALYSIS INSTRUCTIONS
-Compare the candidate's assessment results against typical requirements for their target position.
-Identify specific matches and gaps based solely on the assessment data provided.
-Do not make assumptions about skills or qualifications not evidenced in the assessment results.
+1. Evaluate both technical aptitude and writing abilities for the ${position} role.
+2. Consider how the candidate's writing responses demonstrate job-relevant skills and knowledge.
+3. Provide specific examples from their writing to support your analysis.
+4. Calculate match percentage based on both aptitude and writing performance.
 
 # FORMAT
 Return your analysis as a JSON object with this exact structure:
 {
-  "position": "The position being analyzed",
-  "matchPercentage": overall match percentage as a number between 0-100,
-  "keyMatches": ["match 1", "match 2", "match 3"],
-  "keyGaps": ["gap 1", "gap 2", "gap 3"]
+  "position": "${position}",
+  "matchPercentage": [calculated percentage between 0-100],
+  "keyMatches": [
+    "Match point 1 with specific evidence",
+    "Match point 2 with specific evidence",
+    "Match point 3 with specific evidence"
+  ],
+  "keyGaps": [
+    "Gap 1 with specific evidence",
+    "Gap 2 with specific evidence",
+    "Gap 3 with specific evidence"
+  ]
 }
 `;
 
