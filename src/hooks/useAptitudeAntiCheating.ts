@@ -81,6 +81,9 @@ const useAptitudeAntiCheating = () => {
       screenResolution,
       multipleDisplays,
       lastActiveTime: lastActivityTime.current,
+      // Adding the missing properties
+      windowBlurDuration: windowMetrics.totalInactivityTime, // Use inactivity time as blur duration
+      windowBlurCount: windowMetrics.windowBlurs, // Use window blurs as window blur count
     };
   };
 
