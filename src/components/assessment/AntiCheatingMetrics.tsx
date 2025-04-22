@@ -1,3 +1,4 @@
+
 import React from "react";
 import { AlertTriangle, Clock, Keyboard, RefreshCw, SwitchCamera, Copy, Clipboard, ShieldAlert, AlertOctagon } from "lucide-react";
 import { AntiCheatingMetrics as AntiCheatingMetricsType } from "@/firebase/assessmentService";
@@ -10,8 +11,8 @@ interface AntiCheatingMetricsProps {
     pasteAttempts?: number;
     windowBlurs?: number;
     windowFocuses?: number;
-    hideAdminMetrics?: boolean; // New prop to control metric visibility
   };
+  hideAdminMetrics?: boolean; // Moved outside the metrics object to be a proper prop
 }
 
 const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics, hideAdminMetrics = false }) => {

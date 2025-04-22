@@ -1,4 +1,3 @@
-
 import React from "react";
 import { AlertTriangle, ShieldAlert, Info } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
