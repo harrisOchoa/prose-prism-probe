@@ -10,6 +10,13 @@ export interface AntiCheatingMetrics {
   wordsPerMinute: number;  // Consistent naming
   tabSwitches: number;
   suspiciousActivity: boolean;
+  copyAttempts?: number;
+  pasteAttempts?: number;
+  rightClickAttempts?: number;
+  keyboardShortcuts?: number;
+  windowBlurs?: number;
+  windowFocuses?: number;
+  suspiciousActivityDetail?: string;
 }
 
 export interface AssessmentSubmission {
