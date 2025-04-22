@@ -80,6 +80,10 @@ const AptitudeTab: React.FC<AptitudeTabProps> = ({
   console.log('AptitudeTab - Full Assessment Data:', JSON.stringify(assessmentData, null, 2));
   console.log('AptitudeTab - Aptitude Score:', assessmentData.aptitudeScore);
   console.log('AptitudeTab - Aptitude Total:', assessmentData.aptitudeTotal);
+  console.log('AptitudeTab - Time Data:', {
+    aptitudeTimeSpent: assessmentData.aptitudeTimeSpent,
+    antiCheatingMetrics: assessmentData.antiCheatingMetrics
+  });
   
   // Extract aptitude results or initialize to empty arrays
   const aptitudeResults = assessmentData?.aptitudeResults || [];
@@ -91,7 +95,33 @@ const AptitudeTab: React.FC<AptitudeTabProps> = ({
   const scoreFraction = totalQuestions > 0 ? correctAnswers / totalQuestions : 0;
   const scorePercentage = Math.round(scoreFraction * 100);
   
-  console.log('Calculated Metrics:', {
+  // Calculate time metrics
+  // First try to get time from antiCheatingMetrics, then fall back to aptitudeTimeSpent
+  const timeSpentMs = assessmentData?.antiCheatingMetrics?.timeSpentMs || 
+                      assessmentData?.antiCheatingMetrics?.totalTypingTime || 
+                      assessmentData?.aptitudeTimeSpent || 0;
+  
+  // Format time for display
+  const formatTime = (ms: number) => {
+    if (!ms) return 'N/A';
+    const seconds = Math.round(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+  };
+  
+  // Calculate average time per question
+  const avgTimePerQuestion = timeSpentMs && totalQuestions > 0 
+    ? Math.round((timeSpentMs / 1000) / totalQuestions) 
+    : null;
+  
+  console.log('Calculated Time Metrics:', {
+    timeSpentMs,
+    avgTimePerQuestion,
+    formattedTime: formatTime(timeSpentMs)
+  });
+  
+  console.log('Calculated Score Metrics:', {
     totalQuestions,
     correctAnswers,
     scoreFraction,
@@ -153,17 +183,13 @@ const AptitudeTab: React.FC<AptitudeTabProps> = ({
               <div className="flex justify-between">
                 <span className="text-sm">Average time per question</span>
                 <span className="text-sm font-medium">
-                  {assessmentData?.aptitudeTimeSpent && totalQuestions > 0 
-                    ? Math.round((assessmentData.aptitudeTimeSpent / 1000) / totalQuestions) 
-                    : 'N/A'} seconds
+                  {avgTimePerQuestion ? `${avgTimePerQuestion} seconds` : 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm">Total time spent</span>
                 <span className="text-sm font-medium">
-                  {assessmentData?.aptitudeTimeSpent 
-                    ? `${Math.floor((assessmentData.aptitudeTimeSpent / 1000) / 60)}m ${Math.round((assessmentData.aptitudeTimeSpent / 1000) % 60)}s` 
-                    : 'N/A'}
+                  {formatTime(timeSpentMs)}
                 </span>
               </div>
             </div>
