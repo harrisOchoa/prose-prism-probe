@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -158,11 +159,7 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
         <span className="bg-assessment-accent/10 rounded-full px-3 py-1">
           Question {currentQuestionIndex + 1} of {randomizedQuestions.length}
         </span>
-        {/* Optionally display tab switches & copy attempts live for admins */}
-        <span className="ml-auto text-xs text-gray-400 flex gap-3">
-          <span>Tab switches: {tabSwitches}</span>
-          <span>Copy attempts: {copyAttempts}</span>
-        </span>
+        {/* Removed the metrics display that was here */}
       </div>
 
       {/* Prevent copying from this card */}

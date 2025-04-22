@@ -47,7 +47,7 @@ export const useAntiCheating = (response: string) => {
       document.removeEventListener("keydown", handleKeyboardShortcuts);
       document.removeEventListener("contextmenu", handleContextMenu);
     };
-  }, []);
+  }, [handleKeyboardShortcuts, handleContextMenu]);
 
   // Check for suspicious typing speed
   useEffect(() => {
@@ -83,6 +83,8 @@ export const useAntiCheating = (response: string) => {
     handleKeyPress,
     preventCopyPaste,
     getAssessmentMetrics,
+    // We're still returning these values for internal component use,
+    // but they shouldn't be displayed to the user during the assessment
     tabSwitches,
     suspiciousActivity,
     suspiciousActivityDetail,
