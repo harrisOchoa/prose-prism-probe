@@ -21,7 +21,9 @@ export interface AptitudeAntiCheatingMetrics {
   screenResolution: string;
   multipleDisplays: boolean;
   lastActiveTime: number;
-  inactivityPeriods: number;
+  inactivityPeriods: number[];
+  totalInactivityTime: number;
+  lastInactiveAt: number | null;
 }
 
 /**
@@ -52,7 +54,9 @@ const useAptitudeAntiCheating = () => {
   const [fullscreenExits, setFullscreenExits] = useState(0);
   const [mouseLeavePage, setMouseLeavePage] = useState(0);
   const [browserResizes, setBrowserResizes] = useState(0);
-  const [inactivityPeriods, setInactivityPeriods] = useState(0);
+  const [inactivityPeriods, setInactivityPeriods] = useState<number[]>([]);
+  const [totalInactivityTime, setTotalInactivityTime] = useState(0);
+  const [lastInactiveAt, setLastInactiveAt] = useState<number | null>(null);
   const lastActivityTime = useRef(Date.now());
   const inactivityThreshold = 30000; // 30 seconds
 
@@ -69,6 +73,7 @@ const useAptitudeAntiCheating = () => {
         setWindowBlurs((prev) => prev + 1);
         setTimeSpentMs(Date.now() - promptStartRef.current);
         setWindowBlurCount(prev => prev + 1);
+        setLastInactiveAt(Date.now());
         
         // Flag as suspicious if tab is switched too many times
         if (tabSwitches >= 2) {
@@ -171,7 +176,7 @@ const useAptitudeAntiCheating = () => {
     const handleActivity = () => {
       const currentTime = Date.now();
       if (currentTime - lastActivityTime.current > inactivityThreshold) {
-        setInactivityPeriods(prev => prev + 1);
+        setInactivityPeriods(prev => [...prev, currentTime - lastActivityTime.current]);
       }
       lastActivityTime.current = currentTime;
     };
@@ -247,6 +252,18 @@ const useAptitudeAntiCheating = () => {
     setSuspiciousActivityDetail(`Paste attempt detected at ${new Date().toLocaleTimeString()}.`);
   };
 
+  useEffect(() => {
+    // Monitor browser activity
+    if (windowBlurs >= 3 || totalInactivityTime > 30000) { // More than 3 switches or 30 seconds inactive
+      setSuspiciousActivity(true);
+      setSuspiciousActivityDetail(
+        `Multiple browser switches detected (${windowBlurs} times) with ` +
+        `${Math.round(totalInactivityTime / 1000)}s total inactivity time. ` +
+        `Last inactive at: ${lastInactiveAt ? new Date(lastInactiveAt).toLocaleTimeString() : 'N/A'}`
+      );
+    }
+  }, [windowBlurs, totalInactivityTime, lastInactiveAt]);
+
   const getAptitudeAntiCheatingMetrics = (): AptitudeAntiCheatingMetrics => ({
     tabSwitches,
     windowBlurs,
@@ -269,6 +286,8 @@ const useAptitudeAntiCheating = () => {
     multipleDisplays,
     lastActiveTime: lastActivityTime.current,
     inactivityPeriods,
+    totalInactivityTime,
+    lastInactiveAt,
   });
 
   // Allow parent to reset if needed
