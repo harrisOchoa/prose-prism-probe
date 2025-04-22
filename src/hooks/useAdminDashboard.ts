@@ -60,10 +60,14 @@ export const useAdminDashboard = () => {
           };
         });
         
-        setAssessments(processedResults);
+        // Remove duplicate submissions (same candidate, position, score within 2 minutes)
+        const uniqueAssessments = removeDuplicateSubmissions(processedResults);
+        console.log(`Filtered ${processedResults.length - uniqueAssessments.length} duplicate submissions`);
+        
+        setAssessments(uniqueAssessments);
         
         // Calculate benchmarks from actual assessment data
-        const benchmarks = calculateBenchmarks(processedResults);
+        const benchmarks = calculateBenchmarks(uniqueAssessments);
         console.log('Calculated benchmarks:', benchmarks);
       } catch (error) {
         console.error("Error fetching assessments:", error);
@@ -74,6 +78,59 @@ export const useAdminDashboard = () => {
 
     fetchAssessments();
   }, []);
+
+  // Helper function to remove duplicate submissions
+  const removeDuplicateSubmissions = (assessments: any[]): any[] => {
+    // Group assessments by candidate name
+    const groupedByName = assessments.reduce((groups: {[key: string]: any[]}, assessment) => {
+      const key = assessment.candidateName;
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(assessment);
+      return groups;
+    }, {});
+    
+    // For each group, filter out potential duplicates
+    const uniqueAssessments: any[] = [];
+    Object.values(groupedByName).forEach(group => {
+      // Sort by submission date, newest first
+      const sortedGroup = [...group].sort((a, b) => {
+        const dateA = a.submittedAt && a.submittedAt.toDate ? a.submittedAt.toDate().getTime() : 0;
+        const dateB = b.submittedAt && b.submittedAt.toDate ? b.submittedAt.toDate().getTime() : 0;
+        return dateB - dateA;
+      });
+      
+      // Keep truly unique submissions and filter duplicates
+      const filtered: any[] = [];
+      sortedGroup.forEach(assessment => {
+        // Check if this is a duplicate of one we've already kept
+        const isDuplicate = filtered.some(kept => {
+          // Skip if positions don't match
+          if (kept.candidatePosition !== assessment.candidatePosition) return false;
+          
+          // Skip if aptitude scores don't match
+          if (kept.aptitudeScore !== assessment.aptitudeScore) return false;
+          
+          // Skip if word counts are significantly different
+          if (Math.abs(kept.wordCount - assessment.wordCount) > 5) return false;
+          
+          // Check if submission times are within 2 minutes of each other
+          const keptDate = kept.submittedAt && kept.submittedAt.toDate ? kept.submittedAt.toDate().getTime() : 0;
+          const currDate = assessment.submittedAt && assessment.submittedAt.toDate ? assessment.submittedAt.toDate().getTime() : 0;
+          return Math.abs(keptDate - currDate) < 2 * 60 * 1000; // 2 minutes in milliseconds
+        });
+        
+        if (!isDuplicate) {
+          filtered.push(assessment);
+        }
+      });
+      
+      uniqueAssessments.push(...filtered);
+    });
+    
+    return uniqueAssessments;
+  };
 
   // Filter assessments based on search term
   const filteredAssessments = assessments.filter((assessment) => 

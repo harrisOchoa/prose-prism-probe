@@ -49,6 +49,39 @@ export const saveAssessmentResult = async (
   antiCheatingMetrics?: AntiCheatingMetrics
 ): Promise<string> => {
   try {
+    // First, check if a very similar submission already exists within the last minute
+    // This helps prevent accidental double-submissions
+    const recentSubmissionsQuery = query(
+      collection(db, 'assessments'),
+      where('candidateName', '==', candidateName),
+      where('candidatePosition', '==', candidatePosition)
+    );
+    
+    const querySnapshot = await getDocs(recentSubmissionsQuery);
+    const recentSubmissions = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    // Check for submissions in the last 60 seconds with the same name and position
+    const now = new Date();
+    const potentialDuplicates = recentSubmissions.filter(submission => {
+      if (submission.submittedAt && submission.submittedAt.toDate) {
+        const submissionTime = submission.submittedAt.toDate();
+        const timeDiffSeconds = (now.getTime() - submissionTime.getTime()) / 1000;
+        return timeDiffSeconds < 60 && 
+               submission.aptitudeScore === aptitudeScore && 
+               submission.aptitudeTotal === aptitudeTotal;
+      }
+      return false;
+    });
+    
+    // If a potential duplicate exists, return its ID instead of creating a new record
+    if (potentialDuplicates.length > 0) {
+      console.log("Potential duplicate submission detected, using existing record ID:", potentialDuplicates[0].id);
+      return potentialDuplicates[0].id;
+    }
+    
     const wordCount = completedPrompts.reduce((total, prompt) => total + prompt.wordCount, 0);
     
     let overallWritingScore;
