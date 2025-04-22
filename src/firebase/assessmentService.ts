@@ -58,6 +58,7 @@ export const saveAssessmentResult = async (
     }
     
     // Log the submission data and metrics before saving
+    console.log("Saving assessment with aptitude score:", aptitudeScore);
     console.log("Saving assessment with metrics:", antiCheatingMetrics);
     
     const submission: AssessmentSubmission = {
@@ -122,10 +123,17 @@ export const getAllAssessments = async (): Promise<DocumentData[]> => {
   try {
     const querySnapshot = await getDocs(collection(db, 'assessments'));
     
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    // Log each document as it's retrieved to check aptitude scores
+    const assessments = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log(`Assessment ${doc.id} aptitude score: ${data.aptitudeScore}/${data.aptitudeTotal}`);
+      return {
+        id: doc.id,
+        ...data
+      };
+    });
+    
+    return assessments;
   } catch (error) {
     console.error('Error fetching all assessments:', error);
     throw new Error('Failed to fetch all assessments');

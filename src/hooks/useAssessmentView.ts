@@ -54,6 +54,18 @@ export const useAssessmentView = (id: string | undefined) => {
           } as AssessmentData;
           
           console.log("Assessment data retrieved:", assessmentData);
+          console.log("Aptitude score from database:", assessmentData.aptitudeScore, "/", assessmentData.aptitudeTotal);
+          
+          // Make sure aptitude score is properly set
+          if (assessmentData.aptitudeScore === undefined || assessmentData.aptitudeScore === null) {
+            console.log("Warning: Missing aptitude score in assessment data");
+            assessmentData.aptitudeScore = 0;
+          }
+          
+          if (assessmentData.aptitudeTotal === undefined || assessmentData.aptitudeTotal === null) {
+            console.log("Warning: Missing aptitude total in assessment data");
+            assessmentData.aptitudeTotal = 30; // Default to 30 questions
+          }
           
           // Log advanced analysis data for debugging
           if (assessmentData.detailedWritingAnalysis) {

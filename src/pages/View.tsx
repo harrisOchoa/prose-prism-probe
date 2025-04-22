@@ -40,6 +40,12 @@ const View = () => {
         });
       }
     }
+    
+    // Debug log for assessment data
+    if (assessment) {
+      console.log("Assessment view - data loaded:", assessment);
+      console.log("Assessment view - aptitude score:", assessment.aptitudeScore, "/", assessment.aptitudeTotal);
+    }
   }, [assessment]);
 
   const handleBack = () => {

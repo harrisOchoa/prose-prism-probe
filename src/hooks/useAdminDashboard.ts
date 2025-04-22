@@ -16,10 +16,28 @@ export const useAdminDashboard = () => {
     const fetchAssessments = async () => {
       try {
         const results = await getAllAssessments();
-        setAssessments(results);
+        
+        // Log the raw data from Firebase to see if aptitude scores are present
+        console.log("Raw assessment data from Firebase:", results);
+        
+        // Make sure aptitudeScore and aptitudeTotal have proper values
+        const processedResults = results.map(assessment => {
+          // Set default values if they don't exist
+          if (assessment.aptitudeScore === undefined || assessment.aptitudeScore === null) {
+            console.log(`Assessment ${assessment.id} has missing aptitude score`);
+            return {
+              ...assessment,
+              aptitudeScore: 0,
+              aptitudeTotal: assessment.aptitudeTotal || 30
+            };
+          }
+          return assessment;
+        });
+        
+        setAssessments(processedResults);
         
         // Calculate benchmarks from actual assessment data
-        const benchmarks = calculateBenchmarks(results);
+        const benchmarks = calculateBenchmarks(processedResults);
         console.log('Calculated benchmarks:', benchmarks);
       } catch (error) {
         console.error("Error fetching assessments:", error);

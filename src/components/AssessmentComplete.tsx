@@ -1,68 +1,137 @@
-
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
-import { saveAssessmentResult, AntiCheatingMetrics } from "@/firebase/assessmentService";
-import { toast } from "@/hooks/use-toast";
-import { evaluateAllWritingPrompts, WritingScore } from "@/services/geminiService";
-import SuccessHeader from "./assessment/SuccessHeader";
-import SubmissionDetails from "./assessment/SubmissionDetails";
-import CandidateInformation from "./assessment/CandidateInformation";
-
-// Define the type for a writing prompt
-interface WritingPromptItem {
-  id: number;
-  prompt: string;
-  response: string;
-  wordCount: number;
-}
+import { saveAssessmentResult } from "@/firebase/assessmentService";
+import { toast } from "@/components/ui/use-toast";
+import { WritingPromptItem } from "./AssessmentManager";
+import { evaluateWriting, WritingScore } from "@/services/geminiService";
+import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { AntiCheatingMetrics } from "@/firebase/assessmentService";
 
 interface AssessmentCompleteProps {
-  wordCount: number;
   candidateName: string;
   candidatePosition: string;
-  restartAssessment: () => void;
+  wordCount: number;
   completedPrompts: WritingPromptItem[];
-  aptitudeScore?: number;
-  aptitudeTotal?: number;
+  aptitudeScore: number;
+  aptitudeTotal: number;
+  restartAssessment: () => void;
   antiCheatingMetrics?: AntiCheatingMetrics;
 }
 
-const AssessmentComplete = ({ 
-  wordCount, 
-  candidateName, 
-  candidatePosition, 
-  restartAssessment, 
+const AssessmentComplete = ({
+  candidateName,
+  candidatePosition,
+  wordCount,
   completedPrompts,
-  aptitudeScore = 0,
-  aptitudeTotal = 0,
+  aptitudeScore,
+  aptitudeTotal,
+  restartAssessment,
   antiCheatingMetrics
 }: AssessmentCompleteProps) => {
-  const [isSaving, setIsSaving] = useState(true);
-  const [submissionId, setSubmissionId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluationProgress, setEvaluationProgress] = useState(0);
   const [writingScores, setWritingScores] = useState<WritingScore[]>([]);
-  const [evaluationStatus, setEvaluationStatus] = useState<"loading" | "complete" | "error">("loading");
-  const [savingStep, setSavingStep] = useState<"evaluating" | "saving" | "complete">("evaluating");
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
 
+  // Auto-submit the assessment when component mounts
   useEffect(() => {
-    const evaluateAndSave = async () => {
-      try {
-        setSavingStep("evaluating");
-        setEvaluationStatus("loading");
-        const scores = await evaluateAllWritingPrompts(completedPrompts);
-        setWritingScores(scores);
+    handleSubmit();
+  }, []);
+
+  const handleSubmit = async () => {
+    if (isSubmitting || isSubmitted) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Log the aptitude score being submitted
+      console.log("Submitting assessment with aptitude score:", aptitudeScore, "out of", aptitudeTotal);
+      
+      // Save the assessment result to the database
+      const id = await saveAssessmentResult(
+        candidateName,
+        candidatePosition,
+        completedPrompts,
+        aptitudeScore,
+        aptitudeTotal,
+        writingScores.length > 0 ? writingScores : undefined,
+        antiCheatingMetrics
+      );
+      
+      setAssessmentId(id);
+      setIsSubmitted(true);
+      
+      toast({
+        title: "Assessment Submitted",
+        description: "Your assessment has been successfully submitted.",
+      });
+    } catch (error) {
+      console.error("Error submitting assessment:", error);
+      toast({
+        title: "Submission Error",
+        description: "There was an error submitting your assessment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const evaluateResponses = async () => {
+    if (isEvaluating || completedPrompts.length === 0) return;
+    
+    setIsEvaluating(true);
+    setEvaluationProgress(0);
+    
+    const scores: WritingScore[] = [];
+    
+    try {
+      for (let i = 0; i < completedPrompts.length; i++) {
+        const prompt = completedPrompts[i];
         
-        let avgScore = 0;
-        if (scores.length > 0) {
-          const totalScore = scores.reduce((sum, evaluation) => sum + evaluation.score, 0);
-          avgScore = Number((totalScore / scores.length).toFixed(1));
+        // Skip empty responses
+        if (!prompt.response.trim()) {
+          scores.push({
+            promptId: prompt.id,
+            score: 0,
+            feedback: "No response provided",
+            strengths: [],
+            weaknesses: []
+          });
+          setEvaluationProgress(((i + 1) / completedPrompts.length) * 100);
+          continue;
         }
         
-        setEvaluationStatus("complete");
-        setSavingStep("saving");
+        try {
+          const evaluation = await evaluateWriting(prompt.prompt, prompt.response);
+          scores.push({
+            promptId: prompt.id,
+            ...evaluation
+          });
+        } catch (evalError) {
+          console.error(`Error evaluating prompt ${prompt.id}:`, evalError);
+          scores.push({
+            promptId: prompt.id,
+            score: 0,
+            feedback: "Error evaluating response",
+            strengths: [],
+            weaknesses: []
+          });
+        }
         
-        console.log("Saving assessment with anti-cheating metrics:", antiCheatingMetrics);
-        
-        const id = await saveAssessmentResult(
+        // Update progress
+        setEvaluationProgress(((i + 1) / completedPrompts.length) * 100);
+      }
+      
+      setWritingScores(scores);
+      
+      // If already submitted, update the assessment with scores
+      if (isSubmitted && assessmentId) {
+        await saveAssessmentResult(
           candidateName,
           candidatePosition,
           completedPrompts,
@@ -72,69 +141,125 @@ const AssessmentComplete = ({
           antiCheatingMetrics
         );
         
-        setSubmissionId(id);
-        setIsSaving(false);
-        setSavingStep("complete");
-        
         toast({
-          title: "Assessment Saved",
-          description: "Your assessment has been successfully saved. Thank you for your participation.",
-          variant: "default",
-        });
-      } catch (error) {
-        console.error("Error saving assessment:", error);
-        setIsSaving(false);
-        setEvaluationStatus("error");
-        setSavingStep("complete");
-        
-        toast({
-          title: "Error Saving Assessment",
-          description: "There was a problem saving your assessment. Please contact support.",
-          variant: "destructive",
+          title: "Evaluation Complete",
+          description: "Your writing has been evaluated and results updated.",
         });
       }
-    };
-
-    evaluateAndSave();
-  }, [candidateName, candidatePosition, completedPrompts, aptitudeScore, aptitudeTotal, antiCheatingMetrics]);
-
-  const getSavingMessage = () => {
-    switch (savingStep) {
-      case "evaluating":
-        return "Evaluating your responses...";
-      case "saving":
-        return "Saving your assessment...";
-      case "complete":
-        return "Assessment complete!";
-      default:
-        return "Processing...";
+    } catch (error) {
+      console.error("Error during evaluation:", error);
+      toast({
+        title: "Evaluation Error",
+        description: "There was an error evaluating your responses.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEvaluating(false);
     }
   };
-  
+
   return (
-    <div className="assessment-card max-w-4xl mx-auto text-center px-2 sm:px-4 py-6 animate-fade-in">
-      <SuccessHeader candidateName={candidateName} />
-      
-      <SubmissionDetails 
-        isSaving={isSaving} 
-        submissionId={submissionId} 
-        evaluationStatus={evaluationStatus}
-        savingMessage={getSavingMessage()}
-      />
-      
-      <CandidateInformation 
-        candidateName={candidateName} 
-        candidatePosition={candidatePosition} 
-      />
-      
-      <div className="flex flex-col items-center justify-center mt-4">
+    <div className="assessment-card max-w-4xl mx-auto">
+      <div className="text-center mb-8">
+        <h1 className="assessment-title">Assessment Complete</h1>
+        <p className="text-lg text-gray-600 mt-2">
+          Thank you for completing the assessment, {candidateName}!
+        </p>
+      </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Assessment Summary</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500">Candidate Name</p>
+              <p className="font-medium">{candidateName}</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500">Position</p>
+              <p className="font-medium">{candidatePosition}</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500">Aptitude Score</p>
+              <p className="font-medium">{aptitudeScore} out of {aptitudeTotal}</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500">Writing Assessment</p>
+              <p className="font-medium">{completedPrompts.length} prompts completed</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500">Total Word Count</p>
+              <p className="font-medium">{wordCount} words</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500">Submission Status</p>
+              <div className="flex items-center">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span>Submitting...</span>
+                  </>
+                ) : isSubmitted ? (
+                  <>
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    <span className="text-green-600 font-medium">Submitted Successfully</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-4 w-4 text-amber-500 mr-2" />
+                    <span className="text-amber-600">Not Submitted</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {isEvaluating && (
+            <div className="space-y-2 pt-2">
+              <div className="flex justify-between text-sm">
+                <span>Evaluating writing...</span>
+                <span>{Math.round(evaluationProgress)}%</span>
+              </div>
+              <Progress value={evaluationProgress} className="h-2" />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Button 
-          className="hirescribe-button w-full max-w-xs sm:w-auto"
-          onClick={restartAssessment}
-          disabled={isSaving}
+          onClick={evaluateResponses} 
+          disabled={isEvaluating || completedPrompts.length === 0}
+          className="min-w-[200px]"
+        >
+          {isEvaluating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Evaluating...
+            </>
+          ) : writingScores.length > 0 ? (
+            "Re-evaluate Writing"
+          ) : (
+            "Evaluate Writing"
+          )}
+        </Button>
+        
+        <Button 
+          onClick={restartAssessment} 
+          variant="outline"
+          className="min-w-[200px]"
         >
           Start New Assessment
         </Button>
+      </div>
+
+      <div className="mt-8 text-center text-sm text-gray-500">
+        <p>Your assessment has been recorded. Thank you for your participation!</p>
+        {assessmentId && (
+          <p className="mt-2 text-xs">Assessment ID: {assessmentId}</p>
+        )}
       </div>
     </div>
   );

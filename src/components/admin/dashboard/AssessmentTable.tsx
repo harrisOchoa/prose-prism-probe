@@ -41,6 +41,9 @@ const AssessmentTable: React.FC<AssessmentTableProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
+  // Debug the assessments data to see actual aptitude scores
+  console.log("Assessments data in table:", assessments);
+
   // Render mobile card view for small screens
   const renderMobileView = () => {
     return (
