@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import FAQSection from "./FAQSection";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface InstructionsProps {
   candidateName: string;

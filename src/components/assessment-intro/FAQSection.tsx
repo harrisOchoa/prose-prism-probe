@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FAQItem {
   id: string;

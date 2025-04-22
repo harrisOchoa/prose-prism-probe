@@ -1,5 +1,7 @@
+
 import CandidateForm from './assessment-intro/CandidateForm';
 import Instructions from './assessment-intro/Instructions';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AssessmentIntroProps {
   step: "info" | "instructions";
