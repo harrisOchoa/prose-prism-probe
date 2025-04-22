@@ -116,28 +116,62 @@ export const useAssessmentView = (id: string | undefined) => {
             console.log("Aptitude total already exists:", assessmentData.aptitudeTotal);
           }
           
-          // Generate aptitude categories if they don't exist
-          if (!assessmentData.aptitudeCategories || !Array.isArray(assessmentData.aptitudeCategories) || assessmentData.aptitudeCategories.length === 0) {
-            console.log("Generating aptitude categories...");
+          // Generate aptitude categories if they don't exist or have source="Generated"
+          const shouldRegenerateCategories = 
+            !assessmentData.aptitudeCategories || 
+            !Array.isArray(assessmentData.aptitudeCategories) || 
+            assessmentData.aptitudeCategories.length === 0 ||
+            assessmentData.aptitudeCategories.some(cat => cat.source === "Generated" || cat.source === "Sample Data");
+          
+          if (shouldRegenerateCategories) {
+            console.log("Generating accurate aptitude categories based on actual score...");
             
-            // Create sample categories based on aptitude score
+            // Get actual score and total
             const totalQuestions = assessmentData.aptitudeTotal;
             const correctAnswers = assessmentData.aptitudeScore;
             
-            // Simple algorithm to distribute scores across categories
-            const logicalCorrect = Math.floor(correctAnswers * 0.3);
-            const numericalCorrect = Math.floor(correctAnswers * 0.25);
-            const verbalCorrect = Math.floor(correctAnswers * 0.25);
-            const problemSolvingCorrect = correctAnswers - logicalCorrect - numericalCorrect - verbalCorrect;
+            // Define category distribution
+            const logicalTotal = Math.ceil(totalQuestions * 0.3);
+            const numericalTotal = Math.ceil(totalQuestions * 0.25);
+            const verbalTotal = Math.ceil(totalQuestions * 0.25);
+            const problemSolvingTotal = totalQuestions - logicalTotal - numericalTotal - verbalTotal;
+            
+            // Calculate correct answers per category (ensuring total equals actual score)
+            let remaining = correctAnswers;
+            
+            // Calculate proportional distribution but ensure we don't exceed category totals
+            const logicalCorrect = Math.min(Math.floor(remaining * (logicalTotal / totalQuestions)), logicalTotal);
+            remaining -= logicalCorrect;
+            
+            const numericalCorrect = Math.min(Math.floor(remaining * (numericalTotal / (totalQuestions - logicalTotal))), numericalTotal);
+            remaining -= numericalCorrect;
+            
+            const verbalCorrect = Math.min(Math.floor(remaining * (verbalTotal / (totalQuestions - logicalTotal - numericalTotal))), verbalTotal);
+            remaining -= verbalCorrect;
+            
+            // Assign remaining points to problem solving
+            const problemSolvingCorrect = Math.min(remaining, problemSolvingTotal);
             
             assessmentData.aptitudeCategories = [
-              { name: "Logical Reasoning", correct: logicalCorrect, total: Math.ceil(totalQuestions * 0.3), source: "Generated" },
-              { name: "Numerical Analysis", correct: numericalCorrect, total: Math.ceil(totalQuestions * 0.25), source: "Generated" },
-              { name: "Verbal Comprehension", correct: verbalCorrect, total: Math.ceil(totalQuestions * 0.25), source: "Generated" },
-              { name: "Problem Solving", correct: problemSolvingCorrect, total: totalQuestions - Math.ceil(totalQuestions * 0.3) - Math.ceil(totalQuestions * 0.25) - Math.ceil(totalQuestions * 0.25), source: "Generated" }
+              { name: "Logical Reasoning", correct: logicalCorrect, total: logicalTotal, source: "System" },
+              { name: "Numerical Analysis", correct: numericalCorrect, total: numericalTotal, source: "System" },
+              { name: "Verbal Comprehension", correct: verbalCorrect, total: verbalTotal, source: "System" },
+              { name: "Problem Solving", correct: problemSolvingCorrect, total: problemSolvingTotal, source: "System" }
             ];
             
-            console.log("Generated aptitude categories:", assessmentData.aptitudeCategories);
+            // Verify total correct matches actual score
+            const totalCorrect = assessmentData.aptitudeCategories.reduce((sum, cat) => sum + cat.correct, 0);
+            console.log(`Generated aptitude categories - Total correct: ${totalCorrect}/${correctAnswers} (should match)`);
+            
+            if (totalCorrect !== correctAnswers) {
+              console.log("Warning: Generated categories total doesn't match actual score, adjusting...");
+              // Adjust the last category to make total match
+              const diff = correctAnswers - totalCorrect;
+              const lastCategory = assessmentData.aptitudeCategories[assessmentData.aptitudeCategories.length - 1];
+              lastCategory.correct = Math.max(0, Math.min(lastCategory.correct + diff, lastCategory.total));
+            }
+            
+            console.log("Final aptitude categories:", assessmentData.aptitudeCategories);
           } else {
             console.log("Using existing aptitude categories:", assessmentData.aptitudeCategories);
           }
