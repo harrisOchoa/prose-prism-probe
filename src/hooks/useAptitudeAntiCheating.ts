@@ -14,6 +14,14 @@ export interface AptitudeAntiCheatingMetrics {
   userAgent: string;
   windowBlurDuration: number;
   windowBlurCount: number;
+  fullscreenExits: number;
+  focusLossDuration: number;
+  mouseLeavePage: number;
+  browserResizes: number;
+  screenResolution: string;
+  multipleDisplays: boolean;
+  lastActiveTime: number;
+  inactivityPeriods: number;
 }
 
 /**
@@ -40,6 +48,17 @@ const useAptitudeAntiCheating = () => {
   const [windowBlurCount, setWindowBlurCount] = useState(0);
   const [windowBlurDuration, setWindowBlurDuration] = useState(0);
   const blurStartTimeRef = useRef<number | null>(null);
+  
+  const [fullscreenExits, setFullscreenExits] = useState(0);
+  const [mouseLeavePage, setMouseLeavePage] = useState(0);
+  const [browserResizes, setBrowserResizes] = useState(0);
+  const [inactivityPeriods, setInactivityPeriods] = useState(0);
+  const lastActivityTime = useRef(Date.now());
+  const inactivityThreshold = 30000; // 30 seconds
+
+  // Detect multiple displays
+  const [multipleDisplays, setMultipleDisplays] = useState(false);
+  const [screenResolution, setScreenResolution] = useState("");
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -111,11 +130,89 @@ const useAptitudeAntiCheating = () => {
       return false;
     };
 
+    // Monitor screen changes and multiple displays
+    const handleScreenChange = () => {
+      if (window.screen && window.screen.availWidth) {
+        setScreenResolution(`${window.screen.availWidth}x${window.screen.availHeight}`);
+        
+        // Attempt to detect multiple displays through screen properties
+        if (window.screen.availWidth > window.innerWidth + 100) {
+          setMultipleDisplays(true);
+          setSuspiciousActivity(true);
+          setSuspiciousActivityDetail("Potential multiple display setup detected");
+        }
+      }
+      setBrowserResizes(prev => prev + 1);
+    };
+
+    // Monitor fullscreen changes
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setFullscreenExits(prev => prev + 1);
+        setSuspiciousActivity(true);
+        setSuspiciousActivityDetail("Assessment environment compromised: Fullscreen mode exited");
+      }
+    };
+
+    // Monitor mouse leaving the page
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 0 || e.clientY >= window.innerHeight || 
+          e.clientX <= 0 || e.clientX >= window.innerWidth) {
+        setMouseLeavePage(prev => prev + 1);
+        
+        if (mouseLeavePage >= 3) {
+          setSuspiciousActivity(true);
+          setSuspiciousActivityDetail("Frequent cursor movements outside assessment window detected");
+        }
+      }
+    };
+
+    // Monitor user activity
+    const handleActivity = () => {
+      const currentTime = Date.now();
+      if (currentTime - lastActivityTime.current > inactivityThreshold) {
+        setInactivityPeriods(prev => prev + 1);
+      }
+      lastActivityTime.current = currentTime;
+    };
+
+    // Enhanced window blur monitoring
+    const handleVisibilityChangeEnhanced = () => {
+      if (document.hidden) {
+        blurStartTimeRef.current = Date.now();
+        setWindowBlurCount(prev => prev + 1);
+        
+        // Flag suspicious activity for extended focus loss
+        if (windowBlurDuration > 10000) { // 10 seconds threshold
+          setSuspiciousActivity(true);
+          setSuspiciousActivityDetail(`Extended period of inactivity detected: ${Math.round(windowBlurDuration/1000)}s`);
+        }
+      } else {
+        if (blurStartTimeRef.current) {
+          const blurDuration = Date.now() - blurStartTimeRef.current;
+          setWindowBlurDuration(prev => prev + blurDuration);
+          blurStartTimeRef.current = null;
+        }
+      }
+    };
+
+    // Initialize screen monitoring
+    handleScreenChange();
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleVisibilityChange);
     window.addEventListener("focus", handleVisibilityChange);
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("contextmenu", handleContextMenu);
+    
+    // Set up event listeners
+    window.addEventListener('resize', handleScreenChange);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener('visibilitychange', handleVisibilityChangeEnhanced);
+    ['mousemove', 'keydown', 'click'].forEach(event => 
+      document.addEventListener(event, handleActivity)
+    );
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -123,8 +220,16 @@ const useAptitudeAntiCheating = () => {
       window.removeEventListener("focus", handleVisibilityChange);
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("contextmenu", handleContextMenu);
+      
+      window.removeEventListener('resize', handleScreenChange);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener('visibilitychange', handleVisibilityChangeEnhanced);
+      ['mousemove', 'keydown', 'click'].forEach(event => 
+        document.removeEventListener(event, handleActivity)
+      );
     };
-  }, [tabSwitches, rightClickAttempts, keyboardShortcuts, windowBlurCount]);
+  }, [tabSwitches, rightClickAttempts, keyboardShortcuts, windowBlurCount, mouseLeavePage, windowBlurDuration]);
 
   // For copying prevention, handler needs to be exposed
   const preventCopy = (e: React.ClipboardEvent | Event) => {
@@ -156,6 +261,14 @@ const useAptitudeAntiCheating = () => {
     userAgent,
     windowBlurDuration,
     windowBlurCount,
+    fullscreenExits,
+    focusLossDuration: windowBlurDuration,
+    mouseLeavePage,
+    browserResizes,
+    screenResolution,
+    multipleDisplays,
+    lastActiveTime: lastActivityTime.current,
+    inactivityPeriods,
   });
 
   // Allow parent to reset if needed
