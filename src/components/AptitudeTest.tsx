@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+
+import { useState, useMemo, useRef } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
 import { AptitudeQuestion } from "@/utils/aptitudeQuestions";
@@ -50,12 +51,23 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
     getAptitudeAntiCheatingMetrics
   } = useAptitudeAntiCheating();
 
-  const containerRef = useMemo(() => {
-    const ref = document.createElement('div');
-    ref.addEventListener('copy', preventCopy as EventListener);
-    ref.addEventListener('cut', preventCopy as EventListener);
-    return ref;
-  }, [preventCopy]);
+  // Use a ref instead of creating a DOM element directly
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Set up anti-cheating on the current ref when it's available
+  useMemo(() => {
+    const currentElement = containerRef.current;
+    if (currentElement) {
+      currentElement.addEventListener('copy', preventCopy as EventListener);
+      currentElement.addEventListener('cut', preventCopy as EventListener);
+      
+      // Clean up function
+      return () => {
+        currentElement.removeEventListener('copy', preventCopy as EventListener);
+        currentElement.removeEventListener('cut', preventCopy as EventListener);
+      };
+    }
+  }, [containerRef.current, preventCopy]);
 
   const handleOptionSelect = (optionIndex: number) => {
     const updatedOptions = [...selectedOptions];
