@@ -1,12 +1,13 @@
-
-import { useState, useEffect, useMemo, useRef } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useMemo } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
 import { AptitudeQuestion } from "@/utils/aptitudeQuestions";
 import AssessmentTimer from "./AssessmentTimer";
 import useAptitudeAntiCheating from "@/hooks/useAptitudeAntiCheating";
 import ProgressIndicator from "./assessment/ProgressIndicator";
+import QuestionHeader from "./aptitude/QuestionHeader";
+import OptionsList from "./aptitude/OptionsList";
+import NavigationButtons from "./aptitude/NavigationButtons";
 
 interface AptitudeTestProps {
   questions: AptitudeQuestion[];
@@ -40,41 +41,21 @@ function randomizeQuestionsAndOptions(questions: AptitudeQuestion[]) {
 }
 
 const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) => {
-  // Use useMemo to randomize only once per mount
   const randomizedQuestions = useMemo(() => randomizeQuestionsAndOptions(shuffleArray(questions)), [questions]);
-
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<number[]>(Array(randomizedQuestions.length).fill(-1));
-
-  // --- Anti-cheating hook for tab switches & copy prevention ---
+  
   const {
     preventCopy,
-    getAptitudeAntiCheatingMetrics,
-    tabSwitches,
-    suspiciousActivity,
-    copyAttempts,
-    resetMetrics,
+    getAptitudeAntiCheatingMetrics
   } = useAptitudeAntiCheating();
 
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Attach copy prevention to question/options container
-  useEffect(() => {
-    const containerEl = containerRef.current;
-    if (!containerEl) return;
-    containerEl.addEventListener("copy", preventCopy as EventListener);
-
-    // Optionally, prevent cut
-    containerEl.addEventListener("cut", preventCopy as EventListener);
-
-    return () => {
-      containerEl.removeEventListener("copy", preventCopy as EventListener);
-      containerEl.removeEventListener("cut", preventCopy as EventListener);
-    };
+  const containerRef = useMemo(() => {
+    const ref = document.createElement('div');
+    ref.addEventListener('copy', preventCopy as EventListener);
+    ref.addEventListener('cut', preventCopy as EventListener);
+    return ref;
   }, [preventCopy]);
-
-  // Optionally reset anti-cheating if test restarts (not required here)
-  // useEffect(() => { resetMetrics(); }, [questions]);
 
   const handleOptionSelect = (optionIndex: number) => {
     const updatedOptions = [...selectedOptions];
@@ -106,7 +87,6 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
   };
 
   const submitTest = () => {
-    // Check if all questions are answered
     const unansweredQuestions = selectedOptions.findIndex((option) => option === -1);
     if (unansweredQuestions !== -1) {
       toast({
@@ -118,7 +98,6 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
       return;
     }
 
-    // Calculate score
     let score = 0;
     for (let i = 0; i < randomizedQuestions.length; i++) {
       if (selectedOptions[i] === randomizedQuestions[i].correctAnswer) {
@@ -126,7 +105,6 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
       }
     }
 
-    // Submit the test with anti-cheating metrics
     onComplete(selectedOptions, score, getAptitudeAntiCheatingMetrics());
   };
 
@@ -155,14 +133,11 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
         />
       </div>
 
-      <div className="flex items-center mb-4 text-sm font-medium text-assessment-accent">
-        <span className="bg-assessment-accent/10 rounded-full px-3 py-1">
-          Question {currentQuestionIndex + 1} of {randomizedQuestions.length}
-        </span>
-        {/* Removed the metrics display that was here */}
-      </div>
+      <QuestionHeader 
+        currentQuestion={currentQuestionIndex + 1}
+        totalQuestions={randomizedQuestions.length}
+      />
 
-      {/* Prevent copying from this card */}
       <Card
         className="mb-6 p-6 select-none"
         ref={containerRef}
@@ -171,57 +146,19 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
         aria-label="Aptitude Question (copying disabled)"
       >
         <h2 className="text-xl font-semibold mb-4">{currentQuestion.question}</h2>
-        <div className="space-y-3">
-          {currentQuestion.options.map((option, index) => (
-            <div
-              key={index}
-              className={`p-3 rounded-md border cursor-pointer transition-colors ${
-                selectedOptions[currentQuestionIndex] === index
-                  ? "bg-assessment-primary text-white border-assessment-primary"
-                  : "bg-white hover:bg-gray-50 border-gray-200"
-              }`}
-              onClick={() => handleOptionSelect(index)}
-              // Extra: Prevent text copy on options
-              style={{ userSelect: "none" }}
-              tabIndex={-1}
-              aria-label={`Option ${String.fromCharCode(65 + index)} (copying disabled)`}
-            >
-              <div className="flex items-center">
-                <div
-                  className={`w-6 h-6 rounded-full mr-3 flex items-center justify-center ${
-                    selectedOptions[currentQuestionIndex] === index
-                      ? "bg-white text-assessment-primary"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {String.fromCharCode(65 + index)}
-                </div>
-                <span>{option}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+        <OptionsList 
+          options={currentQuestion.options}
+          selectedOption={selectedOptions[currentQuestionIndex]}
+          onSelect={handleOptionSelect}
+        />
       </Card>
 
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={handlePrevious}
-          disabled={currentQuestionIndex === 0}
-        >
-          Previous
-        </Button>
-
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">
-            {currentQuestionIndex + 1} of {randomizedQuestions.length}
-          </span>
-        </div>
-
-        <Button onClick={handleNext}>
-          {currentQuestionIndex < randomizedQuestions.length - 1 ? "Next" : "Submit Test"}
-        </Button>
-      </div>
+      <NavigationButtons 
+        currentQuestion={currentQuestionIndex}
+        totalQuestions={randomizedQuestions.length}
+        onPrevious={handlePrevious}
+        onNext={handleNext}
+      />
     </div>
   );
 };
