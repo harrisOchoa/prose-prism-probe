@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AssessmentHeader from "@/components/assessment/AssessmentHeader";
 import CandidateSummaryCard from "@/components/assessment/CandidateSummaryCard";
 import OverviewTab from "@/components/assessment/tabs/OverviewTab";
-import AptitudeTab from "@/components/assessment/tabs/AptitudeTab";
+import { AptitudeTab } from "@/components/assessment/tabs/AptitudeTab";
 import WritingTab from "@/components/assessment/tabs/WritingTab";
 import CandidateComparison from "@/components/assessment/tabs/ComparisonTab";
 import AdvancedAnalysisTab from "@/components/assessment/AdvancedAnalysisTab";
