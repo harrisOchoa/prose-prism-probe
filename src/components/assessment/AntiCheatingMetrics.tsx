@@ -1,4 +1,3 @@
-
 import React from "react";
 import { AlertTriangle, Clock, Keyboard, RefreshCw, SwitchCamera, Copy, Clipboard, ShieldAlert, AlertOctagon } from "lucide-react";
 import { AntiCheatingMetrics as AntiCheatingMetricsType } from "@/firebase/assessmentService";
@@ -11,10 +10,11 @@ interface AntiCheatingMetricsProps {
     pasteAttempts?: number;
     windowBlurs?: number;
     windowFocuses?: number;
+    hideAdminMetrics?: boolean; // New prop to control metric visibility
   };
 }
 
-const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics }) => {
+const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics, hideAdminMetrics = false }) => {
   // Safe access to properties with fallbacks
   const keystrokes = metrics?.keystrokes ?? 0;
   const pauses = metrics?.pauses ?? 0;
@@ -78,16 +78,18 @@ const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics }) =>
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3 border p-3 rounded-md">
-          <SwitchCamera className="text-indigo-500" />
-          <div>
-            <p className="text-sm text-gray-600">Tab Switches</p>
-            <p className={`font-medium ${tabSwitches > 2 ? 'text-amber-600' : ''}`}>
-              {tabSwitches}
-              {tabSwitches > 2 && <span className="ml-2 text-xs">⚠️ High</span>}
-            </p>
+        {!hideAdminMetrics && (
+          <div className="flex items-center gap-3 border p-3 rounded-md">
+            <SwitchCamera className="text-indigo-500" />
+            <div>
+              <p className="text-sm text-gray-600">Tab Switches</p>
+              <p className={`font-medium ${tabSwitches > 2 ? 'text-amber-600' : ''}`}>
+                {tabSwitches}
+                {tabSwitches > 2 && <span className="ml-2 text-xs">⚠️ High</span>}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
         <div className={`flex items-center gap-3 border p-3 rounded-md ${suspiciousActivity ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
           <AlertTriangle className={suspiciousActivity ? 'text-red-500' : 'text-green-500'} />
           <div>
@@ -100,16 +102,18 @@ const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics }) =>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="flex items-center gap-3 border p-3 rounded-md">
-          <Copy className="text-blue-500" />
-          <div>
-            <p className="text-sm text-gray-600">Copy Attempts</p>
-            <p className={`font-medium ${copyAttempts > 0 ? 'text-red-600' : ''}`}>
-              {copyAttempts}
-              {copyAttempts > 0 && <span className="ml-2 text-xs">⚠️ Suspicious</span>}
-            </p>
+        {!hideAdminMetrics && (
+          <div className="flex items-center gap-3 border p-3 rounded-md">
+            <Copy className="text-blue-500" />
+            <div>
+              <p className="text-sm text-gray-600">Copy Attempts</p>
+              <p className={`font-medium ${copyAttempts > 0 ? 'text-red-600' : ''}`}>
+                {copyAttempts}
+                {copyAttempts > 0 && <span className="ml-2 text-xs">⚠️ Suspicious</span>}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
         <div className="flex items-center gap-3 border p-3 rounded-md">
           <Clipboard className="text-teal-500" />
           <div>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Shield, AlertCircle } from "lucide-react";
@@ -26,7 +25,10 @@ const AntiCheatingCard: React.FC<AntiCheatingCardProps> = ({ metrics }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
-        <AntiCheatingMetrics metrics={metrics} />
+        <AntiCheatingMetrics 
+          metrics={metrics} 
+          hideAdminMetrics={true}  // Hide metrics for candidates
+        />
         <AntiCheatingAnalysis metrics={metrics} />
       </CardContent>
     </Card>
