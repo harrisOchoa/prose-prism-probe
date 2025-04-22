@@ -60,7 +60,7 @@ export const saveAssessmentResult = async (
     const querySnapshot = await getDocs(recentSubmissionsQuery);
     const recentSubmissions = querySnapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data() as DocumentData
     }));
     
     // Check for submissions in the last 60 seconds with the same name and position

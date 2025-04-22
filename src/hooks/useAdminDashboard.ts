@@ -93,6 +93,8 @@ export const useAdminDashboard = () => {
     
     // For each group, filter out potential duplicates
     const uniqueAssessments: any[] = [];
+    
+    // Use Object.values to get the proper array type for iteration
     Object.values(groupedByName).forEach(group => {
       // Sort by submission date, newest first
       const sortedGroup = [...group].sort((a, b) => {
