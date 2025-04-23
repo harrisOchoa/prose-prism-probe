@@ -16,8 +16,11 @@ interface AssessmentTabsContentProps {
     getWritingScorePercentage: () => number;
     getOverallScore: () => number;
     getProgressColor: (value: number) => string;
+    getScoreColor: (score: number) => string;
+    getScoreBgColor: (score: number) => string;
+    getScoreLabel: (score: number) => string;
   };
-  generateAdvancedAnalysis: (type: string) => void;
+  generateAdvancedAnalysis: (type: string) => Promise<any>;
 }
 
 const AssessmentTabsContent: React.FC<AssessmentTabsContentProps> = ({
