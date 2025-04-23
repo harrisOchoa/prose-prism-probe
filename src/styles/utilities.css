@@ -1,4 +1,3 @@
-
 @tailwind utilities;
 
 @layer utilities {
@@ -61,8 +60,8 @@
     }
     
     body {
-      font-size: 12pt;
-      line-height: 1.5;
+      font-size: 11pt;
+      line-height: 1.4;
     }
     
     .assessment-container {
@@ -76,30 +75,23 @@
   .pdf-wrapper {
     max-width: 100%;
   }
-  
-  .pdf-layout-landscape .card,
-  .pdf-layout-landscape .assessment-card {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+  .pdf-layout-portrait .card,
+  .pdf-layout-portrait .assessment-card {
+    box-shadow: none;
+    border: 1px solid #e5e7eb;
   }
-  
-  .pdf-layout-landscape .progress {
+
+  .pdf-layout-portrait .progress {
     overflow: hidden;
   }
-  
-  .pdf-layout-landscape table {
+
+  .pdf-layout-portrait table {
     margin-bottom: 0;
+    font-size: 11px;
   }
-  
-  .pdf-layout-landscape .table-body td {
-    padding: 6px 8px;
-  }
-  
-  /* Space optimization for landscape mode */
-  .pdf-layout-landscape .card-header {
-    padding-bottom: 8px !important;
-  }
-  
-  .pdf-layout-landscape .card-content {
-    padding-top: 8px !important;
+
+  .pdf-layout-portrait .table-body td {
+    padding: 4px 6px;
   }
 }

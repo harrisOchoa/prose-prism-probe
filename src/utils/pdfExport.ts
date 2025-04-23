@@ -8,7 +8,7 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     if (!element) {
       throw new Error('Element not found');
     }
-    
+
     // Add classes for PDF export
     document.querySelectorAll('.pdf-hide').forEach((el) => {
       el.classList.add('hidden-for-pdf');
@@ -18,33 +18,26 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       el.classList.add('visible-for-pdf');
     });
 
-    // Use a higher scale for better quality, but detect mobile and adjust if needed
-    const isMobile = window.innerWidth < 768;
-    const scale = isMobile ? 1.5 : 2;
+    // Use a higher scale for better quality
+    const scale = 2;
 
-    // Create a wrapper div to control width more precisely
+    // Create a wrapper div with portrait optimized width
     const wrapper = document.createElement('div');
-    wrapper.style.width = '100%';
-    wrapper.style.maxWidth = '1100px'; // More optimal width for landscape mode
+    wrapper.style.width = '800px'; // Optimized for portrait A4
     wrapper.style.margin = '0 auto';
     wrapper.classList.add('pdf-wrapper');
 
-    // Clone the element for PDF generation to avoid modifying the original DOM
+    // Clone the element for PDF generation
     const clone = element.cloneNode(true) as HTMLElement;
-    
-    // Add clone to wrapper
     wrapper.appendChild(clone);
     
-    // Add wrapper to DOM temporarily with absolute positioning off-screen
     wrapper.style.position = 'absolute';
     wrapper.style.left = '-9999px';
     document.body.appendChild(wrapper);
-    
-    // Add special layout class to the clone
-    clone.classList.add('pdf-layout-landscape');
-    
-    // Apply better margins for landscape mode
-    clone.style.padding = '0 5px';
+
+    // Portrait-specific styles
+    clone.classList.add('pdf-layout-portrait');
+    clone.style.padding = '10px';
 
     const canvas = await html2canvas(wrapper, {
       scale: scale,
@@ -54,30 +47,12 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       ignoreElements: (element) => {
         return element.classList.contains('pdf-hide') ||
                element.classList.contains('hidden-for-pdf');
-      },
-      // Adjust canvas rendering
-      onclone: (document) => {
-        const clonedWrapper = document.querySelector('.pdf-wrapper');
-        if (clonedWrapper) {
-          // Enhance layout for landscape mode
-          const cards = clonedWrapper.querySelectorAll('.card, .assessment-card');
-          cards.forEach(card => {
-            (card as HTMLElement).style.marginBottom = '12px';
-          });
-          
-          // Optimize progress bars
-          const progressBars = clonedWrapper.querySelectorAll('.progress');
-          progressBars.forEach(bar => {
-            (bar as HTMLElement).style.height = '8px';
-          });
-        }
       }
     });
     
-    // Remove the wrapper from DOM
     document.body.removeChild(wrapper);
 
-    // Restore the DOM after capturing
+    // Restore DOM
     document.querySelectorAll('.hidden-for-pdf').forEach((el) => {
       el.classList.remove('hidden-for-pdf');
     });
@@ -91,28 +66,25 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     // Calculate aspect ratio
     const aspectRatio = canvas.width / canvas.height;
     
-    // PDF size (A4 landscape)
-    const pageWidth = 297;  // A4 landscape width in mm
-    const pageHeight = 210; // A4 landscape height in mm
+    // PDF size (A4 portrait)
+    const pageWidth = 210;  // A4 portrait width in mm
+    const pageHeight = 297; // A4 portrait height in mm
 
-    // Reduced margins to utilize more space
-    const margin = 8;
+    // Margins and spacing
+    const margin = 10;
+    const headerHeight = 20;
+    const footerHeight = 15;
     
-    // Header/Footer sizes and spacing management with reduced heights
-    const headerHeight = 16;
-    const footerHeight = 12;
+    // Content area
     const contentTop = headerHeight + margin;
     const contentBottom = pageHeight - footerHeight - margin;
     const availableHeight = contentBottom - contentTop;
-    
-    // Calculate dimensions with wider usable area
     const availableWidth = pageWidth - (margin * 2);
     
-    // Calculate image dimensions to maintain aspect ratio
+    // Calculate image dimensions maintaining aspect ratio
     let imgWidth = availableWidth;
     let imgHeight = imgWidth / aspectRatio;
     
-    // If the height exceeds available space, scale down based on height
     if (imgHeight > availableHeight) {
       imgHeight = availableHeight;
       imgWidth = imgHeight * aspectRatio;
@@ -122,31 +94,30 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     const xOffset = margin + (availableWidth - imgWidth) / 2;
 
     const pdf = new jsPDF({
-      orientation: 'landscape',
+      orientation: 'portrait',
       unit: 'mm',
       format: 'a4'
     });
 
-    // Header background bar
+    // Header
     pdf.setFillColor(248, 250, 252);
     pdf.rect(0, 0, pageWidth, headerHeight, 'F');
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(45, 55, 72);
-    pdf.setFontSize(14);
-    pdf.text('Candidate Assessment Report', margin, 11);
+    pdf.setFontSize(12);
+    pdf.text('Assessment Report', margin, 14);
 
-    const date = new Date();
-    const formattedDate = date.toLocaleDateString('en-US', { 
+    const date = new Date().toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     });
-    pdf.setFontSize(10);
+    pdf.setFontSize(8);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(100, 116, 139);
-    pdf.text(`Generated on ${formattedDate}`, pageWidth - 70, 11);
+    pdf.text(`Generated: ${date}`, pageWidth - 60, 14);
 
-    // Draw image content with reduced margins
+    // Add the image content
     pdf.addImage(
       imgData,
       'PNG',
@@ -156,13 +127,13 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       imgHeight
     );
 
-    // Footer with padding above to prevent overlap
+    // Footer
     pdf.setFillColor(255, 255, 255);
     pdf.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
     pdf.setFontSize(8);
     pdf.setTextColor(156, 163, 175);
-    pdf.text('HireScribe Assessment Platform', margin, pageHeight - 5);
-    pdf.text('Page 1 of 1', pageWidth - 30, pageHeight - 5);
+    pdf.text('HireScribe Assessment Platform', margin, pageHeight - 6);
+    pdf.text('Page 1 of 1', pageWidth - 30, pageHeight - 6);
 
     pdf.save(`${filename}.pdf`);
     return true;
