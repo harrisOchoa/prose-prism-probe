@@ -4,7 +4,8 @@ import {
   generateDetailedWritingAnalysis,
   generatePersonalityInsights,
   generateInterviewQuestions,
-  compareWithIdealProfile
+  compareWithIdealProfile,
+  generateAptitudeAnalysis
 } from "@/services/geminiService";
 import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
 import { toast } from "@/hooks/use-toast";
@@ -50,6 +51,10 @@ export const useAdvancedAnalysis = (assessmentData: any, setAssessmentData: (dat
         case 'profile':
           result = await compareWithIdealProfile(assessmentData);
           updateField = 'profileMatch';
+          break;
+        case 'aptitude':
+          result = await generateAptitudeAnalysis(assessmentData);
+          updateField = 'aptitudeAnalysis';
           break;
         default:
           throw new Error(`Unknown analysis type: ${type}`);
