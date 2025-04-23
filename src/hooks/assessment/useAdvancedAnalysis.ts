@@ -4,7 +4,7 @@ import {
   generateDetailedWritingAnalysis,
   generatePersonalityInsights,
   generateInterviewQuestions,
-  generateProfileMatch
+  compareWithIdealProfile
 } from "@/services/geminiService";
 import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
 import { toast } from "@/hooks/use-toast";
@@ -46,7 +46,7 @@ export const useAdvancedAnalysis = (assessmentData: any, setAssessmentData: (dat
           updateField = 'interviewQuestions';
           break;
         case 'profile':
-          result = await generateProfileMatch(assessmentData);
+          result = await compareWithIdealProfile(assessmentData);
           updateField = 'profileMatch';
           break;
         default:
