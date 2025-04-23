@@ -15,6 +15,19 @@ export const usePdfExport = () => {
       description: "Creating a professional report of this assessment...",
     });
     
+    // Apply custom styles for PDF export
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+      .pdf-content * {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .pdf-content {
+        padding: 10px !important;
+      }
+    `;
+    document.head.appendChild(styleElement);
+    
     // Format filename components
     const formattedName = assessmentData.candidateName.replace(/\s+/g, '');
     const formattedPosition = assessmentData.candidatePosition.replace(/\s+/g, '');
@@ -29,24 +42,47 @@ export const usePdfExport = () => {
       el.classList.add('visible-for-pdf');
     });
     
-    const success = await exportToPdf("assessment-content", filename);
-    
-    // Restore the DOM after PDF generation
-    document.querySelectorAll('.hidden-for-pdf').forEach((el) => {
-      el.classList.remove('hidden-for-pdf');
-    });
-    
-    document.querySelectorAll('.visible-for-pdf').forEach((el) => {
-      el.classList.remove('visible-for-pdf');
-    });
-    
-    if (success) {
-      toast({
-        title: "PDF Exported Successfully",
-        description: "The assessment report has been downloaded.",
-        variant: "default",
+    try {
+      // Add a temporary class to the assessment content for PDF-specific styling
+      const contentElement = document.getElementById('assessment-content');
+      if (contentElement) {
+        contentElement.classList.add('pdf-content');
+      }
+      
+      const success = await exportToPdf("assessment-content", filename);
+      
+      // Clean up: remove the temporary class
+      if (contentElement) {
+        contentElement.classList.remove('pdf-content');
+      }
+      
+      // Restore the DOM after PDF generation
+      document.querySelectorAll('.hidden-for-pdf').forEach((el) => {
+        el.classList.remove('hidden-for-pdf');
       });
-    } else {
+      
+      document.querySelectorAll('.visible-for-pdf').forEach((el) => {
+        el.classList.remove('visible-for-pdf');
+      });
+      
+      // Remove custom styles
+      document.head.removeChild(styleElement);
+      
+      if (success) {
+        toast({
+          title: "PDF Exported Successfully",
+          description: "The assessment report has been downloaded.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "PDF Export Failed",
+          description: "There was an error creating the PDF. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("PDF export error:", error);
       toast({
         title: "PDF Export Failed",
         description: "There was an error creating the PDF. Please try again.",

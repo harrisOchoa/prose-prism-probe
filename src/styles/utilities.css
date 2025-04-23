@@ -47,6 +47,18 @@
     .pdf-show, .visible-for-pdf {
       display: block !important;
     }
+
+    .pdf-content {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .pdf-content .card {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
     
     body {
       font-size: 12pt;

@@ -22,7 +22,16 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     const isMobile = window.innerWidth < 768;
     const scale = isMobile ? 1.5 : 2;
 
-    const canvas = await html2canvas(element, {
+    // Clone the element for PDF generation to avoid modifying the original DOM
+    const clone = element.cloneNode(true) as HTMLElement;
+    clone.style.width = `${element.offsetWidth}px`;
+    
+    // Add clone to DOM temporarily with absolute positioning off-screen
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    document.body.appendChild(clone);
+
+    const canvas = await html2canvas(clone, {
       scale: scale,
       useCORS: true,
       logging: false,
@@ -30,8 +39,20 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       ignoreElements: (element) => {
         return element.classList.contains('pdf-hide') ||
                element.classList.contains('hidden-for-pdf');
+      },
+      // Preserve aspect ratio
+      onclone: (document) => {
+        const clonedElement = document.getElementById(elementId);
+        if (clonedElement) {
+          clonedElement.style.width = `${element.offsetWidth}px`;
+          clonedElement.style.height = 'auto';
+          clonedElement.style.overflow = 'visible';
+        }
       }
     });
+    
+    // Remove the clone from DOM
+    document.body.removeChild(clone);
 
     // Restore the DOM after capturing
     document.querySelectorAll('.hidden-for-pdf').forEach((el) => {
@@ -43,32 +64,43 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     });
 
     const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'landscape',
-      unit: 'mm',
-      format: 'a4'
-    });
-
-    // PDF size
+    
+    // Calculate aspect ratio
+    const aspectRatio = canvas.width / canvas.height;
+    
+    // PDF size (A4 landscape)
     const pageWidth = 297;  // A4 landscape width in mm
     const pageHeight = 210; // A4 landscape height in mm
 
     // Header/Footer sizes and spacing management
     const headerHeight = 18;
-    const footerHeight = 15; // Increased footer height
+    const footerHeight = 15;
     const margin = 10;
     const contentTop = headerHeight + margin;
-    const contentBottom = pageHeight - footerHeight - margin * 2; // Add extra margin for footer
+    const contentBottom = pageHeight - footerHeight - margin;
     const availableHeight = contentBottom - contentTop;
-
-    // Scale image to fit width and max height
-    const imgWidth = pageWidth - margin * 2;
-    let imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    // If image too tall, scale down to fit within availableHeight
+    
+    // Calculate dimensions that preserve aspect ratio
+    const availableWidth = pageWidth - margin * 2;
+    
+    // Calculate image dimensions to maintain aspect ratio
+    let imgWidth = availableWidth;
+    let imgHeight = imgWidth / aspectRatio;
+    
+    // If the height exceeds available space, scale down based on height
     if (imgHeight > availableHeight) {
       imgHeight = availableHeight;
+      imgWidth = imgHeight * aspectRatio;
     }
+    
+    // Center the image horizontally if it doesn't use all available width
+    const xOffset = margin + (availableWidth - imgWidth) / 2;
+
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4'
+    });
 
     // Header background bar
     pdf.setFillColor(248, 250, 252);
@@ -89,11 +121,11 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     pdf.setTextColor(100, 116, 139);
     pdf.text(`Generated on ${formattedDate}`, pageWidth - 70, 11);
 
-    // Draw image content
+    // Draw image content (centered horizontally if needed)
     pdf.addImage(
       imgData,
       'PNG',
-      margin,
+      xOffset,
       contentTop,
       imgWidth,
       imgHeight

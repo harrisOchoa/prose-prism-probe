@@ -27,4 +27,16 @@
   .assessment-card {
     @apply bg-white rounded-lg shadow-md p-6 border border-gray-100 animate-fade-in;
   }
+  
+  /* PDF export specific styles */
+  .pdf-content .card, 
+  .pdf-content .assessment-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 15px;
+  }
+  
+  .pdf-content .progress {
+    height: 8px !important;
+  }
 }
