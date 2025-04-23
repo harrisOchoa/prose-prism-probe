@@ -33,10 +33,45 @@
   .pdf-content .assessment-card {
     break-inside: avoid;
     page-break-inside: avoid;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
   }
   
   .pdf-content .progress {
     height: 8px !important;
+  }
+  
+  .pdf-layout-landscape .card,
+  .pdf-layout-landscape .assessment-card {
+    margin-bottom: 10px;
+    padding: 12px;
+  }
+  
+  .pdf-layout-landscape .progress-bars .progress {
+    height: 8px;
+    margin-bottom: 14px;
+  }
+  
+  .pdf-layout-landscape h3,
+  .pdf-layout-landscape .card-title {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  
+  .pdf-layout-landscape p {
+    margin-bottom: 6px;
+  }
+  
+  .pdf-layout-landscape .card-content {
+    padding-top: 8px;
+  }
+  
+  /* Specific card sizing for PDF landscape layout */
+  .pdf-layout-landscape .performance-cards {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .pdf-layout-landscape .performance-cards > div {
+    flex: 1;
   }
 }

@@ -23,7 +23,19 @@ export const usePdfExport = () => {
         break-inside: avoid;
       }
       .pdf-content {
-        padding: 10px !important;
+        padding: 5px !important;
+        max-width: 100% !important;
+      }
+      .pdf-content .card,
+      .pdf-content .assessment-card {
+        margin-bottom: 12px !important;
+      }
+      .pdf-layout-landscape .assessment-card,
+      .pdf-layout-landscape .card {
+        padding: 12px !important;
+      }
+      .pdf-layout-landscape h3 {
+        margin-bottom: 8px !important;
       }
     `;
     document.head.appendChild(styleElement);

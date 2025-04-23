@@ -22,16 +22,31 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     const isMobile = window.innerWidth < 768;
     const scale = isMobile ? 1.5 : 2;
 
+    // Create a wrapper div to control width more precisely
+    const wrapper = document.createElement('div');
+    wrapper.style.width = '100%';
+    wrapper.style.maxWidth = '1100px'; // More optimal width for landscape mode
+    wrapper.style.margin = '0 auto';
+    wrapper.classList.add('pdf-wrapper');
+
     // Clone the element for PDF generation to avoid modifying the original DOM
     const clone = element.cloneNode(true) as HTMLElement;
-    clone.style.width = `${element.offsetWidth}px`;
     
-    // Add clone to DOM temporarily with absolute positioning off-screen
-    clone.style.position = 'absolute';
-    clone.style.left = '-9999px';
-    document.body.appendChild(clone);
+    // Add clone to wrapper
+    wrapper.appendChild(clone);
+    
+    // Add wrapper to DOM temporarily with absolute positioning off-screen
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '-9999px';
+    document.body.appendChild(wrapper);
+    
+    // Add special layout class to the clone
+    clone.classList.add('pdf-layout-landscape');
+    
+    // Apply better margins for landscape mode
+    clone.style.padding = '0 5px';
 
-    const canvas = await html2canvas(clone, {
+    const canvas = await html2canvas(wrapper, {
       scale: scale,
       useCORS: true,
       logging: false,
@@ -40,19 +55,27 @@ export const exportToPdf = async (elementId: string, filename: string) => {
         return element.classList.contains('pdf-hide') ||
                element.classList.contains('hidden-for-pdf');
       },
-      // Preserve aspect ratio
+      // Adjust canvas rendering
       onclone: (document) => {
-        const clonedElement = document.getElementById(elementId);
-        if (clonedElement) {
-          clonedElement.style.width = `${element.offsetWidth}px`;
-          clonedElement.style.height = 'auto';
-          clonedElement.style.overflow = 'visible';
+        const clonedWrapper = document.querySelector('.pdf-wrapper');
+        if (clonedWrapper) {
+          // Enhance layout for landscape mode
+          const cards = clonedWrapper.querySelectorAll('.card, .assessment-card');
+          cards.forEach(card => {
+            (card as HTMLElement).style.marginBottom = '12px';
+          });
+          
+          // Optimize progress bars
+          const progressBars = clonedWrapper.querySelectorAll('.progress');
+          progressBars.forEach(bar => {
+            (bar as HTMLElement).style.height = '8px';
+          });
         }
       }
     });
     
-    // Remove the clone from DOM
-    document.body.removeChild(clone);
+    // Remove the wrapper from DOM
+    document.body.removeChild(wrapper);
 
     // Restore the DOM after capturing
     document.querySelectorAll('.hidden-for-pdf').forEach((el) => {
@@ -72,16 +95,18 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     const pageWidth = 297;  // A4 landscape width in mm
     const pageHeight = 210; // A4 landscape height in mm
 
-    // Header/Footer sizes and spacing management
-    const headerHeight = 18;
-    const footerHeight = 15;
-    const margin = 10;
+    // Reduced margins to utilize more space
+    const margin = 8;
+    
+    // Header/Footer sizes and spacing management with reduced heights
+    const headerHeight = 16;
+    const footerHeight = 12;
     const contentTop = headerHeight + margin;
     const contentBottom = pageHeight - footerHeight - margin;
     const availableHeight = contentBottom - contentTop;
     
-    // Calculate dimensions that preserve aspect ratio
-    const availableWidth = pageWidth - margin * 2;
+    // Calculate dimensions with wider usable area
+    const availableWidth = pageWidth - (margin * 2);
     
     // Calculate image dimensions to maintain aspect ratio
     let imgWidth = availableWidth;
@@ -93,7 +118,7 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       imgWidth = imgHeight * aspectRatio;
     }
     
-    // Center the image horizontally if it doesn't use all available width
+    // Center the image horizontally
     const xOffset = margin + (availableWidth - imgWidth) / 2;
 
     const pdf = new jsPDF({
@@ -107,7 +132,7 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     pdf.rect(0, 0, pageWidth, headerHeight, 'F');
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(45, 55, 72);
-    pdf.setFontSize(16);
+    pdf.setFontSize(14);
     pdf.text('Candidate Assessment Report', margin, 11);
 
     const date = new Date();
@@ -121,7 +146,7 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     pdf.setTextColor(100, 116, 139);
     pdf.text(`Generated on ${formattedDate}`, pageWidth - 70, 11);
 
-    // Draw image content (centered horizontally if needed)
+    // Draw image content with reduced margins
     pdf.addImage(
       imgData,
       'PNG',
