@@ -34,6 +34,7 @@ export const useAdvancedAnalysis = (assessmentData: any, setAssessmentData: (dat
       
       switch (analysisType) {
         case 'writing':
+        case 'detailed':  // Add 'detailed' as an alias for 'writing'
           result = await generateDetailedWritingAnalysis(assessmentData);
           updateField = 'detailedWritingAnalysis';
           break;
@@ -42,6 +43,7 @@ export const useAdvancedAnalysis = (assessmentData: any, setAssessmentData: (dat
           updateField = 'personalityInsights';
           break;
         case 'interview':
+        case 'questions': // Add 'questions' as an alias for 'interview'
           result = await generateInterviewQuestions(assessmentData);
           updateField = 'interviewQuestions';
           break;

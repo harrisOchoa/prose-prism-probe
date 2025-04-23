@@ -60,9 +60,9 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
   useEffect(() => {
     if (generatingAnalysis) {
       setLoading({
-        writing: generatingAnalysis.detailed || false,
+        writing: generatingAnalysis.writing || generatingAnalysis.detailed || false,
         personality: generatingAnalysis.personality || false,
-        questions: generatingAnalysis.questions || false,
+        questions: generatingAnalysis.interview || generatingAnalysis.questions || false,
         profile: generatingAnalysis.profile || false,
         aptitude: generatingAnalysis.aptitude || false
       });
@@ -83,7 +83,7 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
       let result;
       switch(analysisType) {
         case "writing":
-          result = await generateAdvancedAnalysis("detailed");
+          result = await generateAdvancedAnalysis("writing");
           if (result) setDetailedAnalysis(result);
           break;
         case "personality":
@@ -91,7 +91,7 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
           if (result) setPersonalityInsights(result);
           break;
         case "questions":
-          result = await generateAdvancedAnalysis("questions");
+          result = await generateAdvancedAnalysis("interview");
           if (result) setInterviewQuestions(result);
           break;
         case "profile":
