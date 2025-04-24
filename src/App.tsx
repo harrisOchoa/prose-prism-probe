@@ -9,7 +9,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import View from "./pages/View";
-import { Stage } from "./components/AssessmentManager";
+import { Stage } from "./types/assessment";
 import { pathToStage, stageToPath } from "./hooks/assessment/useStageManagement";
 
 const queryClient = new QueryClient();

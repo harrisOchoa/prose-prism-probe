@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Stage } from "@/components/AssessmentManager";
+import { Stage } from "@/types/assessment";
 
 // Map stages to URL paths for routing
 export const stageToPath = {
