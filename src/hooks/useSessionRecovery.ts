@@ -34,15 +34,13 @@ export const useSessionRecovery = (
       const MAX_SESSION_AGE = 24 * 60 * 60 * 1000; // 24 hours
       
       if (sessionAge > MAX_SESSION_AGE) {
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(TIMER_KEY);
+        clearAllSessionData();
         return null;
       }
       
       // Don't offer to resume if the session was already completed
       if (sessionData.completed) {
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(TIMER_KEY);
+        clearAllSessionData();
         return null;
       }
       
@@ -80,21 +78,25 @@ export const useSessionRecovery = (
     }
   };
   
-  // Clear the session data when assessment is completed or declined
-  const clearSessionData = () => {
+  // Clear all session-related data from localStorage
+  const clearAllSessionData = () => {
     try {
-      // Remove both session data and related timer data
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(TIMER_KEY);
-      localStorage.removeItem(`aptitude_timer`);
-      localStorage.removeItem(`writing_timer`);
+      // Clear all possible session data to ensure nothing persists
+      const keysToRemove = [
+        STORAGE_KEY,
+        TIMER_KEY,
+        `aptitude_timer`,
+        `writing_timer`,
+        `assessment_session_aptitude_data`,
+        `assessment_session_writing_data`
+      ];
       
-      // Clear both types of session data to avoid any lingering issues
-      localStorage.removeItem(`assessment_session_aptitude_data`);
-      localStorage.removeItem(`assessment_session_writing_data`);
+      for (const key of keysToRemove) {
+        localStorage.removeItem(key);
+      }
       
       setSessionData(null);
-      console.log("Session data cleared successfully");
+      console.log("All session data cleared successfully");
     } catch (error) {
       console.error("Failed to clear session data:", error);
     }
@@ -115,14 +117,14 @@ export const useSessionRecovery = (
   
   // Decline resuming session
   const declineResume = () => {
-    clearSessionData();
+    clearAllSessionData();
     setIsResumed(false);
   };
   
   return {
     hasExistingSession: !!sessionData && !isResumed,
     saveSessionData,
-    clearSessionData,
+    clearSessionData: clearAllSessionData,
     resumeSession,
     declineResume,
     sessionData

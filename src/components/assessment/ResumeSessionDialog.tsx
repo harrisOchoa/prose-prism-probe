@@ -52,11 +52,28 @@ const ResumeSessionDialog = ({
     onResume();
   };
   
-  // Handle the decline action
+  // Handle the decline action - thoroughly clear ALL storage data
   const handleDeclineClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Clear all related localStorage items to ensure complete session cleanup
+    localStorage.removeItem(`assessment_session_aptitude_data`);
+    localStorage.removeItem(`assessment_session_writing_data`);
+    localStorage.removeItem(`aptitude_timer`);
+    localStorage.removeItem(`writing_timer`);
+    
     onDecline();
+    
+    // Force navigation back to the landing page to ensure a clean start
+    navigate(stageToPath[Stage.LANDING], { replace: true });
+    
+    // Add a small delay and force reload if needed
+    setTimeout(() => {
+      if (open) {
+        window.location.reload();
+      }
+    }, 100);
   };
   
   return (

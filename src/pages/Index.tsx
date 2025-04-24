@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AssessmentManager, { Stage } from "@/components/AssessmentManager";
 import ResumeSessionDialog from "@/components/assessment/ResumeSessionDialog";
 import AssessmentStages from "@/components/assessment/stages/AssessmentStages";
@@ -18,27 +18,39 @@ const Index = () => {
   const aptitudeSession = useSessionRecovery('aptitude', 30);
   const writingSession = useSessionRecovery('writing', 3);
   
-  React.useEffect(() => {
-    // Check for any existing sessions when the app loads
-    if (aptitudeSession.hasExistingSession) {
-      setGlobalSessionType('aptitude');
-      if (aptitudeSession.sessionData) {
-        setSessionProgress({
-          current: aptitudeSession.sessionData.currentIndex + 1,
-          total: 30
-        });
+  // Clear all sessions function that can be called anywhere
+  const clearAllSessionData = () => {
+    aptitudeSession.clearSessionData();
+    writingSession.clearSessionData();
+    setShowGlobalDialog(false);
+  };
+  
+  useEffect(() => {
+    // Small delay to ensure any previous session clearing has taken effect
+    const checkForSessions = setTimeout(() => {
+      // Check for any existing sessions when the app loads
+      if (aptitudeSession.hasExistingSession) {
+        setGlobalSessionType('aptitude');
+        if (aptitudeSession.sessionData) {
+          setSessionProgress({
+            current: aptitudeSession.sessionData.currentIndex + 1,
+            total: 30
+          });
+        }
+        setShowGlobalDialog(true);
+      } else if (writingSession.hasExistingSession) {
+        setGlobalSessionType('writing');
+        if (writingSession.sessionData) {
+          setSessionProgress({
+            current: writingSession.sessionData.currentIndex + 1,
+            total: 3
+          });
+        }
+        setShowGlobalDialog(true);
       }
-      setShowGlobalDialog(true);
-    } else if (writingSession.hasExistingSession) {
-      setGlobalSessionType('writing');
-      if (writingSession.sessionData) {
-        setSessionProgress({
-          current: writingSession.sessionData.currentIndex + 1,
-          total: 3
-        });
-      }
-      setShowGlobalDialog(true);
-    }
+    }, 300);
+    
+    return () => clearTimeout(checkForSessions);
   }, []);
 
   const handleStageTransition = (newStage: Stage) => {
@@ -74,12 +86,13 @@ const Index = () => {
             handleStageTransition(globalSessionType === 'aptitude' ? Stage.APTITUDE : Stage.WRITING);
           }}
           onDecline={() => {
-            setShowGlobalDialog(false);
             if (globalSessionType === 'aptitude') {
               aptitudeSession.clearSessionData();
             } else {
               writingSession.clearSessionData();
             }
+            clearAllSessionData(); // Ensure all session data is cleared
+            setShowGlobalDialog(false);
           }}
           sessionType={globalSessionType}
           progress={sessionProgress}
