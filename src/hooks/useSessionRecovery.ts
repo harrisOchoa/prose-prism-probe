@@ -15,6 +15,7 @@ export const useSessionRecovery = (
   totalItems: number
 ) => {
   const STORAGE_KEY = `assessment_session_${sessionType}_data`;
+  const TIMER_KEY = `${sessionType}_timer`;
   
   // Check for existing session data
   const loadSessionData = (): SessionData | null => {
@@ -34,12 +35,14 @@ export const useSessionRecovery = (
       
       if (sessionAge > MAX_SESSION_AGE) {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(TIMER_KEY);
         return null;
       }
       
       // Don't offer to resume if the session was already completed
       if (sessionData.completed) {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(TIMER_KEY);
         return null;
       }
       
@@ -77,11 +80,21 @@ export const useSessionRecovery = (
     }
   };
   
-  // Clear the session data when assessment is completed
+  // Clear the session data when assessment is completed or declined
   const clearSessionData = () => {
     try {
+      // Remove both session data and related timer data
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(TIMER_KEY);
+      localStorage.removeItem(`aptitude_timer`);
+      localStorage.removeItem(`writing_timer`);
+      
+      // Clear both types of session data to avoid any lingering issues
+      localStorage.removeItem(`assessment_session_aptitude_data`);
+      localStorage.removeItem(`assessment_session_writing_data`);
+      
       setSessionData(null);
+      console.log("Session data cleared successfully");
     } catch (error) {
       console.error("Failed to clear session data:", error);
     }

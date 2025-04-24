@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ClipboardCheck, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Stage, stageToPath } from "../AssessmentManager";
+import { Stage, stageToPath } from "@/types/assessment";
 
 interface ResumeSessionDialogProps {
   open: boolean;
@@ -36,7 +36,7 @@ const ResumeSessionDialog = ({
   const progressPercentage = Math.round((progress.current / progress.total) * 100);
   const sessionTitle = sessionType === 'aptitude' ? 'Aptitude Test' : 'Writing Assessment';
   
-  // Handle the resume action - prevent default to avoid form submission behavior
+  // Handle the resume action
   const handleResumeClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
