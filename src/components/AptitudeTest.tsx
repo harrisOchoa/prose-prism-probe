@@ -1,5 +1,5 @@
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
 import { AptitudeQuestion } from "@/utils/aptitudeQuestions";
@@ -9,6 +9,9 @@ import ProgressIndicator from "./assessment/ProgressIndicator";
 import QuestionHeader from "./aptitude/QuestionHeader";
 import OptionsList from "./aptitude/OptionsList";
 import NavigationButtons from "./aptitude/NavigationButtons";
+import ResumeSessionDialog from "./assessment/ResumeSessionDialog";
+import { useSessionRecovery } from "@/hooks/useSessionRecovery";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AptitudeTestProps {
   questions: AptitudeQuestion[];
@@ -42,9 +45,22 @@ function randomizeQuestionsAndOptions(questions: AptitudeQuestion[]) {
 }
 
 const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) => {
+  const isMobile = useIsMobile();
   const randomizedQuestions = useMemo(() => randomizeQuestionsAndOptions(shuffleArray(questions)), [questions]);
+  
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<number[]>(Array(randomizedQuestions.length).fill(-1));
+  const [elapsedTime, setElapsedTime] = useState(0);
+  
+  // Initialize session recovery
+  const { 
+    hasExistingSession, 
+    saveSessionData, 
+    clearSessionData, 
+    resumeSession, 
+    declineResume,
+    sessionData 
+  } = useSessionRecovery('aptitude', randomizedQuestions.length);
   
   const {
     preventCopy,
@@ -53,6 +69,43 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
 
   // Use a ref instead of creating a DOM element directly
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Save progress to localStorage every 10 seconds
+  useEffect(() => {
+    const saveInterval = setInterval(() => {
+      if (currentQuestionIndex >= 0) {
+        saveSessionData(currentQuestionIndex, selectedOptions);
+      }
+    }, 10000);
+
+    return () => clearInterval(saveInterval);
+  }, [currentQuestionIndex, selectedOptions]);
+
+  // Save progress on window blur (when user switches tabs or apps)
+  useEffect(() => {
+    const handleBlur = () => {
+      saveSessionData(currentQuestionIndex, selectedOptions);
+    };
+
+    window.addEventListener('blur', handleBlur);
+    
+    return () => {
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, [currentQuestionIndex, selectedOptions]);
+
+  // Handle session resumption
+  const handleResumeSession = () => {
+    const resumedData = resumeSession();
+    if (resumedData) {
+      setCurrentQuestionIndex(resumedData.currentQuestionIndex);
+      setSelectedOptions(resumedData.selectedOptions);
+      toast({
+        title: "Session Resumed",
+        description: `You've resumed from question ${resumedData.currentQuestionIndex + 1}.`,
+      });
+    }
+  };
 
   // Set up anti-cheating on the current ref when it's available
   useMemo(() => {
@@ -73,6 +126,9 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
     const updatedOptions = [...selectedOptions];
     updatedOptions[currentQuestionIndex] = optionIndex;
     setSelectedOptions(updatedOptions);
+    
+    // Save progress after each answer
+    saveSessionData(currentQuestionIndex, updatedOptions);
   };
 
   const handleNext = () => {
@@ -87,6 +143,8 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
 
     if (currentQuestionIndex < randomizedQuestions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
+      // Save progress after moving to next question
+      saveSessionData(currentQuestionIndex + 1, selectedOptions);
     } else {
       submitTest();
     }
@@ -121,6 +179,10 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
     console.log("Submitting aptitude test with score:", score, "out of", randomizedQuestions.length);
     console.log("Selected answers:", selectedOptions);
     
+    // Mark the session as completed and clear it
+    saveSessionData(currentQuestionIndex, selectedOptions, true);
+    clearSessionData();
+    
     onComplete(selectedOptions, score, getAptitudeAntiCheatingMetrics());
   };
 
@@ -144,12 +206,32 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
     return "#22c55e"; // green-500
   };
 
+  // Show the resume session dialog if there's an existing session
+  if (hasExistingSession && sessionData) {
+    return (
+      <ResumeSessionDialog 
+        open={true}
+        onResume={handleResumeSession}
+        onDecline={declineResume}
+        sessionType="aptitude"
+        progress={{
+          current: sessionData.currentIndex + 1,
+          total: randomizedQuestions.length
+        }}
+      />
+    );
+  }
+
   return (
     <div className="assessment-card max-w-4xl mx-auto">
       <div className="space-y-4 mb-6">
         <div className="flex justify-between items-center">
           <h1 className="assessment-title">Aptitude Test</h1>
-          <AssessmentTimer duration={timeLimit} onTimeEnd={handleTimeEnd} />
+          <AssessmentTimer 
+            duration={timeLimit} 
+            onTimeEnd={handleTimeEnd} 
+            persistKey="aptitude_timer" 
+          />
         </div>
         
         <ProgressIndicator 
@@ -186,6 +268,14 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
         onPrevious={handlePrevious}
         onNext={handleNext}
       />
+
+      {isMobile && (
+        <div className="fixed bottom-4 left-4 right-4 bg-background/70 backdrop-blur-sm p-2 rounded-lg border shadow-md">
+          <div className="text-center text-sm">
+            <span className="font-medium">Progress saved</span> - You can safely resume if connection is lost
+          </div>
+        </div>
+      )}
     </div>
   );
 };
