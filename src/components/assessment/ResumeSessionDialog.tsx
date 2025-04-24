@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ClipboardCheck, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Stage, stageToPath } from "@/types/assessment";
+import { Stage } from "@/types/assessment";
+import { stageToPath } from "@/hooks/assessment/useStageManagement";
 
 interface ResumeSessionDialogProps {
   open: boolean;
