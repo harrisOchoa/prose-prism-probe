@@ -57,23 +57,25 @@ const ResumeSessionDialog = ({
     e.preventDefault();
     e.stopPropagation();
     
-    // Clear all related localStorage items to ensure complete session cleanup
-    localStorage.removeItem(`assessment_session_aptitude_data`);
-    localStorage.removeItem(`assessment_session_writing_data`);
-    localStorage.removeItem(`aptitude_timer`);
-    localStorage.removeItem(`writing_timer`);
+    // Full clear of ALL localStorage items related to sessions
+    const allPossibleKeys = [
+      'assessment_session_aptitude_data',
+      'assessment_session_writing_data',
+      'aptitude_timer',
+      'writing_timer'
+    ];
     
+    // Clear all potential session data
+    allPossibleKeys.forEach(key => localStorage.removeItem(key));
+    
+    // Call the parent decline handler
     onDecline();
     
-    // Force navigation back to the landing page to ensure a clean start
+    // Force navigation to landing and ensure complete reset
     navigate(stageToPath[Stage.LANDING], { replace: true });
     
-    // Add a small delay and force reload if needed
-    setTimeout(() => {
-      if (open) {
-        window.location.reload();
-      }
-    }, 100);
+    // Force reload the page to ensure a completely clean state
+    window.location.reload();
   };
   
   return (

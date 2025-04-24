@@ -5,6 +5,7 @@ import ResumeSessionDialog from "@/components/assessment/ResumeSessionDialog";
 import AssessmentStages from "@/components/assessment/stages/AssessmentStages";
 import GeneratingPromptsLoader from "@/components/assessment/stages/GeneratingPromptsLoader";
 import { useSessionRecovery } from "@/hooks/useSessionRecovery";
+import { useLocation } from "react-router-dom";
 
 const Index = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -13,21 +14,56 @@ const Index = () => {
   const [globalSessionType, setGlobalSessionType] = useState<'aptitude' | 'writing'>('aptitude');
   const [sessionProgress, setSessionProgress] = useState({ current: 0, total: 30 });
   const [resumingSession, setResumingSession] = useState(false);
+  const location = useLocation();
   
   // Check for existing sessions at the application level
   const aptitudeSession = useSessionRecovery('aptitude', 30);
   const writingSession = useSessionRecovery('writing', 3);
   
-  // Clear all sessions function that can be called anywhere
+  // Global function to clear ALL session data
   const clearAllSessionData = () => {
+    // Clear all possible localStorage keys that could cause session persistence
+    const allPossibleKeys = [
+      'assessment_session_aptitude_data',
+      'assessment_session_writing_data',
+      'aptitude_timer',
+      'writing_timer'
+    ];
+    
+    allPossibleKeys.forEach(key => localStorage.removeItem(key));
+    
+    // Use the hooks to clear session data properly
     aptitudeSession.clearSessionData();
     writingSession.clearSessionData();
+    
+    // Hide the dialog
     setShowGlobalDialog(false);
   };
+  
+  // Special effect to handle landing page - always clear sessions when landing on root
+  useEffect(() => {
+    if (location.pathname === '/') {
+      // Check if we're coming from another page by checking session storage
+      const fromSession = sessionStorage.getItem('from_session_reset');
+      if (fromSession === 'true') {
+        // Already handled a reset, clear the flag
+        sessionStorage.removeItem('from_session_reset');
+      } else {
+        // Clear all session data when visiting the landing page directly
+        clearAllSessionData();
+      }
+    }
+  }, [location.pathname]);
   
   useEffect(() => {
     // Small delay to ensure any previous session clearing has taken effect
     const checkForSessions = setTimeout(() => {
+      // Only check for sessions if we're not in the process of resetting
+      const isResetting = sessionStorage.getItem('from_session_reset');
+      if (isResetting === 'true') {
+        return;
+      }
+      
       // Check for any existing sessions when the app loads
       if (aptitudeSession.hasExistingSession) {
         setGlobalSessionType('aptitude');
@@ -75,6 +111,18 @@ const Index = () => {
     setTimeout(() => setIsTransitioning(false), 1000);
   };
 
+  // Handle dialog decline more thoroughly
+  const handleDeclineDialog = () => {
+    // Set a flag that we're coming from a reset
+    sessionStorage.setItem('from_session_reset', 'true');
+    
+    // Clear all session data
+    clearAllSessionData();
+    
+    // Force reload to ensure a clean state
+    window.location.reload();
+  };
+
   return (
     <>
       {showGlobalDialog && (
@@ -85,15 +133,7 @@ const Index = () => {
             setResumingSession(true);
             handleStageTransition(globalSessionType === 'aptitude' ? Stage.APTITUDE : Stage.WRITING);
           }}
-          onDecline={() => {
-            if (globalSessionType === 'aptitude') {
-              aptitudeSession.clearSessionData();
-            } else {
-              writingSession.clearSessionData();
-            }
-            clearAllSessionData(); // Ensure all session data is cleared
-            setShowGlobalDialog(false);
-          }}
+          onDecline={handleDeclineDialog}
           sessionType={globalSessionType}
           progress={sessionProgress}
         />

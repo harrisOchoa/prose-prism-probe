@@ -47,12 +47,20 @@ export const useSessionRecovery = (
       return sessionData;
     } catch (error) {
       console.error("Failed to load session data:", error);
+      // If there's an error parsing, clear everything to avoid persistent issues
+      clearAllSessionData();
       return null;
     }
   };
   
-  const [sessionData, setSessionData] = useState<SessionData | null>(loadSessionData);
+  const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [isResumed, setIsResumed] = useState(false);
+  
+  // Load session data only once on mount
+  useEffect(() => {
+    const data = loadSessionData();
+    setSessionData(data);
+  }, []);
   
   // Save session data periodically
   const saveSessionData = (
@@ -81,14 +89,16 @@ export const useSessionRecovery = (
   // Clear all session-related data from localStorage
   const clearAllSessionData = () => {
     try {
-      // Clear all possible session data to ensure nothing persists
+      // Clear all possible session data keys systematically
       const keysToRemove = [
+        // Current session keys
         STORAGE_KEY,
         TIMER_KEY,
-        `aptitude_timer`,
-        `writing_timer`,
-        `assessment_session_aptitude_data`,
-        `assessment_session_writing_data`
+        // All possible session keys to ensure complete cleanup
+        'assessment_session_aptitude_data',
+        'assessment_session_writing_data',
+        'aptitude_timer',
+        'writing_timer'
       ];
       
       for (const key of keysToRemove) {
@@ -96,6 +106,7 @@ export const useSessionRecovery = (
       }
       
       setSessionData(null);
+      setIsResumed(false);
       console.log("All session data cleared successfully");
     } catch (error) {
       console.error("Failed to clear session data:", error);
@@ -115,10 +126,12 @@ export const useSessionRecovery = (
     return null;
   };
   
-  // Decline resuming session
+  // Decline resuming session with a forced clean state
   const declineResume = () => {
     clearAllSessionData();
     setIsResumed(false);
+    // Force reload to ensure clean state
+    setTimeout(() => window.location.reload(), 100);
   };
   
   return {
