@@ -133,6 +133,16 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
   };
 
   const currentQuestion = randomizedQuestions[currentQuestionIndex];
+  
+  // Calculate progress percentage for the progress bar
+  const progressPercentage = ((currentQuestionIndex + 1) / randomizedQuestions.length) * 100;
+  
+  // Determine color based on progress
+  const getProgressColor = () => {
+    if (progressPercentage < 33) return "#3b82f6"; // blue-500
+    if (progressPercentage < 66) return "#8b5cf6"; // purple-500
+    return "#22c55e"; // green-500
+  };
 
   return (
     <div className="assessment-card max-w-4xl mx-auto">
@@ -146,6 +156,7 @@ const AptitudeTest = ({ questions, onComplete, timeLimit }: AptitudeTestProps) =
           currentStep={currentQuestionIndex + 1} 
           totalSteps={randomizedQuestions.length}
           label="Aptitude Progress"
+          color={getProgressColor()}
         />
       </div>
 
