@@ -1,13 +1,16 @@
 
 import React from "react";
-import LandingPage from "@/components/LandingPage";
-import AssessmentIntro from "@/components/AssessmentIntro";
-import AptitudeTest from "@/components/AptitudeTest";
-import PromptSelection from "@/components/PromptSelection";
-import WritingPrompt from "@/components/WritingPrompt";
-import AssessmentComplete from "@/components/AssessmentComplete";
 import { Stage } from "@/components/AssessmentManager";
 import StepTransition from "@/components/assessment/StepTransition";
+
+// Import stage components
+import Landing from "./components/Landing";
+import Info from "./components/Info";
+import Intro from "./components/Intro";
+import Aptitude from "./components/Aptitude";
+import PromptSelector from "./components/PromptSelector";
+import Writing from "./components/Writing";
+import Complete from "./components/Complete";
 
 interface AssessmentStagesProps {
   stage: Stage;
@@ -57,48 +60,42 @@ const AssessmentStages: React.FC<AssessmentStagesProps> = ({
       <StepTransition loading={isTransitioning} message={transitionMessage} />
 
       {stage === Stage.LANDING && !showGlobalDialog && (
-        <LandingPage onStart={onStart} />
+        <Landing onStart={onStart} />
       )}
 
       {stage === Stage.INFO && (
-        <AssessmentIntro 
-          step="info" 
+        <Info 
           candidateName={candidateName}
           candidatePosition={candidatePosition}
-          onInfoSubmit={(name, position, skills) => onInfoSubmit(name, position, skills)} 
+          onInfoSubmit={onInfoSubmit}
         />
       )}
 
       {stage === Stage.INTRO && (
-        <AssessmentIntro 
-          step="instructions" 
+        <Intro 
           candidateName={candidateName}
-          onStart={handleStart} 
+          onStart={handleStart}
         />
       )}
 
       {stage === Stage.APTITUDE && aptitudeQuestions.length > 0 && (
-        <AptitudeTest 
+        <Aptitude 
           questions={aptitudeQuestions}
           onComplete={handleAptitudeComplete}
-          timeLimit={30 * 60}
         />
       )}
 
       {stage === Stage.SELECT_PROMPTS && availablePrompts.length > 0 && (
-        <PromptSelection
+        <PromptSelector
           availablePrompts={availablePrompts}
           onSelection={handlePromptSelection}
-          minSelect={1}
-          maxSelect={availablePrompts.length}
         />
       )}
 
       {stage === Stage.WRITING && (
-        <WritingPrompt 
+        <Writing 
           prompt={prompts[currentPromptIndex]?.prompt || ""}
           response={prompts[currentPromptIndex]?.response || ""}
-          timeLimit={30 * 60}
           onSubmit={handlePromptSubmit}
           currentQuestion={currentPromptIndex + 1}
           totalQuestions={prompts.length}
@@ -107,14 +104,13 @@ const AssessmentStages: React.FC<AssessmentStagesProps> = ({
       )}
 
       {stage === Stage.COMPLETE && (
-        <AssessmentComplete
-          wordCount={prompts.reduce((total, prompt) => total + prompt.wordCount, 0)}
+        <Complete
           candidateName={candidateName}
           candidatePosition={candidatePosition}
-          restartAssessment={restartAssessment}
-          completedPrompts={prompts}
+          prompts={prompts}
           aptitudeScore={aptitudeScore}
           aptitudeTotal={aptitudeQuestions.length}
+          restartAssessment={restartAssessment}
           antiCheatingMetrics={antiCheatingMetrics}
         />
       )}
