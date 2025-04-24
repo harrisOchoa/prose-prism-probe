@@ -6,10 +6,8 @@ import AssessmentTimer from "@/components/AssessmentTimer";
 import { useAntiCheating } from "@/hooks/useAntiCheating";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Loader2, Save } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import ProgressIndicator from "./assessment/ProgressIndicator";
-import { useSessionRecovery } from "@/hooks/useSessionRecovery";
-import ResumeSessionDialog from "./assessment/ResumeSessionDialog";
 
 interface WritingPromptProps {
   prompt: string;
@@ -31,7 +29,6 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
   isLoading = false
 }) => {
   const [text, setText] = useState("");
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [wordCount, setWordCount] = useState(0);
   const isMobile = useIsMobile();
@@ -43,16 +40,6 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
     tabSwitches,
     suspiciousActivity
   } = useAntiCheating(text);
-  
-  // Initialize session recovery - here we store just the text response
-  const { 
-    hasExistingSession, 
-    saveSessionData, 
-    clearSessionData, 
-    resumeSession, 
-    declineResume,
-    sessionData 
-  } = useSessionRecovery('writing', totalQuestions);
 
   useEffect(() => {
     const words = text.trim().split(/\s+/).filter(word => word !== "");
@@ -68,47 +55,6 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
   useEffect(() => {
     setText(response || "");
   }, [response, currentQuestion]);
-  
-  // Save progress to localStorage every 30 seconds or after 100 characters typed
-  const [lastLength, setLastLength] = useState(text.length);
-  useEffect(() => {
-    // If text changed by more than 100 characters since last save
-    if (Math.abs(text.length - lastLength) > 100) {
-      saveText();
-      setLastLength(text.length);
-    }
-    
-    // Auto-save timer
-    const saveInterval = setInterval(() => {
-      if (text.trim()) {
-        saveText();
-      }
-    }, 30000); // Save every 30 seconds
-
-    return () => clearInterval(saveInterval);
-  }, [text]);
-  
-  // Save text when the window loses focus
-  useEffect(() => {
-    const handleBlur = () => {
-      if (text.trim()) {
-        saveText();
-      }
-    };
-
-    window.addEventListener('blur', handleBlur);
-    
-    return () => {
-      window.removeEventListener('blur', handleBlur);
-    };
-  }, [text]);
-  
-  // Function to save text
-  const saveText = () => {
-    const dummyAnswers = new Array(totalQuestions).fill(-1);
-    saveSessionData(currentQuestion - 1, dummyAnswers, false, text);
-    setLastSaved(new Date());
-  };
 
   const handleSubmit = () => {
     if (wordCount < 50) {
@@ -124,50 +70,8 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
     
     console.log("Anti-cheating metrics captured:", metrics);
     
-    // Mark the session as completed and clear it
-    const dummyAnswers = new Array(totalQuestions).fill(-1);
-    saveSessionData(currentQuestion - 1, dummyAnswers, true, text);
-    clearSessionData();
-    
     onSubmit(text, metrics);
   };
-  
-  // Handle session resumption
-  const handleResumeSession = () => {
-    const resumedData = resumeSession();
-    if (resumedData) {
-      setText(resumedData.textResponse || "");
-      toast({
-        title: "Session Resumed",
-        description: "Your previous writing has been restored.",
-      });
-    }
-  };
-  
-  // Custom save button handler
-  const handleManualSave = () => {
-    saveText();
-    toast({
-      title: "Progress Saved",
-      description: "Your response has been saved. You can safely resume later if needed.",
-    });
-  };
-
-  // Show the resume session dialog if there's an existing session
-  if (hasExistingSession && sessionData && sessionData.textResponse) {
-    return (
-      <ResumeSessionDialog 
-        open={true}
-        onResume={handleResumeSession}
-        onDecline={declineResume}
-        sessionType="writing"
-        progress={{
-          current: currentQuestion,
-          total: totalQuestions
-        }}
-      />
-    );
-  }
 
   return (
     <div className="container max-w-4xl mx-auto py-3 md:py-6 px-3 md:px-0">
@@ -178,11 +82,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
               <CardTitle className={`${isMobile ? 'text-lg' : 'text-2xl'}`}>
                 Writing Assessment
               </CardTitle>
-              <AssessmentTimer 
-                duration={timeLimit} 
-                onTimeEnd={handleSubmit}
-                persistKey={`writing_timer_${currentQuestion}`}
-              />
+              <AssessmentTimer duration={timeLimit} onTimeEnd={handleSubmit} />
             </div>
             <ProgressIndicator 
               currentStep={currentQuestion} 
@@ -221,25 +121,8 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
           </div>
           
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-            <div className="flex items-center gap-3 w-full sm:w-auto order-2 sm:order-1">
-              <div className={`text-xs sm:text-sm ${wordCount < 50 ? 'text-red-500' : 'text-green-500'}`}>
-                Word count: {wordCount} {wordCount < 50 && "(minimum 50 words)"}
-              </div>
-              
-              {lastSaved && (
-                <div className="text-xs text-muted-foreground">
-                  Last saved: {lastSaved.toLocaleTimeString()}
-                </div>
-              )}
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleManualSave}
-                className="flex items-center gap-1"
-              >
-                <Save className="h-3 w-3" /> Save
-              </Button>
+            <div className={`text-xs sm:text-sm ${wordCount < 50 ? 'text-red-500' : 'text-green-500'} order-2 sm:order-1`}>
+              Word count: {wordCount} {wordCount < 50 && "(minimum 50 words)"}
             </div>
             
             <Button 
@@ -251,12 +134,6 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
               Submit Response
             </Button>
           </div>
-          
-          {isMobile && (
-            <div className="mt-4 text-center text-xs text-muted-foreground">
-              Progress is automatically saved every 30 seconds
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

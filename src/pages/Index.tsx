@@ -1,92 +1,31 @@
 
 import React, { useState, useEffect } from "react";
+import AssessmentIntro from "@/components/AssessmentIntro";
+import WritingPrompt from "@/components/WritingPrompt";
+import AssessmentComplete from "@/components/AssessmentComplete";
+import AptitudeTest from "@/components/AptitudeTest";
+import LandingPage from "@/components/LandingPage";
 import AssessmentManager, { Stage } from "@/components/AssessmentManager";
-import ResumeSessionDialog from "@/components/assessment/ResumeSessionDialog";
-import AssessmentStages from "@/components/assessment/stages/AssessmentStages";
-import GeneratingPromptsLoader from "@/components/assessment/stages/GeneratingPromptsLoader";
-import { useSessionRecovery } from "@/hooks/useSessionRecovery";
-import { useLocation } from "react-router-dom";
+import PromptSelection from "@/components/PromptSelection";
+import StepTransition from "@/components/assessment/StepTransition";
+
+const loadingMessages = [
+  "Preparing your assessment\u2026",
+  "Getting your assessment ready\u2026",
+  "Loading your assessment\u2026"
+];
 
 const Index = () => {
+  const [loadingIndex, setLoadingIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionMessage, setTransitionMessage] = useState("");
-  const [showGlobalDialog, setShowGlobalDialog] = useState(false);
-  const [globalSessionType, setGlobalSessionType] = useState<'aptitude' | 'writing'>('aptitude');
-  const [sessionProgress, setSessionProgress] = useState({ current: 0, total: 30 });
-  const [resumingSession, setResumingSession] = useState(false);
-  const location = useLocation();
-  
-  // Check for existing sessions at the application level
-  const aptitudeSession = useSessionRecovery('aptitude', 30);
-  const writingSession = useSessionRecovery('writing', 3);
-  
-  // Global function to clear ALL session data
-  const clearAllSessionData = () => {
-    // Clear all possible localStorage keys that could cause session persistence
-    const allPossibleKeys = [
-      'assessment_session_aptitude_data',
-      'assessment_session_writing_data',
-      'aptitude_timer',
-      'writing_timer'
-    ];
-    
-    allPossibleKeys.forEach(key => localStorage.removeItem(key));
-    
-    // Use the hooks to clear session data properly
-    aptitudeSession.clearSessionData();
-    writingSession.clearSessionData();
-    
-    // Hide the dialog
-    setShowGlobalDialog(false);
-  };
-  
-  // Special effect to handle landing page - always clear sessions when landing on root
+
   useEffect(() => {
-    if (location.pathname === '/') {
-      // Check if we're coming from another page by checking session storage
-      const fromSession = sessionStorage.getItem('from_session_reset');
-      if (fromSession === 'true') {
-        // Already handled a reset, clear the flag
-        sessionStorage.removeItem('from_session_reset');
-      } else {
-        // Clear all session data when visiting the landing page directly
-        clearAllSessionData();
-      }
-    }
-  }, [location.pathname]);
-  
-  useEffect(() => {
-    // Small delay to ensure any previous session clearing has taken effect
-    const checkForSessions = setTimeout(() => {
-      // Only check for sessions if we're not in the process of resetting
-      const isResetting = sessionStorage.getItem('from_session_reset');
-      if (isResetting === 'true') {
-        return;
-      }
-      
-      // Check for any existing sessions when the app loads
-      if (aptitudeSession.hasExistingSession) {
-        setGlobalSessionType('aptitude');
-        if (aptitudeSession.sessionData) {
-          setSessionProgress({
-            current: aptitudeSession.sessionData.currentIndex + 1,
-            total: 30
-          });
-        }
-        setShowGlobalDialog(true);
-      } else if (writingSession.hasExistingSession) {
-        setGlobalSessionType('writing');
-        if (writingSession.sessionData) {
-          setSessionProgress({
-            current: writingSession.sessionData.currentIndex + 1,
-            total: 3
-          });
-        }
-        setShowGlobalDialog(true);
-      }
-    }, 300);
-    
-    return () => clearTimeout(checkForSessions);
+    const interval = setInterval(() => {
+      setLoadingIndex((prev) => (prev + 1) % loadingMessages.length);
+    }, 2000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleStageTransition = (newStage: Stage) => {
@@ -111,101 +50,123 @@ const Index = () => {
     setTimeout(() => setIsTransitioning(false), 1000);
   };
 
-  // Handle dialog decline more thoroughly
-  const handleDeclineDialog = () => {
-    // Set a flag that we're coming from a reset
-    sessionStorage.setItem('from_session_reset', 'true');
-    
-    // Clear all session data
-    clearAllSessionData();
-    
-    // Force reload to ensure a clean state
-    window.location.reload();
-  };
-
   return (
-    <>
-      {showGlobalDialog && (
-        <ResumeSessionDialog
-          open={true}
-          onResume={() => {
-            setShowGlobalDialog(false);
-            setResumingSession(true);
-            handleStageTransition(globalSessionType === 'aptitude' ? Stage.APTITUDE : Stage.WRITING);
-          }}
-          onDecline={handleDeclineDialog}
-          sessionType={globalSessionType}
-          progress={sessionProgress}
-        />
-      )}
-      
-      <AssessmentManager>
-        {({
-          stage,
-          candidateName,
-          candidatePosition,
-          currentPromptIndex,
-          prompts,
-          availablePrompts,
-          aptitudeQuestions,
-          aptitudeScore,
-          startAssessment,
-          handleInfoSubmit,
-          handleStart,
-          handleAptitudeComplete,
-          handlePromptSubmit,
-          handlePromptSelection,
-          restartAssessment,
-          antiCheatingMetrics,
-          setStage
-        }) => {
-          // Effect to handle session resumption by setting the correct stage
-          React.useEffect(() => {
-            if (resumingSession) {
-              if (globalSessionType === 'aptitude') {
-                setStage(Stage.APTITUDE);
-              } else if (globalSessionType === 'writing') {
-                if (availablePrompts.length > 0) {
-                  handlePromptSelection([1, 2, 3]);
-                  setStage(Stage.WRITING);
-                } else {
-                  setStage(Stage.SELECT_PROMPTS);
-                }
-              }
-              setResumingSession(false);
-            }
-          }, [resumingSession, globalSessionType, availablePrompts.length, setStage]);
+    <AssessmentManager>
+      {({
+        stage,
+        candidateName,
+        candidatePosition,
+        currentPromptIndex,
+        prompts,
+        availablePrompts,
+        selectedPromptIds,
+        aptitudeQuestions,
+        aptitudeScore,
+        startAssessment,
+        handleInfoSubmit,
+        handleStart,
+        handleAptitudeComplete,
+        handlePromptSubmit,
+        handlePromptSelection,
+        restartAssessment,
+        antiCheatingMetrics
+      }) => (
+        <div className="assessment-container min-h-screen py-6 sm:py-12 px-2 sm:px-0">
+          <StepTransition loading={isTransitioning} message={transitionMessage} />
 
-          if (stage === Stage.GENERATING_PROMPTS) {
-            return <GeneratingPromptsLoader />;
-          }
+          {stage === Stage.LANDING && (
+            <LandingPage onStart={() => {
+              handleStageTransition(Stage.INFO);
+              startAssessment();
+            }} />
+          )}
 
-          return (
-            <AssessmentStages
-              stage={stage}
-              showGlobalDialog={showGlobalDialog}
-              isTransitioning={isTransitioning}
-              transitionMessage={transitionMessage}
+          {stage === Stage.INFO && (
+            <AssessmentIntro 
+              step="info" 
               candidateName={candidateName}
               candidatePosition={candidatePosition}
-              currentPromptIndex={currentPromptIndex}
-              prompts={prompts}
-              availablePrompts={availablePrompts}
-              aptitudeQuestions={aptitudeQuestions}
-              aptitudeScore={aptitudeScore}
-              antiCheatingMetrics={antiCheatingMetrics}
-              onStart={startAssessment}
-              onInfoSubmit={handleInfoSubmit}
-              handleStart={handleStart}
-              handleAptitudeComplete={handleAptitudeComplete}
-              handlePromptSubmit={handlePromptSubmit}
-              handlePromptSelection={handlePromptSelection}
-              restartAssessment={restartAssessment}
+              onInfoSubmit={(name, position, skills) => {
+                handleStageTransition(Stage.GENERATING_PROMPTS);
+                handleInfoSubmit(name, position, skills);
+              }} 
             />
-          );
-        }}
-      </AssessmentManager>
-    </>
+          )}
+
+          {stage === Stage.GENERATING_PROMPTS && (
+            <div className="w-full min-h-[40vh] flex flex-col items-center justify-center">
+              <div className="flex items-center gap-2">
+                <span className="animate-spin rounded-full h-7 w-7 border-2 border-primary border-t-transparent mr-2"></span>
+                <span className="text-lg font-medium">{loadingMessages[loadingIndex]}</span>
+              </div>
+            </div>
+          )}
+
+          {stage === Stage.INTRO && (
+            <AssessmentIntro 
+              step="instructions" 
+              candidateName={candidateName}
+              onStart={handleStart} 
+            />
+          )}
+
+          {stage === Stage.APTITUDE && aptitudeQuestions.length > 0 && (
+            <AptitudeTest 
+              questions={aptitudeQuestions}
+              onComplete={(answers, score, metrics) => {
+                console.log("Aptitude test completed with score:", score, "out of", aptitudeQuestions.length);
+                handleStageTransition(Stage.SELECT_PROMPTS);
+                handleAptitudeComplete(answers, score, metrics);
+              }}
+              timeLimit={30 * 60} // 30 minutes in seconds
+            />
+          )}
+
+          {stage === Stage.SELECT_PROMPTS && availablePrompts.length > 0 && (
+            <PromptSelection
+              availablePrompts={availablePrompts}
+              onSelection={(selectedIds) => {
+                handleStageTransition(Stage.WRITING);
+                handlePromptSelection(selectedIds);
+              }}
+              minSelect={1}
+              maxSelect={availablePrompts.length}
+            />
+          )}
+
+          {stage === Stage.WRITING && (
+            <WritingPrompt 
+              prompt={prompts[currentPromptIndex]?.prompt || ""}
+              response={prompts[currentPromptIndex]?.response || ""}
+              timeLimit={30 * 60} // 30 minutes in seconds
+              onSubmit={(text, metrics) => {
+                const isLastPrompt = currentPromptIndex === prompts.length - 1;
+                if (isLastPrompt) {
+                  handleStageTransition(Stage.COMPLETE);
+                }
+                handlePromptSubmit(text, metrics);
+              }}
+              currentQuestion={currentPromptIndex + 1}
+              totalQuestions={prompts.length}
+              isLoading={prompts.length === 0}
+            />
+          )}
+
+          {stage === Stage.COMPLETE && (
+            <AssessmentComplete
+              wordCount={prompts.reduce((total, prompt) => total + prompt.wordCount, 0)}
+              candidateName={candidateName}
+              candidatePosition={candidatePosition}
+              restartAssessment={restartAssessment}
+              completedPrompts={prompts}
+              aptitudeScore={aptitudeScore}
+              aptitudeTotal={aptitudeQuestions.length}
+              antiCheatingMetrics={antiCheatingMetrics}
+            />
+          )}
+        </div>
+      )}
+    </AssessmentManager>
   );
 };
 
