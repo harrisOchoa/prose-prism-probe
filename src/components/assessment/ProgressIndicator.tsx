@@ -9,7 +9,8 @@ interface ProgressIndicatorProps {
 }
 
 const ProgressIndicator = ({ currentStep, totalSteps, label }: ProgressIndicatorProps) => {
-  const progress = (currentStep / totalSteps) * 100;
+  const progress = Math.max(0, Math.min(100, (currentStep / totalSteps) * 100));
+  const progressColor = progress === 100 ? "#22c55e" : undefined;
 
   return (
     <div className="w-full space-y-2">
@@ -22,7 +23,7 @@ const ProgressIndicator = ({ currentStep, totalSteps, label }: ProgressIndicator
       <Progress 
         value={progress} 
         className="h-2"
-        color={progress === 100 ? "#22c55e" : undefined}
+        color={progressColor}
       />
     </div>
   );

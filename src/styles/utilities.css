@@ -1,3 +1,4 @@
+
 @tailwind utilities;
 
 @layer utilities {
@@ -23,6 +24,19 @@
   
   .mobile-full {
     @apply w-full sm:w-auto;
+  }
+
+  /* Progress bar styles */
+  .progress-bar-success {
+    --progress-background: theme('colors.green.500');
+  }
+  
+  .progress-bar-warning {
+    --progress-background: theme('colors.yellow.500');
+  }
+  
+  .progress-bar-danger {
+    --progress-background: theme('colors.red.500');
   }
 
   @media (max-width: 768px) {

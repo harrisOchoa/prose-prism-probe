@@ -8,20 +8,21 @@ interface CategoryProgressBarProps {
 }
 
 const CategoryProgressBar: React.FC<CategoryProgressBarProps> = ({ correct, total }) => {
-  const percentage = Math.round((correct / total) * 100);
+  const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
   
   // Get color based on percentage score
   const getColorByPercentage = (percent: number): string => {
-    if (percent >= 80) return "bg-green-500"; // High score
-    if (percent >= 60) return "bg-yellow-500"; // Medium score
-    return "bg-red-500"; // Low score
+    if (percent >= 80) return "#22c55e"; // green-500
+    if (percent >= 60) return "#eab308"; // yellow-500
+    return "#ef4444"; // red-500
   };
   
   return (
     <div className="relative pt-1">
       <Progress 
         value={percentage} 
-        className={`h-2.5 ${getColorByPercentage(percentage)}`}
+        className="h-2.5"
+        color={getColorByPercentage(percentage)}
       />
     </div>
   );
