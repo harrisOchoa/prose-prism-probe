@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import AssessmentIntro from "@/components/AssessmentIntro";
 import WritingPrompt from "@/components/WritingPrompt";
@@ -24,6 +23,7 @@ const Index = () => {
   const [showGlobalDialog, setShowGlobalDialog] = useState(false);
   const [globalSessionType, setGlobalSessionType] = useState<'aptitude' | 'writing'>('aptitude');
   const [sessionProgress, setSessionProgress] = useState({ current: 0, total: 30 });
+  const [resumingSession, setResumingSession] = useState(false);
   
   // Check for existing sessions at the application level
   const aptitudeSession = useSessionRecovery('aptitude', 30);
@@ -86,7 +86,14 @@ const Index = () => {
   // Handle resuming from global dialog
   const handleGlobalResume = () => {
     setShowGlobalDialog(false);
-    // The individual components will handle the actual resumption
+    setResumingSession(true);
+    
+    // Set up transition to the correct stage based on session type
+    if (globalSessionType === 'aptitude') {
+      handleStageTransition(Stage.APTITUDE);
+    } else {
+      handleStageTransition(Stage.WRITING);
+    }
   };
   
   // Handle declining from global dialog
@@ -132,103 +139,125 @@ const Index = () => {
           handlePromptSubmit,
           handlePromptSelection,
           restartAssessment,
-          antiCheatingMetrics
-        }) => (
-          <div className="assessment-container min-h-screen py-6 sm:py-12 px-2 sm:px-0">
-            <StepTransition loading={isTransitioning} message={transitionMessage} />
+          antiCheatingMetrics,
+          setStage
+        }) => {
+          // Effect to handle session resumption by setting the correct stage
+          useEffect(() => {
+            if (resumingSession) {
+              if (globalSessionType === 'aptitude') {
+                setStage(Stage.APTITUDE);
+              } else if (globalSessionType === 'writing') {
+                // For writing, we need to ensure there are prompts selected
+                if (availablePrompts.length > 0) {
+                  handlePromptSelection([1, 2, 3]); // Default selection
+                  setStage(Stage.WRITING);
+                } else {
+                  // If no prompts available, go to prompt selection
+                  setStage(Stage.SELECT_PROMPTS);
+                }
+              }
+              setResumingSession(false);
+            }
+          }, [resumingSession, globalSessionType, availablePrompts.length, setStage]);
+          
+          return (
+            <div className="assessment-container min-h-screen py-6 sm:py-12 px-2 sm:px-0">
+              <StepTransition loading={isTransitioning} message={transitionMessage} />
 
-            {stage === Stage.LANDING && !showGlobalDialog && (
-              <LandingPage onStart={() => {
-                handleStageTransition(Stage.INFO);
-                startAssessment();
-              }} />
-            )}
+              {stage === Stage.LANDING && !showGlobalDialog && (
+                <LandingPage onStart={() => {
+                  handleStageTransition(Stage.INFO);
+                  startAssessment();
+                }} />
+              )}
 
-            {stage === Stage.INFO && (
-              <AssessmentIntro 
-                step="info" 
-                candidateName={candidateName}
-                candidatePosition={candidatePosition}
-                onInfoSubmit={(name, position, skills) => {
-                  handleStageTransition(Stage.GENERATING_PROMPTS);
-                  handleInfoSubmit(name, position, skills);
-                }} 
-              />
-            )}
+              {stage === Stage.INFO && (
+                <AssessmentIntro 
+                  step="info" 
+                  candidateName={candidateName}
+                  candidatePosition={candidatePosition}
+                  onInfoSubmit={(name, position, skills) => {
+                    handleStageTransition(Stage.GENERATING_PROMPTS);
+                    handleInfoSubmit(name, position, skills);
+                  }} 
+                />
+              )}
 
-            {stage === Stage.GENERATING_PROMPTS && (
-              <div className="w-full min-h-[40vh] flex flex-col items-center justify-center">
-                <div className="flex items-center gap-2">
-                  <span className="animate-spin rounded-full h-7 w-7 border-2 border-primary border-t-transparent mr-2"></span>
-                  <span className="text-lg font-medium">{loadingMessages[loadingIndex]}</span>
+              {stage === Stage.GENERATING_PROMPTS && (
+                <div className="w-full min-h-[40vh] flex flex-col items-center justify-center">
+                  <div className="flex items-center gap-2">
+                    <span className="animate-spin rounded-full h-7 w-7 border-2 border-primary border-t-transparent mr-2"></span>
+                    <span className="text-lg font-medium">{loadingMessages[loadingIndex]}</span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {stage === Stage.INTRO && (
-              <AssessmentIntro 
-                step="instructions" 
-                candidateName={candidateName}
-                onStart={handleStart} 
-              />
-            )}
+              {stage === Stage.INTRO && (
+                <AssessmentIntro 
+                  step="instructions" 
+                  candidateName={candidateName}
+                  onStart={handleStart} 
+                />
+              )}
 
-            {stage === Stage.APTITUDE && aptitudeQuestions.length > 0 && (
-              <AptitudeTest 
-                questions={aptitudeQuestions}
-                onComplete={(answers, score, metrics) => {
-                  console.log("Aptitude test completed with score:", score, "out of", aptitudeQuestions.length);
-                  handleStageTransition(Stage.SELECT_PROMPTS);
-                  handleAptitudeComplete(answers, score, metrics);
-                }}
-                timeLimit={30 * 60} // 30 minutes in seconds
-              />
-            )}
+              {stage === Stage.APTITUDE && aptitudeQuestions.length > 0 && (
+                <AptitudeTest 
+                  questions={aptitudeQuestions}
+                  onComplete={(answers, score, metrics) => {
+                    console.log("Aptitude test completed with score:", score, "out of", aptitudeQuestions.length);
+                    handleStageTransition(Stage.SELECT_PROMPTS);
+                    handleAptitudeComplete(answers, score, metrics);
+                  }}
+                  timeLimit={30 * 60} // 30 minutes in seconds
+                />
+              )}
 
-            {stage === Stage.SELECT_PROMPTS && availablePrompts.length > 0 && (
-              <PromptSelection
-                availablePrompts={availablePrompts}
-                onSelection={(selectedIds) => {
-                  handleStageTransition(Stage.WRITING);
-                  handlePromptSelection(selectedIds);
-                }}
-                minSelect={1}
-                maxSelect={availablePrompts.length}
-              />
-            )}
+              {stage === Stage.SELECT_PROMPTS && availablePrompts.length > 0 && (
+                <PromptSelection
+                  availablePrompts={availablePrompts}
+                  onSelection={(selectedIds) => {
+                    handleStageTransition(Stage.WRITING);
+                    handlePromptSelection(selectedIds);
+                  }}
+                  minSelect={1}
+                  maxSelect={availablePrompts.length}
+                />
+              )}
 
-            {stage === Stage.WRITING && (
-              <WritingPrompt 
-                prompt={prompts[currentPromptIndex]?.prompt || ""}
-                response={prompts[currentPromptIndex]?.response || ""}
-                timeLimit={30 * 60} // 30 minutes in seconds
-                onSubmit={(text, metrics) => {
-                  const isLastPrompt = currentPromptIndex === prompts.length - 1;
-                  if (isLastPrompt) {
-                    handleStageTransition(Stage.COMPLETE);
-                  }
-                  handlePromptSubmit(text, metrics);
-                }}
-                currentQuestion={currentPromptIndex + 1}
-                totalQuestions={prompts.length}
-                isLoading={prompts.length === 0}
-              />
-            )}
+              {stage === Stage.WRITING && (
+                <WritingPrompt 
+                  prompt={prompts[currentPromptIndex]?.prompt || ""}
+                  response={prompts[currentPromptIndex]?.response || ""}
+                  timeLimit={30 * 60} // 30 minutes in seconds
+                  onSubmit={(text, metrics) => {
+                    const isLastPrompt = currentPromptIndex === prompts.length - 1;
+                    if (isLastPrompt) {
+                      handleStageTransition(Stage.COMPLETE);
+                    }
+                    handlePromptSubmit(text, metrics);
+                  }}
+                  currentQuestion={currentPromptIndex + 1}
+                  totalQuestions={prompts.length}
+                  isLoading={prompts.length === 0}
+                />
+              )}
 
-            {stage === Stage.COMPLETE && (
-              <AssessmentComplete
-                wordCount={prompts.reduce((total, prompt) => total + prompt.wordCount, 0)}
-                candidateName={candidateName}
-                candidatePosition={candidatePosition}
-                restartAssessment={restartAssessment}
-                completedPrompts={prompts}
-                aptitudeScore={aptitudeScore}
-                aptitudeTotal={aptitudeQuestions.length}
-                antiCheatingMetrics={antiCheatingMetrics}
-              />
-            )}
-          </div>
-        )}
+              {stage === Stage.COMPLETE && (
+                <AssessmentComplete
+                  wordCount={prompts.reduce((total, prompt) => total + prompt.wordCount, 0)}
+                  candidateName={candidateName}
+                  candidatePosition={candidatePosition}
+                  restartAssessment={restartAssessment}
+                  completedPrompts={prompts}
+                  aptitudeScore={aptitudeScore}
+                  aptitudeTotal={aptitudeQuestions.length}
+                  antiCheatingMetrics={antiCheatingMetrics}
+                />
+              )}
+            </div>
+          );
+        }}
       </AssessmentManager>
     </>
   );

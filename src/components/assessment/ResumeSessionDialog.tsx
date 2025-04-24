@@ -33,6 +33,20 @@ const ResumeSessionDialog = ({
   const progressPercentage = Math.round((progress.current / progress.total) * 100);
   const sessionTitle = sessionType === 'aptitude' ? 'Aptitude Test' : 'Writing Assessment';
   
+  // Handle the resume action - prevent default to avoid form submission behavior
+  const handleResumeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onResume();
+  };
+  
+  // Handle the decline action
+  const handleDeclineClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDecline();
+  };
+  
   return (
     <AlertDialog open={open}>
       <AlertDialogContent className="max-w-md">
@@ -61,8 +75,8 @@ const ResumeSessionDialog = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-2">
-          <AlertDialogCancel onClick={onDecline} className="w-full sm:w-auto">Start Over</AlertDialogCancel>
-          <AlertDialogAction onClick={onResume} className="w-full sm:w-auto">Resume Session</AlertDialogAction>
+          <AlertDialogCancel onClick={handleDeclineClick} className="w-full sm:w-auto">Start Over</AlertDialogCancel>
+          <AlertDialogAction onClick={handleResumeClick} className="w-full sm:w-auto">Resume Session</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

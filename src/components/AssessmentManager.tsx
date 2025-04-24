@@ -44,6 +44,7 @@ interface AssessmentManagerProps {
     handlePromptSubmit: (text: string, metrics?: AntiCheatingMetrics) => void;
     handlePromptSelection: (selectedPromptIds: number[]) => void;
     restartAssessment: () => void;
+    setStage: (stage: Stage) => void; // Added to expose setStage
   }) => React.ReactNode;
 }
 
@@ -188,7 +189,8 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
     handleAptitudeComplete,
     handlePromptSubmit,
     handlePromptSelection,
-    restartAssessment
+    restartAssessment,
+    setStage // Added to expose the setStage function
   })}</>;
 };
 
