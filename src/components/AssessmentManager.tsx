@@ -4,6 +4,7 @@ import { WritingPromptQuestion, getRandomQuestions } from "@/utils/questionBank"
 import { AptitudeQuestion, getRandomAptitudeQuestions } from "@/utils/aptitudeQuestions";
 import { AntiCheatingMetrics } from "@/firebase/assessmentService";
 import { generatePositionSpecificPrompts } from "@/services/gemini/positionPrompts";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export enum Stage {
   LANDING,  // Landing page
@@ -15,6 +16,30 @@ export enum Stage {
   WRITING,  // Writing assessment
   COMPLETE  // Thank you page
 }
+
+// Map stages to URL paths for routing
+export const stageToPath = {
+  [Stage.LANDING]: "/",
+  [Stage.INFO]: "/info",
+  [Stage.INTRO]: "/intro",
+  [Stage.GENERATING_PROMPTS]: "/generating-prompts",
+  [Stage.SELECT_PROMPTS]: "/select-prompts",
+  [Stage.APTITUDE]: "/aptitude",
+  [Stage.WRITING]: "/writing",
+  [Stage.COMPLETE]: "/complete"
+};
+
+// Map URL paths back to stages
+export const pathToStage = {
+  "/": Stage.LANDING,
+  "/info": Stage.INFO,
+  "/intro": Stage.INTRO,
+  "/generating-prompts": Stage.GENERATING_PROMPTS,
+  "/select-prompts": Stage.SELECT_PROMPTS,
+  "/aptitude": Stage.APTITUDE,
+  "/writing": Stage.WRITING,
+  "/complete": Stage.COMPLETE
+};
 
 export interface WritingPromptItem extends WritingPromptQuestion {
   response: string;
@@ -49,6 +74,8 @@ interface AssessmentManagerProps {
 }
 
 const AssessmentManager = ({ children }: AssessmentManagerProps) => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [stage, setStage] = useState<Stage>(Stage.LANDING);
   const [candidateName, setCandidateName] = useState("");
   const [candidatePosition, setCandidatePosition] = useState("");
@@ -67,6 +94,27 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
   const [isGeneratingPrompts, setIsGeneratingPrompts] = useState(false);
 
   const [antiCheatingMetrics, setAntiCheatingMetrics] = useState<AntiCheatingMetrics | undefined>(undefined);
+  
+  // Sync URL with stage
+  useEffect(() => {
+    // Only update the URL if this isn't the initial load or if the path doesn't match the stage
+    if (location.pathname !== stageToPath[stage]) {
+      navigate(stageToPath[stage], { replace: true });
+    }
+  }, [stage, navigate, location.pathname]);
+  
+  // Sync stage with URL on initial load or URL change
+  useEffect(() => {
+    const pathname = location.pathname;
+    // Check if the current path maps to a known stage
+    if (pathname in pathToStage) {
+      const newStage = pathToStage[pathname as keyof typeof pathToStage];
+      setStage(newStage);
+    } else if (pathname !== '/' && pathname !== '/admin' && pathname !== '/view') {
+      // If unknown path and not the admin/view paths, redirect to landing
+      navigate('/', { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   const startAssessment = () => {
     setStage(Stage.INFO);
@@ -190,7 +238,7 @@ const AssessmentManager = ({ children }: AssessmentManagerProps) => {
     handlePromptSubmit,
     handlePromptSelection,
     restartAssessment,
-    setStage // Added to expose the setStage function
+    setStage
   })}</>;
 };
 

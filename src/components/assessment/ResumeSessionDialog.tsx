@@ -11,6 +11,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ClipboardCheck, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Stage, stageToPath } from "../AssessmentManager";
 
 interface ResumeSessionDialogProps {
   open: boolean;
@@ -30,6 +32,7 @@ const ResumeSessionDialog = ({
   sessionType,
   progress
 }: ResumeSessionDialogProps) => {
+  const navigate = useNavigate();
   const progressPercentage = Math.round((progress.current / progress.total) * 100);
   const sessionTitle = sessionType === 'aptitude' ? 'Aptitude Test' : 'Writing Assessment';
   
@@ -37,6 +40,14 @@ const ResumeSessionDialog = ({
   const handleResumeClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Navigate to the appropriate page based on session type
+    if (sessionType === 'aptitude') {
+      navigate(stageToPath[Stage.APTITUDE], { replace: true });
+    } else {
+      navigate(stageToPath[Stage.WRITING], { replace: true });
+    }
+    
     onResume();
   };
   

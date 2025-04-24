@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import View from "./pages/View";
+import { pathToStage } from "./components/AssessmentManager";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,13 @@ const App = () => (
         <Layout>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/info" element={<Index />} />
+            <Route path="/intro" element={<Index />} />
+            <Route path="/generating-prompts" element={<Index />} />
+            <Route path="/select-prompts" element={<Index />} />
+            <Route path="/aptitude" element={<Index />} />
+            <Route path="/writing" element={<Index />} />
+            <Route path="/complete" element={<Index />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/view/:id" element={<View />} />
             <Route path="*" element={<NotFound />} />
