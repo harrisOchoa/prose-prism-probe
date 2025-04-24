@@ -1,11 +1,10 @@
-
 import React from "react";
 import { useStageManagement } from "@/hooks/assessment/useStageManagement";
 import { useAssessmentState } from "@/hooks/assessment/useAssessmentState";
 
 // Re-export items for backward compatibility
 export { pathToStage, stageToPath } from "@/hooks/assessment/useStageManagement";
-export { WritingPromptItem } from "@/hooks/assessment/useAssessmentState";
+export type { WritingPromptItem } from "@/hooks/assessment/useAssessmentState";
 
 export enum Stage {
   LANDING,
