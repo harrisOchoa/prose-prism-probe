@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ClipboardCheck, Clock } from "lucide-react";
 
 interface ResumeSessionDialogProps {
   open: boolean;
@@ -34,17 +35,34 @@ const ResumeSessionDialog = ({
   
   return (
     <AlertDialog open={open}>
-      <AlertDialogContent>
+      <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
-          <AlertDialogTitle>Resume Previous Session?</AlertDialogTitle>
-          <AlertDialogDescription>
-            We detected that you have a previous {sessionTitle} session with {progressPercentage}% progress. 
-            Would you like to resume where you left off? ({progress.current} of {progress.total} questions completed)
+          <div className="flex items-center gap-2 text-primary">
+            <ClipboardCheck className="h-5 w-5" />
+            <AlertDialogTitle>Resume Previous Session</AlertDialogTitle>
+          </div>
+          <AlertDialogDescription className="space-y-4 pt-2">
+            <div className="border rounded-md p-4 bg-muted/30">
+              <p className="font-medium text-sm mb-2">We found your previous {sessionTitle} session:</p>
+              <div className="flex justify-between items-center text-sm mb-1">
+                <span>Progress:</span>
+                <span className="font-medium">{progressPercentage}% complete</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span>Questions completed:</span>
+                <span className="font-medium">{progress.current} of {progress.total}</span>
+              </div>
+              <div className="flex items-center gap-1 mt-3 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" /> 
+                <span>Session saved within the last 24 hours</span>
+              </div>
+            </div>
+            <p>Would you like to resume where you left off or start a new assessment?</p>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={onDecline}>Start Over</AlertDialogCancel>
-          <AlertDialogAction onClick={onResume}>Resume Session</AlertDialogAction>
+        <AlertDialogFooter className="gap-2">
+          <AlertDialogCancel onClick={onDecline} className="w-full sm:w-auto">Start Over</AlertDialogCancel>
+          <AlertDialogAction onClick={onResume} className="w-full sm:w-auto">Resume Session</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
