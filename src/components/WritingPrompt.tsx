@@ -6,7 +6,7 @@ import AssessmentTimer from "@/components/AssessmentTimer";
 import { useAntiCheating } from "@/hooks/useAntiCheating";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Loader2, AlertTriangle, Check, Clock, BookText } from "lucide-react";
+import { Loader2, AlertTriangle, Check } from "lucide-react";
 import ProgressIndicator from "./assessment/ProgressIndicator";
 import { Progress } from "@/components/ui/progress";
 
@@ -114,13 +114,6 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
 
   // Determine if the user has reached the minimum word count
   const hasMinimumWords = wordCount >= 50;
-  
-  // Completion status indicators
-  const wordCountStatus = wordCount < 30 
-    ? { color: "text-red-600", message: "Need more words" }
-    : wordCount < 50 
-      ? { color: "text-amber-600", message: "Almost there" }
-      : { color: "text-green-600", message: "Minimum met" };
 
   return (
     <div className="container max-w-4xl mx-auto py-3 md:py-6 px-3 md:px-0 animate-fade-in">
@@ -128,8 +121,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
         <CardHeader className={`bg-muted/50 ${isMobile ? 'p-3' : 'p-6'}`}>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-              <CardTitle className={`${isMobile ? 'text-lg' : 'text-2xl'} flex items-center gap-2`}>
-                <BookText className="h-5 w-5 text-hirescribe-primary" />
+              <CardTitle className={`${isMobile ? 'text-lg' : 'text-2xl'}`}>
                 Writing Assessment
               </CardTitle>
               <AssessmentTimer duration={timeLimit} onTimeEnd={handleSubmit} />
@@ -143,13 +135,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
         </CardHeader>
         <CardContent className={`${isMobile ? 'p-3 pt-4' : 'p-6 pt-6'}`}>
           <div className={`mb-4 ${isMobile ? 'p-3' : 'p-4'} bg-muted/30 rounded-md`}>
-            <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-lg'} mb-2 flex items-center`}>
-              <span className="mr-2">Prompt:</span>
-              <div className="text-xs py-1 px-2 bg-hirescribe-primary/10 text-hirescribe-primary rounded-full flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                <span>{timeLimit / 60} minutes</span>
-              </div>
-            </h3>
+            <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-lg'} mb-2`}>Prompt:</h3>
             {isLoading ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
@@ -162,12 +148,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
           
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
-              <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-lg'} flex items-center gap-2`}>
-                Your Response:
-                <span className={`text-xs py-1 px-2 rounded-full ${wordCountStatus.color} bg-opacity-10 flex items-center gap-1`}>
-                  {wordCountStatus.message}
-                </span>
-              </h3>
+              <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-lg'}`}>Your Response:</h3>
               <div className={`text-xs sm:text-sm ${hasMinimumWords ? 'text-green-600' : 'text-amber-600'}`}>
                 {wordCount}/50 words minimum
               </div>
@@ -188,11 +169,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
             />
             
             <div className="mt-2">
-              <Progress 
-                value={wordCountPercentage} 
-                color={getProgressColor} 
-                className={`h-2 ${wordCount >= 50 ? 'animate-pulse' : ''}`} 
-              />
+              <Progress value={wordCountPercentage} color={getProgressColor} className="h-2" />
               <div className="flex justify-between items-center text-xs text-gray-500 mt-1">
                 <span>{charCount} characters</span>
                 <span>{wordCount} words</span>
@@ -205,19 +182,13 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
                 <span>Suspicious activity detected. Your submission will be flagged for review.</span>
               </div>
             )}
-            
-            {tabSwitches > 0 && (
-              <div className="mt-2 text-gray-500 text-xs">
-                Tab switches detected: {tabSwitches}
-              </div>
-            )}
           </div>
           
           <div className="flex flex-col sm:flex-row justify-end items-center gap-3">
             <Button 
               onClick={handleSubmit} 
               size={isMobile ? "default" : "lg"}
-              className={`w-full sm:w-auto ${hasMinimumWords ? 'animate-pulse-subtle' : ''}`}
+              className="w-full sm:w-auto"
               disabled={isLoading || isSubmitting || wordCount < 50}
             >
               {isSubmitting ? (
