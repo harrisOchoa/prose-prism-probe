@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
 import { 
@@ -45,11 +45,21 @@ export const useWritingEvaluation = (assessmentData: any, setAssessmentData: (da
         ? Number((validScores.reduce((sum, score) => sum + score.score, 0) / validScores.length).toFixed(1))
         : 0;
 
+      console.log("Writing scores calculated:", scores);
+      console.log("Overall writing score:", overallScore);
+
       // Update Firebase with the writing scores
-      await updateAssessmentAnalysis(assessmentData.id, {
-        writingScores: scores,
-        overallWritingScore: overallScore
-      });
+      try {
+        await updateAssessmentAnalysis(assessmentData.id, {
+          writingScores: scores,
+          overallWritingScore: overallScore
+        });
+        
+        console.log("Successfully saved writing scores to database");
+      } catch (updateError) {
+        console.error("Failed to save writing scores to database:", updateError);
+        throw new Error("Failed to save evaluation results to database");
+      }
 
       setGeneratingSummary(true);
       toast({
@@ -58,9 +68,15 @@ export const useWritingEvaluation = (assessmentData: any, setAssessmentData: (da
       });
       
       try {
+        const updatedAssessmentData = {
+          ...assessmentData, 
+          writingScores: scores, 
+          overallWritingScore: overallScore
+        };
+        
         const [summary, analysis] = await Promise.all([
-          generateCandidateSummary({...assessmentData, writingScores: scores, overallWritingScore: overallScore}),
-          generateStrengthsAndWeaknesses({...assessmentData, writingScores: scores, overallWritingScore: overallScore})
+          generateCandidateSummary(updatedAssessmentData),
+          generateStrengthsAndWeaknesses(updatedAssessmentData)
         ]);
         
         // Update Firebase with the insights
@@ -70,7 +86,7 @@ export const useWritingEvaluation = (assessmentData: any, setAssessmentData: (da
           weaknesses: analysis.weaknesses
         });
         
-        console.log("Insights generated:", { summary, analysis });
+        console.log("Insights generated and saved to database:", { summary, analysis });
       } catch (aiError) {
         console.error("Error generating insights:", aiError);
         toast({
@@ -83,14 +99,22 @@ export const useWritingEvaluation = (assessmentData: any, setAssessmentData: (da
       }
 
       // Get the updated assessment data
-      const updatedDoc = await getDoc(doc(db, "assessments", assessmentData.id));
-      if (updatedDoc.exists()) {
-        const updatedData = {
-          id: updatedDoc.id,
-          ...updatedDoc.data()
-        };
-        
-        setAssessmentData(updatedData);
+      try {
+        const updatedDoc = await getDoc(doc(db, "assessments", assessmentData.id));
+        if (updatedDoc.exists()) {
+          const updatedData = {
+            id: updatedDoc.id,
+            ...updatedDoc.data()
+          };
+          
+          console.log("Retrieved updated assessment data:", updatedData);
+          setAssessmentData(updatedData);
+        } else {
+          console.error("Updated document does not exist after saving");
+        }
+      } catch (fetchError) {
+        console.error("Failed to fetch updated assessment after evaluation:", fetchError);
+        throw new Error("Failed to retrieve updated assessment data");
       }
 
       toast({
@@ -133,18 +157,30 @@ export const useWritingEvaluation = (assessmentData: any, setAssessmentData: (da
       ]);
       
       // Update Firebase with the new insights
-      await updateAssessmentAnalysis(assessmentData.id, {
-        aiSummary: summary,
-        strengths: analysis.strengths,
-        weaknesses: analysis.weaknesses
-      });
-      
-      setAssessmentData({
-        ...assessmentData,
-        aiSummary: summary,
-        strengths: analysis.strengths,
-        weaknesses: analysis.weaknesses
-      });
+      try {
+        await updateAssessmentAnalysis(assessmentData.id, {
+          aiSummary: summary,
+          strengths: analysis.strengths,
+          weaknesses: analysis.weaknesses
+        });
+        
+        console.log("Successfully saved regenerated insights to database");
+        
+        // Force reload the updated data
+        const updatedDoc = await getDoc(doc(db, "assessments", assessmentData.id));
+        if (updatedDoc.exists()) {
+          const updatedData = {
+            id: updatedDoc.id,
+            ...updatedDoc.data()
+          };
+          
+          console.log("Retrieved updated assessment data after regenerating insights:", updatedData);
+          setAssessmentData(updatedData);
+        }
+      } catch (updateError) {
+        console.error("Failed to save regenerated insights to database:", updateError);
+        throw new Error("Failed to save regenerated insights to database");
+      }
       
       toast({
         title: "Insights Updated",

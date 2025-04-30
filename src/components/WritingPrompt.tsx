@@ -66,11 +66,22 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
       return;
     }
     
-    const metrics = getAssessmentMetrics();
-    
-    console.log("Anti-cheating metrics captured:", metrics);
-    
-    onSubmit(text, metrics);
+    try {
+      console.log("Getting assessment metrics before submission");
+      const metrics = getAssessmentMetrics();
+      console.log("Anti-cheating metrics captured:", metrics);
+      
+      // Add additional tracking metric for debugging
+      localStorage.setItem(`prompt-${currentQuestion}-submitted`, "true");
+      localStorage.setItem(`writing-metrics-captured`, JSON.stringify(metrics));
+      
+      // Submit the response with metrics
+      onSubmit(text, metrics);
+    } catch (error) {
+      console.error("Error capturing metrics during submission:", error);
+      // If metrics capturing fails, still submit the response
+      onSubmit(text, null);
+    }
   };
 
   return (

@@ -1,5 +1,6 @@
+
 import { db } from './config';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData, updateDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData, updateDoc, doc, runTransaction } from 'firebase/firestore';
 import { WritingPromptItem } from '@/components/AssessmentManager';
 import { WritingScore } from '@/services/geminiService';
 
@@ -121,11 +122,24 @@ export const updateAssessmentAnalysis = async (
   analysisData: Partial<AssessmentSubmission>
 ): Promise<boolean> => {
   try {
+    console.log(`Updating assessment ${assessmentId} with data:`, analysisData);
     const assessmentRef = doc(db, 'assessments', assessmentId);
-    await updateDoc(assessmentRef, analysisData);
+    
+    // Use a transaction for more reliable updates
+    await runTransaction(db, async (transaction) => {
+      const assessmentDoc = await transaction.get(assessmentRef);
+      if (!assessmentDoc.exists()) {
+        throw new Error(`Assessment document ${assessmentId} not found`);
+      }
+      
+      transaction.update(assessmentRef, analysisData);
+      console.log(`Transaction prepared to update assessment ${assessmentId}`);
+    });
+    
+    console.log(`Successfully updated assessment ${assessmentId}`);
     return true;
   } catch (error) {
-    console.error('Error updating assessment analysis:', error);
+    console.error(`Error updating assessment ${assessmentId}:`, error);
     throw new Error('Failed to update assessment analysis');
   }
 };
