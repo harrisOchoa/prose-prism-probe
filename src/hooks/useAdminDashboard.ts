@@ -4,12 +4,28 @@ import { query, collection, orderBy, limit, startAfter, getDocs, DocumentData, Q
 import { db } from "@/firebase/config";
 import { calculateBenchmarks } from "@/utils/benchmarkCalculations";
 
+// Define an interface for assessment data
+interface AssessmentData {
+  id: string;
+  candidateName: string;
+  candidatePosition: string;
+  aptitudeScore?: number;
+  aptitudeTotal?: number;
+  aptitudeAnswers?: any[];
+  aptitudeData?: {
+    correctAnswers?: number;
+  };
+  wordCount: number;
+  overallWritingScore?: number;
+  submittedAt: any;
+}
+
 export const useAdminDashboard = () => {
-  const [assessments, setAssessments] = useState<any[]>([]);
+  const [assessments, setAssessments] = useState<AssessmentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
+  const [selectedAssessment, setSelectedAssessment] = useState<AssessmentData | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot | null>(null);
   const [hasMore, setHasMore] = useState(true);
@@ -59,10 +75,13 @@ export const useAdminDashboard = () => {
         setLastVisible(lastDoc);
       }
       
-      const results = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data() as DocumentData
-      }));
+      const results = querySnapshot.docs.map(doc => {
+        const data = doc.data() as DocumentData;
+        return {
+          id: doc.id,
+          ...data
+        } as AssessmentData;
+      });
       
       console.log("Raw assessment data from Firebase:", results);
       
@@ -134,8 +153,8 @@ export const useAdminDashboard = () => {
     }
   }, [fetchAssessments, loading, hasMore]);
 
-  const removeDuplicateSubmissions = (assessments: any[]): any[] => {
-    const groupedByName = assessments.reduce((groups: {[key: string]: any[]}, assessment) => {
+  const removeDuplicateSubmissions = (assessments: AssessmentData[]): AssessmentData[] => {
+    const groupedByName = assessments.reduce((groups: {[key: string]: AssessmentData[]}, assessment) => {
       const key = assessment.candidateName;
       if (!groups[key]) {
         groups[key] = [];
@@ -144,16 +163,16 @@ export const useAdminDashboard = () => {
       return groups;
     }, {});
     
-    const uniqueAssessments: any[] = [];
+    const uniqueAssessments: AssessmentData[] = [];
     
-    Object.values(groupedByName).forEach((group: any[]) => {
+    Object.values(groupedByName).forEach((group: AssessmentData[]) => {
       const sortedGroup = [...group].sort((a, b) => {
         const dateA = a.submittedAt?.toDate?.() ?? new Date(0);
         const dateB = b.submittedAt?.toDate?.() ?? new Date(0);
         return dateB.getTime() - dateA.getTime();
       });
       
-      const filtered: any[] = [];
+      const filtered: AssessmentData[] = [];
       sortedGroup.forEach(assessment => {
         const isDuplicate = filtered.some(kept => {
           if (kept.candidatePosition !== assessment.candidatePosition) return false;
@@ -191,7 +210,7 @@ export const useAdminDashboard = () => {
     setCurrentPage(pageNumber);
   };
 
-  const viewAssessmentDetails = (assessment: any) => {
+  const viewAssessmentDetails = (assessment: AssessmentData) => {
     setSelectedAssessment(assessment);
     setShowDetails(true);
   };
@@ -199,7 +218,7 @@ export const useAdminDashboard = () => {
   // Calculate statistics
   const totalAssessments = assessments.length;
   const averageAptitudeScore = assessments.length > 0 
-    ? (assessments.reduce((sum, assessment) => sum + (assessment.aptitudeScore / assessment.aptitudeTotal * 100), 0) / assessments.length).toFixed(1)
+    ? (assessments.reduce((sum, assessment) => sum + (assessment.aptitudeScore / (assessment.aptitudeTotal || 30) * 100), 0) / assessments.length).toFixed(1)
     : 0;
   const averageWordCount = assessments.length > 0
     ? Math.round(assessments.reduce((sum, assessment) => sum + assessment.wordCount, 0) / assessments.length)
