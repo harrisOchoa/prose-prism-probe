@@ -6,6 +6,7 @@ import MobileView from "./components/MobileView";
 import DesktopView from "./components/DesktopView";
 import TablePagination from "./components/TablePagination";
 import type { AssessmentTableProps } from "./utils/assessment-table-utils";
+import { AssessmentData } from "@/types/assessment";
 
 const AssessmentTable: React.FC<AssessmentTableProps> = memo(({
   assessments,

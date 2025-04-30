@@ -1,4 +1,6 @@
 
+import { AssessmentData } from "@/types/assessment";
+
 export const getAptitudeScoreColor = (score: number, total: number) => {
   const percentage = (score / total) * 100;
   if (percentage >= 80) return "bg-green-500";
@@ -9,11 +11,10 @@ export const getAptitudeScoreColor = (score: number, total: number) => {
 };
 
 export interface AssessmentTableProps {
-  assessments: any[];
+  assessments: AssessmentData[];
   currentPage: number;
   totalPages: number;
   handlePageChange: (pageNumber: number) => void;
-  viewAssessmentDetails: (assessment: any) => void;
+  viewAssessmentDetails: (assessment: AssessmentData) => void;
   getScoreColor: (score: number) => string;
 }
-
