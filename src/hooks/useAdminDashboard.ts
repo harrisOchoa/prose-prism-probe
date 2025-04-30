@@ -1,5 +1,6 @@
+
 import { useState, useEffect, useCallback } from "react";
-import { query, collection, orderBy, limit, startAfter, getDocs } from "firebase/firestore";
+import { query, collection, orderBy, limit, startAfter, getDocs, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { calculateBenchmarks } from "@/utils/benchmarkCalculations";
 
@@ -10,7 +11,7 @@ export const useAdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [lastVisible, setLastVisible] = useState<any>(null);
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const itemsPerPage = 10;
   
@@ -53,11 +54,14 @@ export const useAdminDashboard = () => {
       }
       
       // Update the last visible document for pagination
-      setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+      const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+      if (lastDoc) {
+        setLastVisible(lastDoc);
+      }
       
       const results = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data() as DocumentData
       }));
       
       console.log("Raw assessment data from Firebase:", results);
@@ -106,8 +110,12 @@ export const useAdminDashboard = () => {
         setAssessments(prev => [...prev, ...uniqueAssessments]);
       }
       
-      const benchmarks = calculateBenchmarks([...assessments, ...uniqueAssessments]);
-      console.log('Calculated benchmarks:', benchmarks);
+      // Make sure assessments exist before calculating benchmarks
+      const allAssessments = isFirstPage ? uniqueAssessments : [...assessments, ...uniqueAssessments];
+      if (allAssessments.length > 0) {
+        const benchmarks = calculateBenchmarks(allAssessments);
+        console.log('Calculated benchmarks:', benchmarks);
+      }
     } catch (error) {
       console.error("Error fetching assessments:", error);
     } finally {
