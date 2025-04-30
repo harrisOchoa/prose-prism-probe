@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileView from "./components/MobileView";
@@ -7,7 +7,7 @@ import DesktopView from "./components/DesktopView";
 import TablePagination from "./components/TablePagination";
 import type { AssessmentTableProps } from "./utils/assessment-table-utils";
 
-const AssessmentTable: React.FC<AssessmentTableProps> = ({
+const AssessmentTable: React.FC<AssessmentTableProps> = memo(({
   assessments,
   currentPage,
   totalPages,
@@ -54,6 +54,8 @@ const AssessmentTable: React.FC<AssessmentTableProps> = ({
       </CardContent>
     </Card>
   );
-};
+});
+
+AssessmentTable.displayName = "AssessmentTable";
 
 export default AssessmentTable;

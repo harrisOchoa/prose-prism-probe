@@ -1,12 +1,16 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense, lazy } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import AssessmentDetails from "@/components/AssessmentDetails";
 import ViewError from "@/components/assessment/ViewError";
 import ViewLoader from "@/components/assessment/ViewLoader";
 import { useAssessmentView } from "@/hooks/useAssessmentView";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+// Lazy load the AssessmentDetails component
+const AssessmentDetails = lazy(() => 
+  import("@/components/AssessmentDetails")
+);
 
 const View = () => {
   const { id } = useParams();
@@ -64,11 +68,13 @@ const View = () => {
   return (
     <div className={`container mx-auto ${isMobile ? 'py-4 px-2' : 'py-10 px-4'}`}>
       {assessment ? (
-        <AssessmentDetails 
-          assessment={assessment} 
-          onBack={handleBack} 
-          isGeneratingSummary={generatingSummary}
-        />
+        <Suspense fallback={<ViewLoader />}>
+          <AssessmentDetails 
+            assessment={assessment} 
+            onBack={handleBack} 
+            isGeneratingSummary={generatingSummary}
+          />
+        </Suspense>
       ) : (
         <div className="text-center">
           <p>No assessment found with ID: {id}</p>

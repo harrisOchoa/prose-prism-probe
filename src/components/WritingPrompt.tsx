@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import AssessmentTimer from "@/components/AssessmentTimer";
@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Loader2, AlertTriangle, Check } from "lucide-react";
 import ProgressIndicator from "./assessment/ProgressIndicator";
 import { Progress } from "@/components/ui/progress";
+import { memo } from "react";
 
 interface WritingPromptProps {
   prompt: string;
@@ -20,7 +21,7 @@ interface WritingPromptProps {
   isLoading?: boolean;
 }
 
-const WritingPrompt: React.FC<WritingPromptProps> = ({
+const WritingPrompt: React.FC<WritingPromptProps> = memo(({
   prompt,
   response,
   timeLimit,
@@ -44,17 +45,25 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
     suspiciousActivity
   } = useAntiCheating(text);
 
-  // Calculate word count percentage for progress bar
+  // Memoize word count percentage calculation
   const wordCountPercentage = useMemo(() => {
     return Math.min(100, (wordCount / 50) * 100);
   }, [wordCount]);
 
-  // Get progress bar color based on word count
+  // Memoize progress bar color based on word count
   const getProgressColor = useMemo(() => {
     if (wordCount < 30) return "#ef4444"; // red
     if (wordCount < 50) return "#f59e0b"; // amber
     return "#10b981"; // green
   }, [wordCount]);
+
+  // Memoize whether the user has reached minimum word count
+  const hasMinimumWords = useMemo(() => wordCount >= 50, [wordCount]);
+
+  // Memoized text change handler for better performance
+  const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setText(e.target.value);
+  }, []);
 
   useEffect(() => {
     // Calculate word count and character count
@@ -81,7 +90,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
     setText(response || "");
   }, [response, currentQuestion]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (wordCount < 50) {
       toast({
         title: "Response too short",
@@ -110,10 +119,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Determine if the user has reached the minimum word count
-  const hasMinimumWords = wordCount >= 50;
+  }, [text, wordCount, currentQuestion, getAssessmentMetrics, onSubmit]);
 
   return (
     <div className="container max-w-4xl mx-auto py-3 md:py-6 px-3 md:px-0 animate-fade-in">
@@ -157,7 +163,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
             <textarea
               ref={textareaRef}
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={handleTextChange}
               onKeyDown={handleKeyPress}
               onCopy={preventCopyPaste}
               onPaste={preventCopyPaste}
@@ -210,6 +216,8 @@ const WritingPrompt: React.FC<WritingPromptProps> = ({
       </Card>
     </div>
   );
-};
+});
+
+WritingPrompt.displayName = "WritingPrompt";
 
 export default WritingPrompt;

@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { getAllAssessments } from "@/firebase/assessmentService";
+import { useState, useEffect, useCallback } from "react";
+import { query, collection, orderBy, limit, startAfter, getDocs } from "firebase/firestore";
+import { db } from "@/firebase/config";
 import { calculateBenchmarks } from "@/utils/benchmarkCalculations";
 
 export const useAdminDashboard = () => {
@@ -9,66 +10,121 @@ export const useAdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [lastVisible, setLastVisible] = useState<any>(null);
+  const [hasMore, setHasMore] = useState(true);
   const itemsPerPage = 10;
-
-  useEffect(() => {
-    const fetchAssessments = async () => {
-      try {
-        const results = await getAllAssessments();
+  
+  const fetchAssessments = useCallback(async (isFirstPage = false) => {
+    try {
+      setLoading(true);
+      
+      let assessmentsQuery;
+      
+      if (isFirstPage) {
+        // First page query
+        assessmentsQuery = query(
+          collection(db, "assessments"),
+          orderBy("submittedAt", "desc"),
+          limit(itemsPerPage)
+        );
+      } else {
+        // Subsequent pages - use pagination with startAfter
+        if (!lastVisible) {
+          setHasMore(false);
+          setLoading(false);
+          return;
+        }
         
-        console.log("Raw assessment data from Firebase:", results);
+        assessmentsQuery = query(
+          collection(db, "assessments"),
+          orderBy("submittedAt", "desc"),
+          startAfter(lastVisible),
+          limit(itemsPerPage)
+        );
+      }
+      
+      const querySnapshot = await getDocs(assessmentsQuery);
+      
+      // Check if we've reached the end
+      if (querySnapshot.empty) {
+        setHasMore(false);
+        setLoading(false);
+        return;
+      }
+      
+      // Update the last visible document for pagination
+      setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+      
+      const results = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      console.log("Raw assessment data from Firebase:", results);
+      
+      const processedResults = results.map(assessment => {
+        if (assessment.aptitudeScore !== undefined && assessment.aptitudeScore !== null) {
+          console.log(`Assessment ${assessment.id} has aptitude score: ${assessment.aptitudeScore}`);
+          return assessment;
+        }
         
-        const processedResults = results.map(assessment => {
-          if (assessment.aptitudeScore !== undefined && assessment.aptitudeScore !== null) {
-            console.log(`Assessment ${assessment.id} has aptitude score: ${assessment.aptitudeScore}`);
-            return assessment;
-          }
+        if (assessment.aptitudeAnswers && Array.isArray(assessment.aptitudeAnswers)) {
+          console.log(`Assessment ${assessment.id} has aptitude answers array of length: ${assessment.aptitudeAnswers.length}`);
+          const recoveredScore = assessment.aptitudeAnswers.filter(a => a !== 0).length;
+          console.log(`Recovered score for ${assessment.id}: ${recoveredScore}`);
           
-          if (assessment.aptitudeAnswers && Array.isArray(assessment.aptitudeAnswers)) {
-            console.log(`Assessment ${assessment.id} has aptitude answers array of length: ${assessment.aptitudeAnswers.length}`);
-            const recoveredScore = assessment.aptitudeAnswers.filter(a => a !== 0).length;
-            console.log(`Recovered score for ${assessment.id}: ${recoveredScore}`);
-            
-            return {
-              ...assessment,
-              aptitudeScore: recoveredScore,
-              aptitudeTotal: assessment.aptitudeTotal || 30
-            };
-          }
-          
-          if (assessment.aptitudeData && assessment.aptitudeData.correctAnswers !== undefined) {
-            console.log(`Assessment ${assessment.id} has aptitude data with correct answers: ${assessment.aptitudeData.correctAnswers}`);
-            return {
-              ...assessment,
-              aptitudeScore: assessment.aptitudeData.correctAnswers,
-              aptitudeTotal: assessment.aptitudeTotal || 30
-            };
-          }
-          
-          console.log(`Assessment ${assessment.id} has missing aptitude score and no recoverable data`);
           return {
             ...assessment,
-            aptitudeScore: 0,
+            aptitudeScore: recoveredScore,
             aptitudeTotal: assessment.aptitudeTotal || 30
           };
-        });
+        }
         
-        const uniqueAssessments = removeDuplicateSubmissions(processedResults);
-        console.log(`Filtered ${processedResults.length - uniqueAssessments.length} duplicate submissions`);
+        if (assessment.aptitudeData && assessment.aptitudeData.correctAnswers !== undefined) {
+          console.log(`Assessment ${assessment.id} has aptitude data with correct answers: ${assessment.aptitudeData.correctAnswers}`);
+          return {
+            ...assessment,
+            aptitudeScore: assessment.aptitudeData.correctAnswers,
+            aptitudeTotal: assessment.aptitudeTotal || 30
+          };
+        }
         
+        console.log(`Assessment ${assessment.id} has missing aptitude score and no recoverable data`);
+        return {
+          ...assessment,
+          aptitudeScore: 0,
+          aptitudeTotal: assessment.aptitudeTotal || 30
+        };
+      });
+      
+      const uniqueAssessments = removeDuplicateSubmissions(processedResults);
+      console.log(`Filtered ${processedResults.length - uniqueAssessments.length} duplicate submissions`);
+      
+      if (isFirstPage) {
         setAssessments(uniqueAssessments);
-        
-        const benchmarks = calculateBenchmarks(uniqueAssessments);
-        console.log('Calculated benchmarks:', benchmarks);
-      } catch (error) {
-        console.error("Error fetching assessments:", error);
-      } finally {
-        setLoading(false);
+      } else {
+        setAssessments(prev => [...prev, ...uniqueAssessments]);
       }
-    };
+      
+      const benchmarks = calculateBenchmarks([...assessments, ...uniqueAssessments]);
+      console.log('Calculated benchmarks:', benchmarks);
+    } catch (error) {
+      console.error("Error fetching assessments:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [lastVisible, assessments]);
 
-    fetchAssessments();
+  // Initial load
+  useEffect(() => {
+    fetchAssessments(true);
   }, []);
+
+  const loadMore = useCallback(() => {
+    if (!loading && hasMore) {
+      fetchAssessments(false);
+    }
+  }, [fetchAssessments, loading, hasMore]);
 
   const removeDuplicateSubmissions = (assessments: any[]): any[] => {
     const groupedByName = assessments.reduce((groups: {[key: string]: any[]}, assessment) => {
@@ -111,11 +167,13 @@ export const useAdminDashboard = () => {
     return uniqueAssessments;
   };
 
+  // Filter assessments based on search term
   const filteredAssessments = assessments.filter((assessment) => 
     assessment.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     assessment.candidatePosition.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Paginate filtered assessments (client-side)
   const totalPages = Math.ceil(filteredAssessments.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -130,6 +188,7 @@ export const useAdminDashboard = () => {
     setShowDetails(true);
   };
 
+  // Calculate statistics
   const totalAssessments = assessments.length;
   const averageAptitudeScore = assessments.length > 0 
     ? (assessments.reduce((sum, assessment) => sum + (assessment.aptitudeScore / assessment.aptitudeTotal * 100), 0) / assessments.length).toFixed(1)
@@ -167,6 +226,8 @@ export const useAdminDashboard = () => {
     averageWordCount,
     averageWritingScore,
     getScoreColor,
-    assessments
+    assessments,
+    hasMore,
+    loadMore
   };
 };
