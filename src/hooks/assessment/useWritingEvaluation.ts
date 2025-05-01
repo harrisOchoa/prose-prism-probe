@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
 import { 
@@ -9,6 +9,7 @@ import {
   generateCandidateSummary,
   generateStrengthsAndWeaknesses
 } from "@/services/geminiService";
+import { AssessmentData } from "@/types/assessment";
 
 /**
  * Hook for handling writing evaluation functionality
@@ -107,7 +108,7 @@ export const useWritingEvaluation = (assessmentData: any, setAssessmentData: (da
           const refreshedData = {
             id: updatedDoc.id,
             ...updatedDoc.data()
-          };
+          } as AssessmentData;
           
           console.log("Final assessment data after everything:", refreshedData);
           // Only update if there are differences to avoid unnecessary re-renders
@@ -195,7 +196,7 @@ export const useWritingEvaluation = (assessmentData: any, setAssessmentData: (da
         const refreshedData = {
           id: updatedDoc.id,
           ...updatedDoc.data()
-        };
+        } as AssessmentData;
         
         console.log("Retrieved updated assessment data after regenerating insights:", refreshedData);
         setAssessmentData(refreshedData);

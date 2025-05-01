@@ -1,6 +1,6 @@
 
 import { db } from './config';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData, updateDoc, doc, runTransaction } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData, updateDoc, doc, runTransaction, getDoc } from 'firebase/firestore';
 import { WritingPromptItem } from '@/components/AssessmentManager';
 import { WritingScore } from '@/services/geminiService';
 

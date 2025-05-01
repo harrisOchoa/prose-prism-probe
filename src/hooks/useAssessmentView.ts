@@ -8,6 +8,7 @@ import { useAptitudeRecovery } from "./assessment/useAptitudeRecovery";
 import { useAptitudeCategories } from "./assessment/useAptitudeCategories";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
+import { AssessmentData } from "@/types/assessment";
 
 export interface AssessmentData {
   id: string;
@@ -78,7 +79,7 @@ export const useAssessmentView = (id: string | undefined) => {
             const refreshedData = {
               id: refreshedDoc.id,
               ...refreshedDoc.data()
-            };
+            } as AssessmentData;
             
             console.log("Refreshed data after auto-generation:", refreshedData);
             setAssessment(refreshedData);
@@ -98,7 +99,7 @@ export const useAssessmentView = (id: string | undefined) => {
         toast({
           title: "Writing Evaluation Issues",
           description: `Some writing prompts could not be evaluated. Try using the 'Evaluate Writing' button to retry.`,
-          variant: "warning",
+          variant: "default",
         });
       }
 
