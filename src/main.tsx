@@ -12,4 +12,4 @@ if (!rootElement) {
   document.body.appendChild(rootDiv);
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById('root')!).render(<App />);
