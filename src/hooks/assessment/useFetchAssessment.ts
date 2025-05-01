@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { toast } from "@/hooks/use-toast";
-import { AssessmentData } from "@/hooks/useAssessmentView";
+import { AssessmentData } from "@/types/assessment";
 
 export const useFetchAssessment = (id: string | undefined) => {
   const [assessment, setAssessment] = useState<AssessmentData | null>(null);

@@ -10,23 +10,6 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { AssessmentData } from "@/types/assessment";
 
-export interface AssessmentData {
-  id: string;
-  candidateName: string;
-  candidatePosition: string;
-  aptitudeScore: number;
-  aptitudeTotal: number;
-  completedPrompts: any[];
-  wordCount: number;
-  writingScores?: any[];
-  overallWritingScore?: number;
-  submittedAt: any;
-  aiSummary?: string;
-  strengths?: string[];
-  weaknesses?: string[];
-  [key: string]: any;
-}
-
 export const useAssessmentView = (id: string | undefined) => {
   const { assessment, setAssessment, loading, error } = useFetchAssessment(id);
   const [generatingSummary, setGeneratingSummary] = useState(false);
