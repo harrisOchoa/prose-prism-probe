@@ -8,6 +8,7 @@ import View from "./pages/View";
 import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
+import About from "./pages/About";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route index element={<Index />} />
           <Route path="admin" element={<Admin />} />
           <Route path="view/:id" element={<View />} />
+          <Route path="about" element={<About />} />
           <Route path="privacy" element={<PrivacyPolicy />} />
           <Route path="terms" element={<Terms />} />
           <Route path="404" element={<NotFound />} />

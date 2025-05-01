@@ -37,7 +37,7 @@ const Layout = ({ children }: LayoutProps) => {
                 </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link to="/#about">
+                <Link to="/about">
                   <NavigationMenuLink className={cn(
                     "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors",
                     "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",

@@ -27,7 +27,7 @@ const Footer = () => {
               <Link to="/" className="text-sm hover:text-hirescribe-primary transition-colors">
                 Home
               </Link>
-              <Link to="/#about" className="text-sm hover:text-hirescribe-primary transition-colors">
+              <Link to="/about" className="text-sm hover:text-hirescribe-primary transition-colors">
                 About
               </Link>
             </div>
