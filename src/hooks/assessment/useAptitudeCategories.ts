@@ -1,5 +1,5 @@
 
-import { AssessmentData } from "@/hooks/useAssessmentView";
+import { AssessmentData } from "@/types/assessment";
 
 export const useAptitudeCategories = (assessmentData: AssessmentData | null) => {
   const generateAptitudeCategories = (data: AssessmentData): AssessmentData => {

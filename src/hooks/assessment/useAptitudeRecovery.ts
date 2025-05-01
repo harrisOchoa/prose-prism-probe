@@ -1,5 +1,5 @@
 
-import { AssessmentData } from "@/hooks/useAssessmentView";
+import { AssessmentData } from "@/types/assessment";
 
 export const useAptitudeRecovery = (assessmentData: AssessmentData | null) => {
   const recoverAptitudeScore = (data: AssessmentData): AssessmentData => {
