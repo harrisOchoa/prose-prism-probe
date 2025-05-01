@@ -7,6 +7,7 @@ export const useSuspiciousActivity = () => {
   const [suspiciousActivities, setSuspiciousActivities] = useState<string[]>([]);
 
   const flagSuspiciousActivity = (detail: string) => {
+    // Still track the activity but don't show it to the user
     setSuspiciousActivity(true);
     setSuspiciousActivityDetail(prev => {
       if (prev) {

@@ -47,7 +47,7 @@ export const useAntiCheating = (response: string) => {
     initialContentRef,
   });
 
-  // Flag suspicious activity if focus loss is detected
+  // Flag suspicious activity if focus loss is detected, but don't notify the user
   if (suspiciousFocusLoss && !suspiciousActivity) {
     const { focusLossEvents, longestFocusLossDuration, averageFocusLossDuration } = getWindowMetrics();
     flagSuspiciousActivity(
