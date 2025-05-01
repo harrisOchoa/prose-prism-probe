@@ -14,6 +14,11 @@ export interface AntiCheatingMetrics {
   windowBlurs?: number;
   windowFocuses?: number;
   suspiciousActivityDetail?: string;
+  focusLossEvents?: Array<{timestamp: number, duration: number}>;
+  longestFocusLossDuration?: number;
+  averageFocusLossDuration?: number;
+  suspiciousFocusLoss?: boolean;
+  totalInactivityTime?: number;
 }
 
 export interface AssessmentSubmission {

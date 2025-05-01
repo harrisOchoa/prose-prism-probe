@@ -1,9 +1,10 @@
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { useKeyboardMetrics } from "./assessment/metrics/useKeyboardMetrics";
 import { useWindowEvents } from "./assessment/metrics/useWindowEvents";
 import { usePreventActions } from "./assessment/metrics/usePreventActions";
 import { useSuspiciousActivity } from "./assessment/metrics/useSuspiciousActivity";
+import { useAntiCheatingEffects } from "./assessment/metrics/useAntiCheatingEffects";
 
 export const useAntiCheating = (response: string) => {
   const userAgent = navigator?.userAgent || "unknown";
@@ -17,7 +18,9 @@ export const useAntiCheating = (response: string) => {
 
   const {
     getWindowMetrics,
-    tabSwitches
+    tabSwitches,
+    windowBlurs,
+    suspiciousFocusLoss
   } = useWindowEvents();
 
   const {
@@ -33,36 +36,27 @@ export const useAntiCheating = (response: string) => {
     flagSuspiciousActivity
   } = useSuspiciousActivity();
 
-  // Store initial content for plagiarism detection
-  useEffect(() => {
-    initialContentRef.current = response;
-  }, [response]);
+  // Use the extracted effects
+  useAntiCheatingEffects({
+    response,
+    handleKeyboardShortcuts,
+    handleContextMenu,
+    getTypingMetrics,
+    flagSuspiciousActivity,
+    tabSwitches,
+    initialContentRef,
+  });
 
-  useEffect(() => {
-    // Monitor keyboard shortcuts
-    document.addEventListener("keydown", handleKeyboardShortcuts);
-    document.addEventListener("contextmenu", handleContextMenu);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyboardShortcuts);
-      document.removeEventListener("contextmenu", handleContextMenu);
-    };
-  }, [handleKeyboardShortcuts, handleContextMenu]);
-
-  // Check for suspicious typing speed
-  useEffect(() => {
-    const { wordsPerMinute } = getTypingMetrics();
-    if (wordsPerMinute > 120) {
-      flagSuspiciousActivity(`Unusually fast typing speed detected (${wordsPerMinute.toFixed(0)} WPM). The average professional typing speed is 65-80 WPM.`);
-    }
-  }, [getTypingMetrics().wordsPerMinute]);
-
-  // Check for suspicious tab switching
-  useEffect(() => {
-    if (tabSwitches >= 3) {
-      flagSuspiciousActivity(`Frequent tab switching detected (${tabSwitches} times). This may indicate looking up answers.`);
-    }
-  }, [tabSwitches]);
+  // Flag suspicious activity if focus loss is detected
+  if (suspiciousFocusLoss && !suspiciousActivity) {
+    const { focusLossEvents, longestFocusLossDuration, averageFocusLossDuration } = getWindowMetrics();
+    flagSuspiciousActivity(
+      `Suspicious window focus patterns detected: ${focusLossEvents.length} focus loss events, ` +
+      `longest: ${(longestFocusLossDuration/1000).toFixed(1)}s, ` +
+      `average: ${(averageFocusLossDuration/1000).toFixed(1)}s. ` +
+      `This may indicate the use of external resources or multiple screens.`
+    );
+  }
 
   const getAssessmentMetrics = () => {
     const typingMetrics = getTypingMetrics();
@@ -73,7 +67,7 @@ export const useAntiCheating = (response: string) => {
       ...typingMetrics,
       ...windowMetrics,
       ...preventionMetrics,
-      suspiciousActivity,
+      suspiciousActivity: suspiciousActivity || suspiciousFocusLoss,
       suspiciousActivityDetail,
       userAgent,
     };
@@ -83,10 +77,9 @@ export const useAntiCheating = (response: string) => {
     handleKeyPress,
     preventCopyPaste,
     getAssessmentMetrics,
-    // We're still returning these values for internal component use,
-    // but they shouldn't be displayed to the user during the assessment
     tabSwitches,
-    suspiciousActivity,
+    windowBlurs,
+    suspiciousActivity: suspiciousActivity || suspiciousFocusLoss,
     suspiciousActivityDetail,
   };
 };

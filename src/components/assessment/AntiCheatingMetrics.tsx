@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Clock, Keyboard, RefreshCw, SwitchCamera, Copy, Clipboard } from "lucide-react";
+import { Clock, Keyboard, RefreshCw, SwitchCamera, Copy, Clipboard, Eye, EyeOff } from "lucide-react";
 import { AntiCheatingMetrics as AntiCheatingMetricsType } from "@/firebase/assessmentService";
 import MetricDisplay from "./metrics/MetricDisplay";
 import SuspiciousActivityAlert from "./metrics/SuspiciousActivityAlert";
@@ -13,6 +13,11 @@ interface AntiCheatingMetricsProps {
     pasteAttempts?: number;
     windowBlurs?: number;
     windowFocuses?: number;
+    focusLossEvents?: Array<{timestamp: number, duration: number}>;
+    longestFocusLossDuration?: number;
+    averageFocusLossDuration?: number;
+    suspiciousFocusLoss?: boolean;
+    totalInactivityTime?: number;
   };
   hideAdminMetrics?: boolean;
 }
@@ -25,9 +30,26 @@ const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics, hide
     tabSwitches = 0,
     copyAttempts = 0,
     pasteAttempts = 0,
+    windowBlurs = 0,
+    windowFocuses = 0,
     suspiciousActivity = false,
-    suspiciousActivityDetail
+    suspiciousActivityDetail,
+    focusLossEvents = [],
+    longestFocusLossDuration = 0,
+    averageFocusLossDuration = 0,
+    suspiciousFocusLoss = false,
+    totalInactivityTime = 0
   } = metrics;
+  
+  // Format durations for display
+  const formatDuration = (ms: number): string => {
+    if (ms < 1000) return `${ms}ms`;
+    const seconds = Math.floor(ms / 1000);
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+  };
 
   const metricsData = [
     {
@@ -50,6 +72,22 @@ const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics, hide
       progressValue: Math.min(100, (wordsPerMinute / 150) * 100),
       alert: wordsPerMinute > 100,
       alertText: "High"
+    },
+    {
+      icon: EyeOff,
+      iconColor: "text-red-500",
+      label: "Focus Loss Events",
+      value: windowBlurs,
+      alert: windowBlurs > 2,
+      alertText: "Suspicious"
+    },
+    {
+      icon: Eye,
+      iconColor: "text-emerald-500",
+      label: "Out of Focus Time",
+      value: formatDuration(totalInactivityTime),
+      alert: totalInactivityTime > 30000, // 30 seconds
+      alertText: "Excessive"
     },
     ...(!hideAdminMetrics ? [
       {
@@ -75,20 +113,46 @@ const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics, hide
         value: pasteAttempts,
         alert: pasteAttempts > 0,
         alertText: "Suspicious"
+      },
+      {
+        icon: Clock,
+        iconColor: "text-amber-500",
+        label: "Longest Focus Loss",
+        value: formatDuration(longestFocusLossDuration),
+        alert: longestFocusLossDuration > 20000, // 20 seconds
+        alertText: "Suspicious"
       }
     ] : [])
   ];
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {metricsData.map((metric, index) => (
           <MetricDisplay key={index} {...metric} />
         ))}
       </div>
 
-      {suspiciousActivity && suspiciousActivityDetail && (
+      {(suspiciousActivity || suspiciousFocusLoss) && suspiciousActivityDetail && (
         <SuspiciousActivityAlert detail={suspiciousActivityDetail} />
+      )}
+
+      {focusLossEvents && focusLossEvents.length > 0 && !hideAdminMetrics && (
+        <div className="mt-4 p-3 border rounded-md bg-slate-50">
+          <h3 className="text-sm font-medium mb-2">Focus Loss Timeline:</h3>
+          <div className="max-h-40 overflow-y-auto text-xs space-y-1">
+            {focusLossEvents.map((event, i) => (
+              <div key={i} className="flex justify-between py-1 px-2 border-b">
+                <span>
+                  {new Date(event.timestamp).toLocaleTimeString()}
+                </span>
+                <span className={event.duration > 10000 ? "text-amber-600 font-medium" : ""}>
+                  {formatDuration(event.duration)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       <MetricsHelpTooltip />
@@ -97,4 +161,3 @@ const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics, hide
 };
 
 export default AntiCheatingMetrics;
-

@@ -15,6 +15,11 @@ interface AntiCheatingAnalysisProps {
     windowFocuses?: number;
     rightClickAttempts?: number;
     keyboardShortcuts?: number;
+    focusLossEvents?: Array<{timestamp: number, duration: number}>;
+    longestFocusLossDuration?: number;
+    averageFocusLossDuration?: number;
+    suspiciousFocusLoss?: boolean;
+    totalInactivityTime?: number;
   };
 }
 
@@ -47,22 +52,35 @@ Assessment Metrics:
 - Keyboard Shortcut Uses: ${metrics.keyboardShortcuts || 0}
 - Window Blur Events: ${metrics.windowBlurs || 0}
 - Window Focus Events: ${metrics.windowFocuses || 0}
+- Total Time Out of Focus: ${metrics.totalInactivityTime || 0}ms
+- Longest Focus Loss Duration: ${metrics.longestFocusLossDuration || 0}ms
+- Average Focus Loss Duration: ${metrics.averageFocusLossDuration || 0}ms
 - Suspicious Activity Flag: ${metrics.suspiciousActivity ? "Detected" : "Not Detected"}
+- Suspicious Focus Loss: ${metrics.suspiciousFocusLoss ? "Detected" : "Not Detected"}
 - Suspicious Activity Detail: ${metrics.suspiciousActivityDetail || "Not specified"}
+
+Focus Loss Timeline:
+${metrics.focusLossEvents ? metrics.focusLossEvents.map(e => 
+  `- At ${new Date(e.timestamp).toLocaleTimeString()}: Lost focus for ${(e.duration/1000).toFixed(1)} seconds`
+).join('\n') : "No focus loss events recorded"}
 
 Instructions:
 1. Base your interpretation exclusively on these metric values. Do NOT provide concerns or recommendations unless they are warranted by the _actual_ data.
 2. If all metric values are within a reasonable and professional range, clearly state there are no significant integrity risks found.
-3. If the Suspicious Activity Flag is "Detected", explain EXACTLY what triggered it based on the Suspicious Activity Detail provided. Be specific about what activity was detected and why it's considered suspicious.
-4. For other unusual values, explain specifically what is concerning and why:
+3. Pay special attention to focus loss patterns:
+   - Multiple focus losses may indicate checking other resources
+   - Long focus loss durations (>20 seconds) strongly suggest using another screen or application
+   - Repeated short focus losses may indicate checking reference materials
+4. If the Suspicious Activity Flag is "Detected", explain EXACTLY what triggered it based on the Suspicious Activity Detail provided. Be specific about what activity was detected and why it's considered suspicious.
+5. For other unusual values, explain specifically what is concerning and why:
    - WPM over 100 may suggest unusually fast typing or text generation
    - Multiple tab switches may indicate looking up answers
    - Copy/paste attempts suggest potential plagiarism
    - Right-click menu attempts may indicate attempts to access browser tools
    - Keyboard shortcuts may indicate attempts to use browser functions
-5. Directly relate each concern/recommendation to a specific metric value—never include boilerplate or template responses.
-6. Only include concerns that are truly warranted by the data. If there are no legitimate concerns, state this clearly and provide an empty concerns array.
-7. Be specific in your recommendations for addressing any issues, such as:
+6. Directly relate each concern/recommendation to a specific metric value—never include boilerplate or template responses.
+7. Only include concerns that are truly warranted by the data. If there are no legitimate concerns, state this clearly and provide an empty concerns array.
+8. Be specific in your recommendations for addressing any issues, such as:
    - Follow-up interview questions to verify knowledge
    - Additional skills verification
    - Manual review of responses

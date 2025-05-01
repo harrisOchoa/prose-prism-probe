@@ -6,7 +6,7 @@ import AssessmentTimer from "@/components/AssessmentTimer";
 import { useAntiCheating } from "@/hooks/useAntiCheating";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Loader2, AlertTriangle, Check } from "lucide-react";
+import { Loader2, AlertTriangle, Check, Eye, EyeOff } from "lucide-react";
 import ProgressIndicator from "./assessment/ProgressIndicator";
 import { Progress } from "@/components/ui/progress";
 import { memo } from "react";
@@ -35,6 +35,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showFocusWarning, setShowFocusWarning] = useState(false);
   const isMobile = useIsMobile();
   
   const {
@@ -42,8 +43,30 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
     preventCopyPaste,
     getAssessmentMetrics,
     tabSwitches,
+    windowBlurs,
     suspiciousActivity
   } = useAntiCheating(text);
+
+  useEffect(() => {
+    // Show warning when window blurs occur
+    if (windowBlurs > 0) {
+      setShowFocusWarning(true);
+      
+      // Show toast when user switches away
+      toast({
+        title: "Focus lost",
+        description: "Switching away from this assessment is being tracked and may be flagged as suspicious.",
+        variant: "destructive",
+      });
+      
+      // Hide warning after 5 seconds
+      const timer = setTimeout(() => {
+        setShowFocusWarning(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [windowBlurs]);
 
   // Memoize word count percentage calculation
   const wordCountPercentage = useMemo(() => {
@@ -151,6 +174,15 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
               <p className={isMobile ? 'text-sm' : 'text-base'}>{prompt}</p>
             )}
           </div>
+          
+          {showFocusWarning && (
+            <div className="mb-4 p-3 text-sm flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-md">
+              <EyeOff className="h-4 w-4 text-amber-600" />
+              <span className="text-amber-800">
+                <strong>Focus tracking active:</strong> Leaving this window or switching tabs is being monitored and may be flagged as suspicious activity.
+              </span>
+            </div>
+          )}
           
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">

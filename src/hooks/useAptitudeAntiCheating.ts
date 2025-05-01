@@ -1,5 +1,5 @@
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { useWindowEvents } from "./assessment/metrics/useWindowEvents";
 import { usePreventBehavior } from "./assessment/metrics/usePreventBehavior";
 import { useScreenMetrics } from "./assessment/metrics/useScreenMetrics";
@@ -29,6 +29,10 @@ export interface AptitudeAntiCheatingMetrics {
   inactivityPeriods: number[];
   totalInactivityTime: number;
   lastInactiveAt: number | null;
+  focusLossEvents?: Array<{timestamp: number, duration: number}>;
+  longestFocusLossDuration?: number;
+  averageFocusLossDuration?: number;
+  suspiciousFocusLoss?: boolean;
 }
 
 const useAptitudeAntiCheating = () => {
@@ -36,6 +40,7 @@ const useAptitudeAntiCheating = () => {
 
   const {
     getWindowMetrics,
+    suspiciousFocusLoss
   } = useWindowEvents();
 
   const {
@@ -58,9 +63,23 @@ const useAptitudeAntiCheating = () => {
   const {
     suspiciousActivity,
     suspiciousActivityDetail,
+    flagSuspiciousActivity
   } = useSuspiciousActivity();
 
   const lastActivityTime = useRef(Date.now());
+
+  // Flag suspicious activity if focus loss is detected
+  useEffect(() => {
+    if (suspiciousFocusLoss && !suspiciousActivity) {
+      const { focusLossEvents, longestFocusLossDuration, averageFocusLossDuration } = getWindowMetrics();
+      flagSuspiciousActivity(
+        `Suspicious window focus patterns detected: ${focusLossEvents.length} focus loss events, ` +
+        `longest: ${(longestFocusLossDuration/1000).toFixed(1)}s, ` +
+        `average: ${(averageFocusLossDuration/1000).toFixed(1)}s. ` +
+        `This may indicate the use of external resources or multiple screens.`
+      );
+    }
+  }, [suspiciousFocusLoss, suspiciousActivity, getWindowMetrics, flagSuspiciousActivity]);
 
   const getAptitudeAntiCheatingMetrics = (): AptitudeAntiCheatingMetrics => {
     const windowMetrics = getWindowMetrics();
@@ -71,7 +90,7 @@ const useAptitudeAntiCheating = () => {
       pasteAttempts,
       rightClickAttempts,
       keyboardShortcuts,
-      suspiciousActivity,
+      suspiciousActivity: suspiciousActivity || suspiciousFocusLoss,
       suspiciousActivityDetail,
       userAgent,
       fullscreenExits,
@@ -92,7 +111,7 @@ const useAptitudeAntiCheating = () => {
     preventPaste,
     getAptitudeAntiCheatingMetrics,
     tabSwitches: getWindowMetrics().tabSwitches,
-    suspiciousActivity,
+    suspiciousActivity: suspiciousActivity || suspiciousFocusLoss,
     copyAttempts,
   };
 };
