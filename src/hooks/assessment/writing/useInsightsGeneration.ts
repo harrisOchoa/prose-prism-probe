@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { generateCandidateSummary, generateStrengthsAndWeaknesses } from "@/services/geminiService";
-import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
+import { updateAssessmentAnalysis } from "@/firebase/services/assessment";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { AssessmentData } from "@/types/assessment";

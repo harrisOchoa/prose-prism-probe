@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { generateCandidateSummary, generateStrengthsAndWeaknesses } from "@/services/geminiService";
-import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
+import { updateAssessmentAnalysis } from "@/firebase/services/assessment";
 import { toast } from "@/hooks/use-toast";
 import { useFetchAssessment } from "./assessment/useFetchAssessment";
 import { useAptitudeRecovery } from "./assessment/useAptitudeRecovery";

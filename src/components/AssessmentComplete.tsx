@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { saveAssessmentResult } from "@/firebase/assessmentService";
+import { saveAssessmentResult } from "@/firebase/services/assessment";
 import { toast } from "@/components/ui/use-toast";
 import { WritingPromptItem } from "./AssessmentManager";
 import { CheckCircle } from "lucide-react";
-import { AntiCheatingMetrics } from "@/firebase/assessmentService";
+import { AntiCheatingMetrics } from "@/firebase/services/assessment";
 
 interface AssessmentCompleteProps {
   candidateName: string;
