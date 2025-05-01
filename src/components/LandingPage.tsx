@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, Users, CheckCircle, ArrowRight } from "lucide-react";
+import { FileText, Users, CheckCircle, ArrowRight, BarChart, Shield, Clock } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LandingPageProps {
@@ -12,68 +12,120 @@ const LandingPage = ({ onStart }: LandingPageProps) => {
   const isMobile = useIsMobile();
   
   return (
-    <div className="min-h-[80vh] flex items-center justify-center p-2 sm:p-4">
-      <div className="assessment-card max-w-4xl mx-auto text-center space-y-6 md:space-y-8 animate-fade-in w-full">
-        <div className="space-y-4 md:space-y-6">
-          <h1 className={`${isMobile ? 'text-3xl' : 'text-4xl md:text-5xl'} font-bold text-hirescribe-primary bg-gradient-to-r from-hirescribe-primary to-hirescribe-accent bg-clip-text text-transparent`}>
-            HireScribe
-          </h1>
-          <p className={`${isMobile ? 'text-base' : 'text-xl'} text-muted-foreground max-w-2xl mx-auto px-2`}>
-            Welcome to our intelligent assessment platform, designed to evaluate candidates fairly and comprehensively.
+    <div className="flex flex-col min-h-[80vh]">
+      {/* Hero Section */}
+      <div className="brand-section flex items-center justify-center p-4 sm:p-6">
+        <div className="assessment-card max-w-4xl mx-auto text-center space-y-6 md:space-y-8 animate-fade-in w-full">
+          <div className="space-y-4 md:space-y-6">
+            <h1 className={`${isMobile ? 'text-3xl' : 'text-4xl md:text-5xl'} brand-heading`}>
+              HireScribe
+            </h1>
+            <p className={`${isMobile ? 'text-base' : 'text-xl'} text-muted-foreground max-w-2xl mx-auto px-2`}>
+              Welcome to our intelligent assessment platform, designed to evaluate candidates fairly and comprehensively.
+            </p>
+          </div>
+
+          {/* Feature Cards */}
+          <div className={`grid gap-4 ${isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3"}`}>
+            <div className="glass-effect p-4 md:p-6 rounded-xl hover:shadow-elevation-2 transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex flex-col items-center gap-3 md:gap-4">
+                <div className="rounded-full bg-hirescribe-primary/10 p-3">
+                  <FileText className="h-5 w-5 md:h-6 md:w-6 text-hirescribe-primary" />
+                </div>
+                <h3 className="font-semibold text-base md:text-lg">Writing Assessment</h3>
+                <p className="text-muted-foreground text-xs md:text-sm">
+                  Demonstrate your written communication skills through thoughtful responses
+                </p>
+              </div>
+            </div>
+
+            <div className="glass-effect p-4 md:p-6 rounded-xl hover:shadow-elevation-2 transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex flex-col items-center gap-3 md:gap-4">
+                <div className="rounded-full bg-hirescribe-accent/10 p-3">
+                  <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-hirescribe-accent" />
+                </div>
+                <h3 className="font-semibold text-base md:text-lg">Aptitude Test</h3>
+                <p className="text-muted-foreground text-xs md:text-sm">
+                  Show your problem-solving abilities with our carefully curated questions
+                </p>
+              </div>
+            </div>
+
+            <div className="glass-effect p-4 md:p-6 rounded-xl hover:shadow-elevation-2 transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex flex-col items-center gap-3 md:gap-4">
+                <div className="rounded-full bg-hirescribe-secondary/10 p-3">
+                  <Users className="h-5 w-5 md:h-6 md:w-6 text-hirescribe-secondary" />
+                </div>
+                <h3 className="font-semibold text-base md:text-lg">Fair Evaluation</h3>
+                <p className="text-muted-foreground text-xs md:text-sm">
+                  Get assessed through an unbiased and comprehensive process
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {/* CTA Button */}
+          <div className="pt-4 md:pt-8 w-full">
+            <Button 
+              onClick={onStart}
+              className={`bg-gradient-to-r from-hirescribe-primary to-hirescribe-accent hover:opacity-90 transition-all duration-300 text-white ${isMobile ? 'px-6 py-3 text-sm rounded-lg w-full' : 'px-8 py-6 text-lg rounded-xl w-auto'} group`}
+            >
+              Start Assessment
+              <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5 transition-transform group-hover:translate-x-1" />
+            </Button>
+          </div>
+
+          <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground pt-2 md:pt-4`}>
+            Time required: approximately 60 minutes
           </p>
         </div>
-
-        <div className={`grid gap-4 ${isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3"}`}>
-          <div className="glass-effect p-4 md:p-6 rounded-xl hover:shadow-elevation-2 transition-all duration-300">
-            <div className="flex flex-col items-center gap-3 md:gap-4">
-              <div className="rounded-full bg-hirescribe-primary/10 p-3">
-                <FileText className="h-5 w-5 md:h-6 md:w-6 text-hirescribe-primary" />
+      </div>
+      
+      {/* Benefits Section */}
+      <div className="brand-section bg-muted/50 py-12 md:py-16" id="about">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} brand-heading mb-4`}>
+              Why Choose HireScribe?
+            </h2>
+            <p className="text-muted-foreground max-w-3xl mx-auto">
+              Our assessment platform provides comprehensive insights into candidate abilities,
+              helping organizations make informed hiring decisions.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <div className="brand-card p-6">
+              <div className="rounded-full bg-hirescribe-primary/10 p-3 w-12 h-12 flex items-center justify-center mb-4">
+                <BarChart className="h-6 w-6 text-hirescribe-primary" />
               </div>
-              <h3 className="font-semibold text-base md:text-lg">Writing Assessment</h3>
-              <p className="text-muted-foreground text-xs md:text-sm">
-                Demonstrate your written communication skills through thoughtful responses
+              <h3 className="text-lg font-semibold mb-2">Detailed Analysis</h3>
+              <p className="text-muted-foreground">
+                Get comprehensive insights into candidates' skills, competencies and potential fit with your organization.
               </p>
             </div>
-          </div>
-
-          <div className="glass-effect p-4 md:p-6 rounded-xl hover:shadow-elevation-2 transition-all duration-300">
-            <div className="flex flex-col items-center gap-3 md:gap-4">
-              <div className="rounded-full bg-hirescribe-accent/10 p-3">
-                <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-hirescribe-accent" />
+            
+            <div className="brand-card p-6">
+              <div className="rounded-full bg-hirescribe-accent/10 p-3 w-12 h-12 flex items-center justify-center mb-4">
+                <Shield className="h-6 w-6 text-hirescribe-accent" />
               </div>
-              <h3 className="font-semibold text-base md:text-lg">Aptitude Test</h3>
-              <p className="text-muted-foreground text-xs md:text-sm">
-                Show your problem-solving abilities with our carefully curated questions
+              <h3 className="text-lg font-semibold mb-2">Anti-Cheating Measures</h3>
+              <p className="text-muted-foreground">
+                Advanced security features ensure assessment integrity and accurate candidate evaluation.
               </p>
             </div>
-          </div>
-
-          <div className="glass-effect p-4 md:p-6 rounded-xl hover:shadow-elevation-2 transition-all duration-300">
-            <div className="flex flex-col items-center gap-3 md:gap-4">
-              <div className="rounded-full bg-hirescribe-secondary/10 p-3">
-                <Users className="h-5 w-5 md:h-6 md:w-6 text-hirescribe-secondary" />
+            
+            <div className="brand-card p-6">
+              <div className="rounded-full bg-hirescribe-secondary/10 p-3 w-12 h-12 flex items-center justify-center mb-4">
+                <Clock className="h-6 w-6 text-hirescribe-secondary" />
               </div>
-              <h3 className="font-semibold text-base md:text-lg">Fair Evaluation</h3>
-              <p className="text-muted-foreground text-xs md:text-sm">
-                Get assessed through an unbiased and comprehensive process
+              <h3 className="text-lg font-semibold mb-2">Efficiency</h3>
+              <p className="text-muted-foreground">
+                Streamline your hiring process and reduce time-to-hire with our automated assessment platform.
               </p>
             </div>
           </div>
         </div>
-
-        <div className="pt-4 md:pt-8 w-full">
-          <Button 
-            onClick={onStart}
-            className={`bg-gradient-to-r from-hirescribe-primary to-hirescribe-accent hover:opacity-90 transition-all duration-300 text-white ${isMobile ? 'px-6 py-3 text-sm rounded-lg w-full' : 'px-8 py-6 text-lg rounded-xl w-auto'} group`}
-          >
-            Start Assessment
-            <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5 transition-transform group-hover:translate-x-1" />
-          </Button>
-        </div>
-
-        <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground pt-2 md:pt-4`}>
-          Time required: approximately 60 minutes
-        </p>
       </div>
     </div>
   );
