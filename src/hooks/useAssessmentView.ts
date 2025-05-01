@@ -1,11 +1,13 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { generateCandidateSummary, generateStrengthsAndWeaknesses } from "@/services/geminiService";
 import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
 import { toast } from "@/hooks/use-toast";
 import { useFetchAssessment } from "./assessment/useFetchAssessment";
 import { useAptitudeRecovery } from "./assessment/useAptitudeRecovery";
 import { useAptitudeCategories } from "./assessment/useAptitudeCategories";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/firebase/config";
 
 export interface AssessmentData {
   id: string;
@@ -31,25 +33,24 @@ export const useAssessmentView = (id: string | undefined) => {
   const { generateAptitudeCategories } = useAptitudeCategories(assessment);
 
   // Process assessment data when it's loaded
-  const processAssessmentData = async (data: AssessmentData) => {
-    let updatedData = recoverAptitudeScore(data);
-    updatedData = generateAptitudeCategories(updatedData);
+  useEffect(() => {
+    const processData = async () => {
+      if (!assessment || !assessment.id) return;
+      
+      console.log("Processing assessment data in useEffect:", assessment.id);
+      
+      let updatedData = recoverAptitudeScore(assessment);
+      updatedData = generateAptitudeCategories(updatedData);
 
-    if (updatedData.writingScores && updatedData.writingScores.length > 0) {
-      const errorScores = updatedData.writingScores.filter(score => score.score === 0);
-      if (errorScores.length > 0) {
-        console.log("Found error scores:", errorScores);
-        toast({
-          title: "Writing Evaluation Errors",
-          description: `${errorScores.length} writing prompt(s) could not be evaluated. Try using the 'Evaluate Writing' button to retry.`,
-          variant: "destructive",
-        });
-      }
-
-      if (!updatedData.aiSummary || !updatedData.strengths || !updatedData.weaknesses) {
+      // If writing scores exist but we're missing summary data, generate it
+      if (updatedData.writingScores && 
+          updatedData.writingScores.length > 0 && 
+          updatedData.writingScores.some(score => score.score > 0) &&
+          (!updatedData.aiSummary || !updatedData.strengths || !updatedData.weaknesses)) {
+        
+        console.log("Missing insights detected, attempting to generate");
         setGeneratingSummary(true);
-        console.log("Generating insights for assessment");
-
+        
         try {
           const [summary, analysis] = await Promise.all([
             generateCandidateSummary(updatedData),
@@ -69,39 +70,54 @@ export const useAssessmentView = (id: string | undefined) => {
             weaknesses: analysis.weaknesses
           });
 
-          console.log("Insights saved to assessment:", updatedData);
+          console.log("Auto-generated insights saved to assessment:", updatedData);
+          
+          // Verify the update by re-fetching
+          const refreshedDoc = await getDoc(doc(db, "assessments", updatedData.id));
+          if (refreshedDoc.exists()) {
+            const refreshedData = {
+              id: refreshedDoc.id,
+              ...refreshedDoc.data()
+            };
+            
+            console.log("Refreshed data after auto-generation:", refreshedData);
+            setAssessment(refreshedData);
+            return; // Skip the setAssessment below
+          }
         } catch (aiError) {
-          console.error("Error generating insights:", aiError);
+          console.error("Error auto-generating insights:", aiError);
         } finally {
           setGeneratingSummary(false);
         }
+      } else if (
+        updatedData.writingScores && 
+        updatedData.writingScores.length > 0 && 
+        updatedData.writingScores.some(score => score.score === 0)
+      ) {
+        console.log("Found error scores, notifying user");
+        toast({
+          title: "Writing Evaluation Issues",
+          description: `Some writing prompts could not be evaluated. Try using the 'Evaluate Writing' button to retry.`,
+          variant: "warning",
+        });
       }
-    } else {
-      console.log("No writing scores found in assessment data");
-      toast({
-        title: "Writing Scores Missing",
-        description: "This assessment does not have evaluated writing scores. Use the 'Evaluate Writing' button to start evaluation.",
-        variant: "destructive",
-      });
-    }
 
-    return updatedData;
-  };
-
-  // Update assessment data when it changes
-  if (assessment) {
-    processAssessmentData(assessment).then(updatedData => {
       if (JSON.stringify(updatedData) !== JSON.stringify(assessment)) {
         setAssessment(updatedData);
       }
-    });
-  }
+    };
+
+    if (assessment) {
+      processData();
+    }
+  }, [assessment?.id]);
 
   return {
     assessment,
     loading,
     error,
     generatingSummary,
-    setAssessment
+    setAssessment,
+    setGeneratingSummary
   };
 };

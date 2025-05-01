@@ -9,6 +9,16 @@ interface SummaryCardProps {
 }
 
 const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSummary }) => {
+  // Debug logging to verify data
+  React.useEffect(() => {
+    console.log("SummaryCard - Assessment data:", {
+      hasAiSummary: !!assessmentData.aiSummary,
+      hasStrengths: !!(assessmentData.strengths && assessmentData.strengths.length),
+      hasWeaknesses: !!(assessmentData.weaknesses && assessmentData.weaknesses.length),
+      hasValidWritingScores: !!(assessmentData.writingScores && assessmentData.writingScores.some(score => score.score > 0))
+    });
+  }, [assessmentData]);
+  
   return (
     <Card>
       <CardHeader className="pb-2">

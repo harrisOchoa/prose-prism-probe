@@ -30,6 +30,20 @@ export const useFetchAssessment = (id: string | undefined) => {
           } as AssessmentData;
           
           console.log("Assessment data retrieved:", assessmentData);
+          
+          // Validate the important fields exist
+          if (!assessmentData.aiSummary) {
+            console.log("Assessment missing aiSummary");
+          }
+          
+          if (!assessmentData.strengths || assessmentData.strengths.length === 0) {
+            console.log("Assessment missing strengths");
+          }
+          
+          if (!assessmentData.weaknesses || assessmentData.weaknesses.length === 0) {
+            console.log("Assessment missing weaknesses");
+          }
+          
           setAssessment(assessmentData);
         } else {
           setError("Assessment not found");

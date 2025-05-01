@@ -132,12 +132,41 @@ export const updateAssessmentAnalysis = async (
         throw new Error(`Assessment document ${assessmentId} not found`);
       }
       
-      transaction.update(assessmentRef, analysisData);
-      console.log(`Transaction prepared to update assessment ${assessmentId}`);
+      // Merge the existing document data with the new analysis data
+      const existingData = assessmentDoc.data();
+      const updateData = { ...analysisData };
+      
+      // Special handling for arrays to prevent overwriting with empty arrays
+      if (Array.isArray(updateData.strengths) && updateData.strengths.length === 0 && existingData.strengths && existingData.strengths.length > 0) {
+        delete updateData.strengths;
+      }
+      
+      if (Array.isArray(updateData.weaknesses) && updateData.weaknesses.length === 0 && existingData.weaknesses && existingData.weaknesses.length > 0) {
+        delete updateData.weaknesses;
+      }
+      
+      if (Array.isArray(updateData.writingScores) && updateData.writingScores.length === 0 && existingData.writingScores && existingData.writingScores.length > 0) {
+        delete updateData.writingScores;
+      }
+      
+      // Don't update aiSummary if it would be set to empty string and there's an existing value
+      if (updateData.aiSummary === "" && existingData.aiSummary) {
+        delete updateData.aiSummary;
+      }
+      
+      transaction.update(assessmentRef, updateData);
+      console.log(`Transaction prepared to update assessment ${assessmentId} with data:`, updateData);
     });
     
-    console.log(`Successfully updated assessment ${assessmentId}`);
-    return true;
+    // Verify the update
+    const verificationDoc = await getDoc(assessmentRef);
+    if (verificationDoc.exists()) {
+      console.log(`Successfully verified update to assessment ${assessmentId}:`, verificationDoc.data());
+      return true;
+    } else {
+      console.error(`Assessment ${assessmentId} not found after update attempt`);
+      return false;
+    }
   } catch (error) {
     console.error(`Error updating assessment ${assessmentId}:`, error);
     throw new Error('Failed to update assessment analysis');
