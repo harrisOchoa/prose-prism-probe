@@ -27,6 +27,12 @@ export interface AssessmentData {
   interviewQuestions?: any[];
   profileMatch?: any;
   antiCheatingMetrics?: AntiCheatingMetrics;
+  aptitudeCategories?: Array<{
+    name: string;
+    correct: number;
+    total: number;
+    source: string;
+  }>;
   [key: string]: any;
 }
 
