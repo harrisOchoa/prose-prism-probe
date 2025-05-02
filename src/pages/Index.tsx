@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import AssessmentIntro from "@/components/AssessmentIntro";
 import WritingPrompt from "@/components/WritingPrompt";
 import AssessmentComplete from "@/components/AssessmentComplete";
@@ -19,6 +20,7 @@ const Index = () => {
   const [loadingIndex, setLoadingIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionMessage, setTransitionMessage] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -31,20 +33,35 @@ const Index = () => {
   const handleStageTransition = (newStage: Stage) => {
     setIsTransitioning(true);
     let message = "";
+    let stageParam = "";
     
     switch (newStage) {
       case Stage.APTITUDE:
         message = "Preparing aptitude test...";
+        stageParam = "aptitude";
         break;
       case Stage.WRITING:
         message = "Setting up writing assessment...";
+        stageParam = "writing";
         break;
       case Stage.COMPLETE:
         message = "Finalizing your assessment...";
+        stageParam = "complete";
         break;
       default:
         message = "Loading next section...";
+        stageParam = "";
     }
+    
+    // Update URL parameter for stage
+    setSearchParams(params => {
+      if (stageParam) {
+        params.set('stage', stageParam);
+      } else {
+        params.delete('stage');
+      }
+      return params;
+    });
     
     setTransitionMessage(message);
     setTimeout(() => setIsTransitioning(false), 1000);
@@ -106,7 +123,10 @@ const Index = () => {
             <AssessmentIntro 
               step="instructions" 
               candidateName={candidateName}
-              onStart={handleStart} 
+              onStart={() => {
+                handleStageTransition(Stage.APTITUDE);
+                handleStart();
+              }} 
             />
           )}
 
@@ -157,7 +177,10 @@ const Index = () => {
               wordCount={prompts.reduce((total, prompt) => total + prompt.wordCount, 0)}
               candidateName={candidateName}
               candidatePosition={candidatePosition}
-              restartAssessment={restartAssessment}
+              restartAssessment={() => {
+                handleStageTransition(Stage.LANDING);
+                restartAssessment();
+              }}
               completedPrompts={prompts}
               aptitudeScore={aptitudeScore}
               aptitudeTotal={aptitudeQuestions.length}
