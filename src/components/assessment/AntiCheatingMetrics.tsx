@@ -41,6 +41,9 @@ const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics, hide
     totalInactivityTime = 0
   } = metrics;
   
+  // Ensure WPM is a valid number
+  const safeWPM = isNaN(wordsPerMinute) ? 0 : wordsPerMinute;
+  
   // Format durations for display
   const formatDuration = (ms: number): string => {
     if (ms < 1000) return `${ms}ms`;
@@ -68,9 +71,9 @@ const AntiCheatingMetrics: React.FC<AntiCheatingMetricsProps> = ({ metrics, hide
       icon: RefreshCw,
       iconColor: "text-purple-500",
       label: "Typing Speed",
-      value: `${wordsPerMinute.toFixed(0)} WPM`,
-      progressValue: Math.min(100, (wordsPerMinute / 150) * 100),
-      alert: wordsPerMinute > 100,
+      value: `${safeWPM.toFixed(0)} WPM`,
+      progressValue: Math.min(100, (safeWPM / 150) * 100),
+      alert: safeWPM > 100,
       alertText: "High"
     },
     {

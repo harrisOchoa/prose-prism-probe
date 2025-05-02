@@ -23,8 +23,11 @@ export const useKeyboardMetrics = (response: string) => {
   const keystrokeTimesRef = useRef<number[]>([]);
 
   const calculateWordsPerMinute = (keystrokes: number, totalTimeMs: number): number => {
-    if (totalTimeMs <= 0) return 0;
-    return (keystrokes / 5) / (totalTimeMs / 60000);
+    // Fix: Return 0 if there's no typing activity or time is zero/negative
+    if (totalTimeMs <= 0 || keystrokes <= 0) return 0;
+    
+    // Standard calculation: 5 keystrokes = 1 word, convert ms to minutes
+    return Math.min(200, (keystrokes / 5) / (totalTimeMs / 60000));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
