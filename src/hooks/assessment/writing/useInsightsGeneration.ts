@@ -28,10 +28,7 @@ export const useInsightsGeneration = (
     
     try {
       setGeneratingSummary(true);
-      toast({
-        title: "Generating Insights",
-        description: "System is analyzing the assessment to provide insights.",
-      });
+      console.log("Starting insights generation for assessment:", data.id);
       
       // Generate insights
       const [summary, analysis] = await Promise.all([
@@ -39,39 +36,43 @@ export const useInsightsGeneration = (
         generateStrengthsAndWeaknesses(data)
       ]);
       
-      // Update local state first
-      const updatedData = {
-        ...data,
+      console.log("Generated summary and analysis:", { 
+        summaryLength: summary?.length,
+        strengthsCount: analysis?.strengths?.length,
+        weaknessesCount: analysis?.weaknesses?.length
+      });
+      
+      // Prepare update payload
+      const updatePayload = {
         aiSummary: summary,
         strengths: analysis.strengths,
         weaknesses: analysis.weaknesses
       };
       
-      setAssessmentData(updatedData);
+      // Update local state first
+      const updatedData = {
+        ...data,
+        ...updatePayload
+      };
       
-      // Update Firebase with the new insights
-      await updateAssessmentAnalysis(data.id, {
-        aiSummary: summary,
-        strengths: analysis.strengths,
-        weaknesses: analysis.weaknesses
-      });
+      // Update Firebase with the new insights - ensure this completes
+      const updateSuccess = await updateAssessmentAnalysis(data.id, updatePayload);
+      console.log("Update to Firebase completed:", updateSuccess);
       
-      console.log("Successfully saved generated insights to database");
-      
-      // Verify data persistence with a fresh fetch
-      const updatedDoc = await getDoc(doc(db, "assessments", data.id));
-      if (updatedDoc.exists()) {
-        const refreshedData = {
-          id: updatedDoc.id,
-          ...updatedDoc.data()
-        } as AssessmentData;
-        
-        console.log("Retrieved updated assessment data after generating insights:", refreshedData);
-        setAssessmentData(refreshedData);
+      if (!updateSuccess) {
+        console.error("Failed to update assessment in Firebase");
+        toast({
+          title: "Update Failed",
+          description: "Failed to save insights to the database. Please try again.",
+          variant: "destructive",
+        });
       }
       
+      // Update local state
+      setAssessmentData(updatedData);
+      
       toast({
-        title: "Insights Updated",
+        title: "Insights Generated",
         description: "Assessment insights have been generated successfully.",
       });
 

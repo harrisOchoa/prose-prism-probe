@@ -16,7 +16,14 @@ const View = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { assessment, loading, error, generatingSummary, setAssessment } = useAssessmentView(id);
+  const { 
+    assessment, 
+    loading, 
+    error, 
+    generatingSummary, 
+    setAssessment, 
+    refreshAssessment 
+  } = useAssessmentView(id);
   const isMobile = useIsMobile();
   
   // Get current tab from URL parameters or default to "overview"
@@ -44,15 +51,17 @@ const View = () => {
         });
       }
     }
-    
-    // Debug log for assessment data
-    if (assessment) {
-      console.log("Assessment view - data loaded:", assessment);
-      console.log("Assessment view - aptitude score:", assessment.aptitudeScore, "/", assessment.aptitudeTotal);
-    }
   }, [assessment]);
 
-  const handleBack = () => {
+  // Before navigating back, refresh the assessment data
+  const handleBack = async () => {
+    try {
+      if (refreshAssessment) {
+        await refreshAssessment();
+      }
+    } catch (error) {
+      console.error("Error refreshing before navigation:", error);
+    }
     // Navigate back to admin while preserving the tab the user was on
     navigate('/admin');
   };
@@ -73,6 +82,7 @@ const View = () => {
             assessment={assessment} 
             onBack={handleBack} 
             isGeneratingSummary={generatingSummary}
+            refreshAssessment={refreshAssessment}
           />
         </Suspense>
       ) : (

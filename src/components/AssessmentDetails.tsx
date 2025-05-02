@@ -15,12 +15,14 @@ interface AssessmentDetailsProps {
   assessment: any;
   onBack: () => void;
   isGeneratingSummary?: boolean;
+  refreshAssessment?: () => Promise<any>;
 }
 
 const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({ 
   assessment, 
   onBack,
-  isGeneratingSummary = false
+  isGeneratingSummary = false,
+  refreshAssessment
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -49,28 +51,14 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
 
   const { handleExportPdf } = usePdfExport();
 
-  // Log initial assessment data for debugging
+  // Update local state when assessment prop changes
   useEffect(() => {
-    console.log("Initial assessment data in AssessmentDetails:", assessmentData);
-    
-    // Log any advanced analysis data that exists
-    if (assessmentData.detailedWritingAnalysis) {
-      console.log("Detailed writing analysis loaded:", assessmentData.detailedWritingAnalysis);
+    if (assessment && JSON.stringify(assessment) !== JSON.stringify(assessmentData)) {
+      console.log("Assessment prop updated, updating local state");
+      setAssessmentData(assessment);
     }
-    
-    if (assessmentData.personalityInsights) {
-      console.log("Personality insights loaded:", assessmentData.personalityInsights);
-    }
-    
-    if (assessmentData.interviewQuestions) {
-      console.log("Interview questions loaded:", assessmentData.interviewQuestions);
-    }
-    
-    if (assessmentData.profileMatch) {
-      console.log("Profile match data loaded:", assessmentData.profileMatch);
-    }
-  }, [assessmentData]);
-
+  }, [assessment, assessmentData]);
+  
   // Set initial state for generatingSummary if provided
   useEffect(() => {
     if (isGeneratingSummary) {
@@ -82,6 +70,19 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     navigate(`${location.pathname}?tab=${value}`, { replace: true });
+  };
+
+  // Handle back with potential refresh
+  const handleBack = async () => {
+    // Attempt to refresh data before navigating back
+    if (refreshAssessment) {
+      try {
+        await refreshAssessment();
+      } catch (error) {
+        console.error("Error refreshing assessment before navigation:", error);
+      }
+    }
+    onBack();
   };
 
   // Get the current tab for PDF export
@@ -106,7 +107,7 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       <AssessmentHeader 
         assessmentData={assessmentData}
-        onBack={onBack}
+        onBack={handleBack}
         evaluating={evaluating}
         generatingSummary={generatingSummary}
         handleManualEvaluation={handleManualEvaluation}

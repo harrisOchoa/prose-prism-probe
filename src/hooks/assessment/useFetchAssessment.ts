@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { toast } from "@/hooks/use-toast";
@@ -10,55 +10,62 @@ export const useFetchAssessment = (id: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Create a memoized fetchAssessment function that can be called on demand
+  const fetchAssessment = useCallback(async (assessmentId: string) => {
+    try {
+      console.log(`[${new Date().toISOString()}] Fetching assessment with ID:`, assessmentId);
+      setLoading(true);
+      
+      const docRef = doc(db, "assessments", assessmentId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const assessmentData = {
+          id: docSnap.id,
+          ...docSnap.data()
+        } as AssessmentData;
+        
+        console.log("Assessment data retrieved:", {
+          id: assessmentData.id,
+          hasAiSummary: !!assessmentData.aiSummary,
+          hasStrengths: !!(assessmentData.strengths && assessmentData.strengths.length > 0),
+          hasWeaknesses: !!(assessmentData.weaknesses && assessmentData.weaknesses.length > 0),
+          hasWritingScores: !!(assessmentData.writingScores && assessmentData.writingScores.length > 0)
+        });
+        
+        setAssessment(assessmentData);
+        setError(null);
+        return assessmentData;
+      } else {
+        setError("Assessment not found");
+        console.log("Assessment document does not exist");
+        return null;
+      }
+    } catch (err) {
+      console.error("Error fetching assessment:", err);
+      setError("Failed to load assessment");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial fetch on component mount
   useEffect(() => {
-    const fetchAssessment = async () => {
-      if (!id) {
-        setError("Assessment ID is missing");
-        setLoading(false);
-        return;
-      }
+    if (!id) {
+      setError("Assessment ID is missing");
+      setLoading(false);
+      return;
+    }
+    
+    fetchAssessment(id);
+  }, [id, fetchAssessment]);
 
-      try {
-        console.log("Fetching assessment with ID:", id);
-        const docRef = doc(db, "assessments", id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const assessmentData = {
-            id: docSnap.id,
-            ...docSnap.data()
-          } as AssessmentData;
-          
-          console.log("Assessment data retrieved:", assessmentData);
-          
-          // Validate the important fields exist
-          if (!assessmentData.aiSummary) {
-            console.log("Assessment missing aiSummary");
-          }
-          
-          if (!assessmentData.strengths || assessmentData.strengths.length === 0) {
-            console.log("Assessment missing strengths");
-          }
-          
-          if (!assessmentData.weaknesses || assessmentData.weaknesses.length === 0) {
-            console.log("Assessment missing weaknesses");
-          }
-          
-          setAssessment(assessmentData);
-        } else {
-          setError("Assessment not found");
-          console.log("Assessment document does not exist");
-        }
-      } catch (err) {
-        console.error("Error fetching assessment:", err);
-        setError("Failed to load assessment");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAssessment();
-  }, [id]);
-
-  return { assessment, setAssessment, loading, error };
+  return { 
+    assessment, 
+    setAssessment, 
+    loading, 
+    error, 
+    refreshAssessment: fetchAssessment 
+  };
 };

@@ -6,12 +6,10 @@ import { toast } from "@/hooks/use-toast";
 import { useFetchAssessment } from "./assessment/useFetchAssessment";
 import { useAptitudeRecovery } from "./assessment/useAptitudeRecovery";
 import { useAptitudeCategories } from "./assessment/useAptitudeCategories";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/firebase/config";
 import { AssessmentData } from "@/types/assessment";
 
 export const useAssessmentView = (id: string | undefined) => {
-  const { assessment, setAssessment, loading, error } = useFetchAssessment(id);
+  const { assessment, setAssessment, loading, error, refreshAssessment } = useFetchAssessment(id);
   const [generatingSummary, setGeneratingSummary] = useState(false);
   const { recoverAptitudeScore } = useAptitudeRecovery(assessment);
   const { generateAptitudeCategories } = useAptitudeCategories(assessment);
@@ -21,7 +19,7 @@ export const useAssessmentView = (id: string | undefined) => {
     const processData = async () => {
       if (!assessment || !assessment.id) return;
       
-      console.log("Processing assessment data in useEffect:", assessment.id);
+      console.log(`[${new Date().toISOString()}] Processing assessment data in useEffect:`, assessment.id);
       
       let updatedData = recoverAptitudeScore(assessment);
       updatedData = generateAptitudeCategories(updatedData);
@@ -41,32 +39,27 @@ export const useAssessmentView = (id: string | undefined) => {
             generateStrengthsAndWeaknesses(updatedData)
           ]);
 
-          updatedData = {
-            ...updatedData,
+          const updateData = {
             aiSummary: summary,
             strengths: analysis.strengths,
             weaknesses: analysis.weaknesses
           };
+          
+          updatedData = {
+            ...updatedData,
+            ...updateData
+          };
 
-          await updateAssessmentAnalysis(updatedData.id, {
-            aiSummary: summary,
-            strengths: analysis.strengths,
-            weaknesses: analysis.weaknesses
-          });
-
+          await updateAssessmentAnalysis(updatedData.id, updateData);
           console.log("Auto-generated insights saved to assessment:", updatedData);
           
-          // Verify the update by re-fetching
-          const refreshedDoc = await getDoc(doc(db, "assessments", updatedData.id));
-          if (refreshedDoc.exists()) {
-            const refreshedData = {
-              id: refreshedDoc.id,
-              ...refreshedDoc.data()
-            } as AssessmentData;
-            
-            console.log("Refreshed data after auto-generation:", refreshedData);
-            setAssessment(refreshedData);
-            return; // Skip the setAssessment below
+          // Refresh assessment data after update to ensure we have the latest
+          if (id) {
+            const refreshedData = await refreshAssessment(id);
+            if (refreshedData) {
+              console.log("Assessment refreshed after auto-generation");
+              return; // Skip the setAssessment below as refreshAssessment will handle it
+            }
           }
         } catch (aiError) {
           console.error("Error auto-generating insights:", aiError);
@@ -94,7 +87,15 @@ export const useAssessmentView = (id: string | undefined) => {
     if (assessment) {
       processData();
     }
-  }, [assessment?.id]);
+  }, [assessment?.id, assessment, setAssessment, recoverAptitudeScore, generateAptitudeCategories, refreshAssessment, id]);
+
+  // Function to manually refresh assessment data
+  const refresh = async () => {
+    if (id) {
+      return await refreshAssessment(id);
+    }
+    return null;
+  };
 
   return {
     assessment,
@@ -102,6 +103,7 @@ export const useAssessmentView = (id: string | undefined) => {
     error,
     generatingSummary,
     setAssessment,
-    setGeneratingSummary
+    setGeneratingSummary,
+    refreshAssessment: refresh
   };
 };

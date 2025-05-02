@@ -8,7 +8,7 @@ export const updateAssessmentAnalysis = async (
   analysisData: Partial<AssessmentSubmission>
 ): Promise<boolean> => {
   try {
-    console.log(`Updating assessment ${assessmentId} with data:`, analysisData);
+    console.log(`[${new Date().toISOString()}] Updating assessment ${assessmentId} with data:`, analysisData);
     const assessmentRef = doc(db, 'assessments', assessmentId);
     
     // Use a transaction for more reliable updates
@@ -40,15 +40,56 @@ export const updateAssessmentAnalysis = async (
         delete updateData.aiSummary;
       }
       
+      // Print what's being updated for debugging
+      console.log(`Transaction prepared: updating fields:`, Object.keys(updateData));
+      
+      // Check if existing data already has these values to prevent redundant updates
+      let hasChanges = false;
+      for (const [key, value] of Object.entries(updateData)) {
+        if (JSON.stringify(existingData[key]) !== JSON.stringify(value)) {
+          hasChanges = true;
+          break;
+        }
+      }
+      
+      if (!hasChanges) {
+        console.log("No changes detected, skipping update");
+        return;
+      }
+      
       transaction.update(assessmentRef, updateData);
-      console.log(`Transaction prepared to update assessment ${assessmentId} with data:`, updateData);
+      console.log(`Transaction committed to update assessment ${assessmentId}`);
     });
     
     // Verify the update
     const verificationDoc = await getDoc(doc(db, "assessments", assessmentId));
     if (verificationDoc.exists()) {
-      console.log(`Successfully verified update to assessment ${assessmentId}:`, verificationDoc.data());
-      return true;
+      const data = verificationDoc.data();
+      
+      // Verify key fields were actually updated
+      let updateSuccessful = true;
+      if (analysisData.aiSummary && data.aiSummary !== analysisData.aiSummary) {
+        console.warn("aiSummary wasn't saved correctly");
+        updateSuccessful = false;
+      }
+      
+      if (analysisData.strengths && (!data.strengths || data.strengths.length !== analysisData.strengths.length)) {
+        console.warn("strengths weren't saved correctly");
+        updateSuccessful = false;
+      }
+      
+      if (analysisData.weaknesses && (!data.weaknesses || data.weaknesses.length !== analysisData.weaknesses.length)) {
+        console.warn("weaknesses weren't saved correctly");
+        updateSuccessful = false;
+      }
+      
+      if (updateSuccessful) {
+        console.log(`Successfully verified update to assessment ${assessmentId}`);
+      } else {
+        console.error(`Update verification failed for assessment ${assessmentId}`);
+      }
+      
+      return updateSuccessful;
     } else {
       console.error(`Assessment ${assessmentId} not found after update attempt`);
       return false;
