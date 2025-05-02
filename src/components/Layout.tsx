@@ -23,8 +23,8 @@ const Layout = ({ children }: LayoutProps) => {
   const searchParams = new URLSearchParams(location.search);
   const stage = searchParams.get('stage');
   
-  // Hide header during assessment stages (aptitude and writing)
-  const hideHeader = stage === 'aptitude' || stage === 'writing';
+  // Hide header during assessment stages (aptitude, prompt selection, and writing)
+  const hideHeader = stage === 'aptitude' || stage === 'writing' || stage === 'select_prompts';
   
   // Also hide header on admin views and assessment view page
   const isAdminOrViewPage = pathname.includes('/admin') || pathname.includes('/view');

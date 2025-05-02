@@ -40,6 +40,10 @@ const Index = () => {
         message = "Preparing aptitude test...";
         stageParam = "aptitude";
         break;
+      case Stage.SELECT_PROMPTS:
+        message = "Loading writing prompt options...";
+        stageParam = "select_prompts";
+        break;
       case Stage.WRITING:
         message = "Setting up writing assessment...";
         stageParam = "writing";
