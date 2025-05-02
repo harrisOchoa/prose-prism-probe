@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import LandingPage from "@/components/LandingPage";
 import { Stage } from "@/components/AssessmentManager";
 
@@ -13,7 +13,9 @@ const LandingStage: React.FC<LandingStageProps> = ({
   handleStageTransition, 
   startAssessment 
 }) => {
-  console.log("LandingStage rendering"); // Add logging to track rendering
+  useEffect(() => {
+    console.log("LandingStage mounted and rendering");
+  }, []);
   
   const handleStart = () => {
     console.log("LandingStage: Start button clicked");
@@ -22,7 +24,7 @@ const LandingStage: React.FC<LandingStageProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex-1" data-testid="landing-stage">
+    <div className="w-full h-full flex-1" data-testid="landing-stage" style={{ display: 'flex', flexDirection: 'column' }}>
       <LandingPage onStart={handleStart} />
     </div>
   );

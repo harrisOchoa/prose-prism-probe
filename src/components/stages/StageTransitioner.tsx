@@ -15,7 +15,7 @@ const StageTransitioner: React.FC<StageTransitionerProps> = ({ children }) => {
   const [key, setKey] = useState(Date.now()); // Add a key to force re-render
 
   useEffect(() => {
-    console.log("StageTransitioner rendering with children:", !!children);
+    console.log("StageTransitioner rendering with children:", children ? 'present' : 'absent');
     setKey(Date.now()); // Update key when searchParams change to force re-render
   }, [searchParams, children]);
 
@@ -69,20 +69,23 @@ const StageTransitioner: React.FC<StageTransitionerProps> = ({ children }) => {
     setTimeout(() => setIsTransitioning(false), 1000);
   };
 
-  // Without a valid React Element, return null to prevent rendering errors
+  // Without a valid React Element, return fallback content
   if (!React.isValidElement(children)) {
     console.error("StageTransitioner: Invalid children provided", children);
-    return null;
+    return (
+      <div className="p-4 bg-red-50 text-red-500 rounded">
+        Error loading content. Please refresh the page.
+      </div>
+    );
   }
 
   return (
-    <>
+    <React.Fragment key={key}>
       <StepTransition loading={isTransitioning} message={transitionMessage} />
       {React.cloneElement(children as React.ReactElement<any>, { 
-        handleStageTransition,
-        key: key // Add key to force re-render when URL params change
+        handleStageTransition 
       })}
-    </>
+    </React.Fragment>
   );
 };
 

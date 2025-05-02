@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, CheckCircle, ArrowRight, Clock } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -10,6 +10,10 @@ interface LandingPageProps {
 
 const LandingPage = ({ onStart }: LandingPageProps) => {
   const isMobile = useIsMobile();
+  
+  useEffect(() => {
+    console.log("LandingPage component mounted");
+  }, []);
   
   return (
     <div className="flex flex-col min-h-[80vh]">

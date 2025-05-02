@@ -68,8 +68,7 @@ const Layout = ({ children }: LayoutProps) => {
         "flex-1 container mx-auto px-4 py-8 md:px-8 flex flex-col",
         hideHeader && "pt-16" // Add extra padding when header is hidden to compensate for timer position
       )}>
-        {/* Force explicit render of children or outlet */}
-        {children ? React.Children.map(children, child => child) : <Outlet />}
+        {children || <Outlet />}
       </main>
       <Footer />
     </div>

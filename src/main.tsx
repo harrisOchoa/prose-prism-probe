@@ -12,4 +12,8 @@ if (!rootElement) {
   document.body.appendChild(rootDiv);
 }
 
-createRoot(document.getElementById('root')!).render(<App />);
+// Force re-render by creating a new root
+const root = createRoot(document.getElementById('root')!);
+root.render(<App />);
+
+console.log("main.tsx: App rendering initiated");
