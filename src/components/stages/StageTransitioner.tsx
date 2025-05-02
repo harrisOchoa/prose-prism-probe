@@ -35,6 +35,14 @@ const StageTransitioner: React.FC<StageTransitionerProps> = ({ children }) => {
         message = "Finalizing your assessment...";
         stageParam = "complete";
         break;
+      case Stage.INFO:
+        message = "Loading candidate information...";
+        stageParam = "info";
+        break;
+      case Stage.LANDING:
+        message = "Returning to home page...";
+        stageParam = "";
+        break;
       default:
         message = "Loading next section...";
         stageParam = "";

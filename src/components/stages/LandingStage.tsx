@@ -14,12 +14,14 @@ const LandingStage: React.FC<LandingStageProps> = ({
   startAssessment 
 }) => {
   const handleStart = () => {
-    handleStageTransition(Stage.INFO);
-    startAssessment();
+    startAssessment(); // First call startAssessment to initialize
+    handleStageTransition(Stage.INFO); // Then transition to the INFO stage
   };
 
   return (
-    <LandingPage onStart={handleStart} />
+    <div className="w-full">
+      <LandingPage onStart={handleStart} />
+    </div>
   );
 };
 

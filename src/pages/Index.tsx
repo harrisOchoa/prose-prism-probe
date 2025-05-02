@@ -1,4 +1,3 @@
-
 import React from "react";
 import AssessmentManager, { Stage } from "@/components/AssessmentManager";
 import StageTransitioner from "@/components/stages/StageTransitioner";

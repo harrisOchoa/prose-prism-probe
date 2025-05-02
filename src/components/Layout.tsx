@@ -40,26 +40,22 @@ const Layout = ({ children }: LayoutProps) => {
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <Link to="/">
-                    <NavigationMenuLink className={cn(
-                      "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors",
-                      "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-                      "px-4 py-2"
-                    )}>
-                      Home
-                    </NavigationMenuLink>
-                  </Link>
+                  <NavigationMenuLink asChild className={cn(
+                    "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors",
+                    "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                    "px-4 py-2"
+                  )}>
+                    <Link to="/">Home</Link>
+                  </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Link to="/about">
-                    <NavigationMenuLink className={cn(
-                      "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors",
-                      "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-                      "px-4 py-2"
-                    )}>
-                      About
-                    </NavigationMenuLink>
-                  </Link>
+                  <NavigationMenuLink asChild className={cn(
+                    "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors",
+                    "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                    "px-4 py-2"
+                  )}>
+                    <Link to="/about">About</Link>
+                  </NavigationMenuLink>
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
