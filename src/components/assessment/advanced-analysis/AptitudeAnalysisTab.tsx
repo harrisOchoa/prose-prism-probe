@@ -55,11 +55,15 @@ const AptitudeAnalysisTab: React.FC<AptitudeAnalysisProps> = ({
           <div className="grid gap-6 lg:grid-cols-2">
             <Card className="p-6 border shadow-sm bg-white">
               <h4 className="font-medium mb-4 text-green-600 border-b pb-2">Strong Categories</h4>
-              <ul className="list-disc list-inside space-y-2">
-                {aptitudeAnalysis.strengthCategories.map((strength, index) => (
-                  <li key={index} className="text-gray-700">{strength}</li>
-                ))}
-              </ul>
+              {aptitudeAnalysis.strengthCategories && aptitudeAnalysis.strengthCategories.length > 0 ? (
+                <ul className="list-disc list-inside space-y-2">
+                  {aptitudeAnalysis.strengthCategories.map((strength, index) => (
+                    <li key={index} className="text-gray-700">{strength}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500 italic">No strong categories identified in this assessment.</p>
+              )}
             </Card>
 
             <Card className="p-6 border shadow-sm bg-white">
