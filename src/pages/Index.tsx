@@ -39,6 +39,7 @@ const Index = () => {
               <LandingStage
                 onStartAssessment={startAssessment}
                 startAssessment={startAssessment}
+                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
               />
             )}
 
@@ -47,6 +48,7 @@ const Index = () => {
                 candidateName={candidateName}
                 candidatePosition={candidatePosition}
                 handleInfoSubmit={handleInfoSubmit}
+                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
               />
             )}
 
@@ -58,6 +60,7 @@ const Index = () => {
               <IntroStage 
                 candidateName={candidateName}
                 handleStart={handleStart}
+                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
               />
             )}
 
@@ -65,6 +68,7 @@ const Index = () => {
               <AptitudeStage 
                 aptitudeQuestions={aptitudeQuestions}
                 handleAptitudeComplete={handleAptitudeComplete}
+                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
               />
             )}
 
@@ -72,6 +76,7 @@ const Index = () => {
               <SelectPromptsStage
                 availablePrompts={availablePrompts}
                 handlePromptSelection={handlePromptSelection}
+                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
               />
             )}
 
@@ -80,6 +85,7 @@ const Index = () => {
                 prompts={prompts}
                 currentPromptIndex={currentPromptIndex}
                 handlePromptSubmit={handlePromptSubmit}
+                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
               />
             )}
 
@@ -92,6 +98,7 @@ const Index = () => {
                 aptitudeTotal={aptitudeQuestions.length}
                 antiCheatingMetrics={antiCheatingMetrics}
                 restartAssessment={restartAssessment}
+                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
               />
             )}
           </StageTransitioner>
