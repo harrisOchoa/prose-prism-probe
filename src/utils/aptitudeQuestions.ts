@@ -4,6 +4,7 @@ export interface AptitudeQuestion {
   question: string;
   options: string[];
   correctAnswer: number; // Index of the correct option
+  category?: string; // Adding the category property as optional
 }
 
 export const aptitudeQuestions: AptitudeQuestion[] = [

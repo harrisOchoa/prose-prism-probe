@@ -13,7 +13,12 @@ export const generateAptitudeAnalysis = async (assessmentData: any): Promise<Apt
     
     // Get all possible aptitude questions to understand categories being tested
     const allQuestions = getRandomAptitudeQuestions(30);
-    const questionCategories = [...new Set(allQuestions.map(q => q.category))].join(", ");
+    
+    // Extract categories safely, using a default if category is not available
+    const questionCategories = [...new Set(allQuestions
+      .map(q => q.category || 'General Aptitude')
+      .filter(Boolean))]
+      .join(", ");
     
     const promptTemplate = `
 You are an expert aptitude test analyzer for job candidate assessments. Your task is to provide an objective, accurate, and realistic analysis of a candidate's aptitude test performance.
