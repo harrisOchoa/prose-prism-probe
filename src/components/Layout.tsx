@@ -1,14 +1,13 @@
 
 import React from "react";
 import Footer from "./Footer";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, Link } from "react-router-dom";
 import { 
   NavigationMenu,
   NavigationMenuList,
   NavigationMenuItem,
   NavigationMenuLink 
 } from "@/components/ui/navigation-menu";
-import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface LayoutProps {
@@ -69,7 +68,8 @@ const Layout = ({ children }: LayoutProps) => {
         "flex-1 container mx-auto px-4 py-8 md:px-8 flex flex-col",
         hideHeader && "pt-16" // Add extra padding when header is hidden to compensate for timer position
       )}>
-        {children || <Outlet />}
+        {/* Force explicit render of children or outlet */}
+        {children ? React.Children.map(children, child => child) : <Outlet />}
       </main>
       <Footer />
     </div>

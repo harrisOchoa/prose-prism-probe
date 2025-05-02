@@ -13,13 +13,16 @@ const LandingStage: React.FC<LandingStageProps> = ({
   handleStageTransition, 
   startAssessment 
 }) => {
+  console.log("LandingStage rendering"); // Add logging to track rendering
+  
   const handleStart = () => {
+    console.log("LandingStage: Start button clicked");
     startAssessment(); // First call startAssessment to initialize
     handleStageTransition(Stage.INFO); // Then transition to the INFO stage
   };
 
   return (
-    <div className="w-full h-full flex-1">
+    <div className="w-full h-full flex-1" data-testid="landing-stage">
       <LandingPage onStart={handleStart} />
     </div>
   );

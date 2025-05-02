@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Stage } from "@/components/AssessmentManager";
 import StepTransition from "@/components/assessment/StepTransition";
@@ -12,6 +12,12 @@ const StageTransitioner: React.FC<StageTransitionerProps> = ({ children }) => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionMessage, setTransitionMessage] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
+  const [key, setKey] = useState(Date.now()); // Add a key to force re-render
+
+  useEffect(() => {
+    console.log("StageTransitioner rendering with children:", !!children);
+    setKey(Date.now()); // Update key when searchParams change to force re-render
+  }, [searchParams, children]);
 
   const handleStageTransition = (newStage: Stage) => {
     console.log("Transitioning to stage:", newStage);
@@ -63,14 +69,19 @@ const StageTransitioner: React.FC<StageTransitionerProps> = ({ children }) => {
     setTimeout(() => setIsTransitioning(false), 1000);
   };
 
+  // Without a valid React Element, return null to prevent rendering errors
+  if (!React.isValidElement(children)) {
+    console.error("StageTransitioner: Invalid children provided", children);
+    return null;
+  }
+
   return (
     <>
       <StepTransition loading={isTransitioning} message={transitionMessage} />
-      {React.isValidElement(children) && 
-        React.cloneElement(children as React.ReactElement<any>, { 
-          handleStageTransition,
-          key: searchParams.toString() // Add key to force re-render when URL params change
-        })}
+      {React.cloneElement(children as React.ReactElement<any>, { 
+        handleStageTransition,
+        key: key // Add key to force re-render when URL params change
+      })}
     </>
   );
 };
