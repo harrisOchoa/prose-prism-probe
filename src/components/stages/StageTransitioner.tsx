@@ -14,6 +14,7 @@ const StageTransitioner: React.FC<StageTransitionerProps> = ({ children }) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const handleStageTransition = (newStage: Stage) => {
+    console.log("Transitioning to stage:", newStage);
     setIsTransitioning(true);
     let message = "";
     let stageParam = "";
@@ -66,7 +67,10 @@ const StageTransitioner: React.FC<StageTransitionerProps> = ({ children }) => {
     <>
       <StepTransition loading={isTransitioning} message={transitionMessage} />
       {React.isValidElement(children) && 
-        React.cloneElement(children as React.ReactElement<any>, { handleStageTransition })}
+        React.cloneElement(children as React.ReactElement<any>, { 
+          handleStageTransition,
+          key: searchParams.toString() // Add key to force re-render when URL params change
+        })}
     </>
   );
 };

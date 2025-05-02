@@ -4,7 +4,7 @@ import LandingPage from "@/components/LandingPage";
 import { Stage } from "@/components/AssessmentManager";
 
 interface LandingStageProps {
-  onStartAssessment: () => void;
+  onStartAssessment?: () => void;
   handleStageTransition: (newStage: Stage) => void;
   startAssessment: () => void;
 }
@@ -19,7 +19,7 @@ const LandingStage: React.FC<LandingStageProps> = ({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full flex-1">
       <LandingPage onStart={handleStart} />
     </div>
   );

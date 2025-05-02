@@ -29,6 +29,9 @@ const Layout = ({ children }: LayoutProps) => {
   // Also hide header on admin views and assessment view page
   const isAdminOrViewPage = pathname.includes('/admin') || pathname.includes('/view');
 
+  // Debugging output to help track rendering
+  console.log("Layout rendering, pathname:", pathname, "stage:", stage);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {!hideHeader && !isAdminOrViewPage && (
@@ -63,7 +66,7 @@ const Layout = ({ children }: LayoutProps) => {
         </header>
       )}
       <main className={cn(
-        "flex-1 container mx-auto px-4 py-8 md:px-8",
+        "flex-1 container mx-auto px-4 py-8 md:px-8 flex flex-col",
         hideHeader && "pt-16" // Add extra padding when header is hidden to compensate for timer position
       )}>
         {children || <Outlet />}

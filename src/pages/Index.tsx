@@ -12,98 +12,100 @@ import CompleteStage from "@/components/stages/CompleteStage";
 
 const Index = () => {
   return (
-    <AssessmentManager>
-      {({
-        stage,
-        candidateName,
-        candidatePosition,
-        currentPromptIndex,
-        prompts,
-        availablePrompts,
-        selectedPromptIds,
-        aptitudeQuestions,
-        aptitudeScore,
-        antiCheatingMetrics,
-        startAssessment,
-        handleInfoSubmit,
-        handleStart,
-        handleAptitudeComplete,
-        handlePromptSubmit,
-        handlePromptSelection,
-        restartAssessment
-      }) => (
-        <div className="assessment-container min-h-screen py-6 sm:py-12 px-2 sm:px-0">
-          <StageTransitioner>
-            {stage === Stage.LANDING && (
-              <LandingStage
-                onStartAssessment={startAssessment}
-                startAssessment={startAssessment}
-                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
-              />
-            )}
+    <div className="flex flex-col min-h-[80vh]">
+      <AssessmentManager>
+        {({
+          stage,
+          candidateName,
+          candidatePosition,
+          currentPromptIndex,
+          prompts,
+          availablePrompts,
+          selectedPromptIds,
+          aptitudeQuestions,
+          aptitudeScore,
+          antiCheatingMetrics,
+          startAssessment,
+          handleInfoSubmit,
+          handleStart,
+          handleAptitudeComplete,
+          handlePromptSubmit,
+          handlePromptSelection,
+          restartAssessment
+        }) => (
+          <div className="assessment-container min-h-screen py-6 sm:py-12 px-2 sm:px-0">
+            <StageTransitioner>
+              {stage === Stage.LANDING && (
+                <LandingStage
+                  onStartAssessment={startAssessment}
+                  startAssessment={startAssessment}
+                  handleStageTransition={() => {}} // This will be overridden by StageTransitioner
+                />
+              )}
 
-            {stage === Stage.INFO && (
-              <InfoStage 
-                candidateName={candidateName}
-                candidatePosition={candidatePosition}
-                handleInfoSubmit={handleInfoSubmit}
-                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
-              />
-            )}
+              {stage === Stage.INFO && (
+                <InfoStage 
+                  candidateName={candidateName}
+                  candidatePosition={candidatePosition}
+                  handleInfoSubmit={handleInfoSubmit}
+                  handleStageTransition={() => {}} // This will be overridden by StageTransitioner
+                />
+              )}
 
-            {stage === Stage.GENERATING_PROMPTS && (
-              <GeneratingPromptsStage />
-            )}
+              {stage === Stage.GENERATING_PROMPTS && (
+                <GeneratingPromptsStage />
+              )}
 
-            {stage === Stage.INTRO && (
-              <IntroStage 
-                candidateName={candidateName}
-                handleStart={handleStart}
-                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
-              />
-            )}
+              {stage === Stage.INTRO && (
+                <IntroStage 
+                  candidateName={candidateName}
+                  handleStart={handleStart}
+                  handleStageTransition={() => {}} // This will be overridden by StageTransitioner
+                />
+              )}
 
-            {stage === Stage.APTITUDE && aptitudeQuestions.length > 0 && (
-              <AptitudeStage 
-                aptitudeQuestions={aptitudeQuestions}
-                handleAptitudeComplete={handleAptitudeComplete}
-                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
-              />
-            )}
+              {stage === Stage.APTITUDE && aptitudeQuestions.length > 0 && (
+                <AptitudeStage 
+                  aptitudeQuestions={aptitudeQuestions}
+                  handleAptitudeComplete={handleAptitudeComplete}
+                  handleStageTransition={() => {}} // This will be overridden by StageTransitioner
+                />
+              )}
 
-            {stage === Stage.SELECT_PROMPTS && availablePrompts.length > 0 && (
-              <SelectPromptsStage
-                availablePrompts={availablePrompts}
-                handlePromptSelection={handlePromptSelection}
-                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
-              />
-            )}
+              {stage === Stage.SELECT_PROMPTS && availablePrompts.length > 0 && (
+                <SelectPromptsStage
+                  availablePrompts={availablePrompts}
+                  handlePromptSelection={handlePromptSelection}
+                  handleStageTransition={() => {}} // This will be overridden by StageTransitioner
+                />
+              )}
 
-            {stage === Stage.WRITING && (
-              <WritingStage 
-                prompts={prompts}
-                currentPromptIndex={currentPromptIndex}
-                handlePromptSubmit={handlePromptSubmit}
-                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
-              />
-            )}
+              {stage === Stage.WRITING && (
+                <WritingStage 
+                  prompts={prompts}
+                  currentPromptIndex={currentPromptIndex}
+                  handlePromptSubmit={handlePromptSubmit}
+                  handleStageTransition={() => {}} // This will be overridden by StageTransitioner
+                />
+              )}
 
-            {stage === Stage.COMPLETE && (
-              <CompleteStage
-                candidateName={candidateName}
-                candidatePosition={candidatePosition}
-                prompts={prompts}
-                aptitudeScore={aptitudeScore}
-                aptitudeTotal={aptitudeQuestions.length}
-                antiCheatingMetrics={antiCheatingMetrics}
-                restartAssessment={restartAssessment}
-                handleStageTransition={() => {}} // This will be overridden by StageTransitioner
-              />
-            )}
-          </StageTransitioner>
-        </div>
-      )}
-    </AssessmentManager>
+              {stage === Stage.COMPLETE && (
+                <CompleteStage
+                  candidateName={candidateName}
+                  candidatePosition={candidatePosition}
+                  prompts={prompts}
+                  aptitudeScore={aptitudeScore}
+                  aptitudeTotal={aptitudeQuestions.length}
+                  antiCheatingMetrics={antiCheatingMetrics}
+                  restartAssessment={restartAssessment}
+                  handleStageTransition={() => {}} // This will be overridden by StageTransitioner
+                />
+              )}
+            </StageTransitioner>
+          </div>
+        )}
+      </AssessmentManager>
+    </div>
   );
 };
 
