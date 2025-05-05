@@ -40,11 +40,13 @@ export const useInsightsGeneration = (
       let summary, analysis;
       try {
         // Generate summary and analysis in parallel
+        console.log("Starting parallel generation of summary and analysis...");
         [summary, analysis] = await Promise.all([
           generateCandidateSummary(data),
           generateStrengthsAndWeaknesses(data)
         ]);
-      } catch (apiError) {
+        console.log("Summary and analysis generation completed successfully");
+      } catch (apiError: any) {
         console.error("API error during generation:", apiError);
         // If the error includes rate limiting mention
         if (apiError.message && apiError.message.toLowerCase().includes("rate") && apiError.message.toLowerCase().includes("limit")) {
@@ -54,8 +56,11 @@ export const useInsightsGeneration = (
             variant: "destructive", // Only "default" and "destructive" are valid
           });
           // For clarity, we'll try again but one at a time
+          console.log("Attempting sequential generation after rate limit...");
           summary = await generateCandidateSummary(data);
+          console.log("Summary generated successfully");
           analysis = await generateStrengthsAndWeaknesses(data);
+          console.log("Analysis generated successfully");
         } else {
           throw apiError; // Re-throw if it's not a rate limit issue
         }
@@ -66,6 +71,10 @@ export const useInsightsGeneration = (
         strengthsCount: analysis?.strengths?.length,
         weaknessesCount: analysis?.weaknesses?.length
       });
+      
+      if (!summary || !analysis || !analysis.strengths || !analysis.weaknesses) {
+        throw new Error("Failed to generate complete insights");
+      }
       
       // Prepare update payload
       const updatePayload = {
@@ -80,37 +89,44 @@ export const useInsightsGeneration = (
         ...updatePayload
       };
       
-      // Update Firebase with the new insights - ensure this completes
-      const updateSuccess = await updateAssessmentAnalysis(data.id, updatePayload);
-      console.log("Update to Firebase completed:", updateSuccess);
-      
-      if (!updateSuccess) {
-        console.error("Failed to update assessment in Firebase");
+      // Update Firebase with the new insights
+      console.log("Saving insights to Firebase...");
+      try {
+        await updateAssessmentAnalysis(data.id, updatePayload);
+        console.log("Update to Firebase completed successfully");
+      } catch (updateError) {
+        console.error("Failed to update assessment in Firebase:", updateError);
         toast({
           title: "Update Failed",
           description: "Failed to save insights to the database. Please try again.",
           variant: "destructive",
         });
-      } else {
-        // Verify data was properly saved by fetching it again
-        try {
-          const assessmentRef = doc(db, "assessments", data.id);
-          const refreshedDoc = await getDoc(assessmentRef);
-          
-          if (refreshedDoc.exists()) {
-            const savedData = refreshedDoc.data();
-            if (!savedData.aiSummary || savedData.aiSummary !== summary) {
-              console.warn("Saved summary doesn't match what we tried to save");
-            } else {
-              console.log("Summary verified as successfully saved");
-            }
+        throw updateError;
+      }
+      
+      // Verify data was properly saved by fetching it again
+      try {
+        console.log("Verifying saved data...");
+        const assessmentRef = doc(db, "assessments", data.id);
+        const refreshedDoc = await getDoc(assessmentRef);
+        
+        if (refreshedDoc.exists()) {
+          const savedData = refreshedDoc.data();
+          if (!savedData.aiSummary) {
+            console.warn("Saved summary is missing!");
+            throw new Error("Failed to verify data was saved correctly");
+          } else {
+            console.log("Summary verified as successfully saved");
           }
-        } catch (verifyError) {
-          console.error("Error verifying saved data:", verifyError);
+        } else {
+          console.warn("Could not verify - document doesn't exist");
         }
+      } catch (verifyError) {
+        console.error("Error verifying saved data:", verifyError);
       }
       
       // Update local state
+      console.log("Updating local state with new insights");
       setAssessmentData(updatedData);
       
       toast({
@@ -119,13 +135,13 @@ export const useInsightsGeneration = (
       });
 
       return updatedData;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating insights:", error);
       toast({
         title: "Failed to Generate Insights",
-        description: error.message.includes("rate limit") 
+        description: error.message && error.message.includes("rate limit") 
           ? "API rate limit reached. Please wait a few minutes and try again." 
-          : `Error: ${error.message}`,
+          : `Error: ${error.message || "Unknown error"}`,
         variant: "destructive",
       });
       return null;

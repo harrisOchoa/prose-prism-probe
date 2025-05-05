@@ -31,6 +31,7 @@ export const useWritingScores = (
         description: "The system is now evaluating the writing responses. This may take a moment.",
       });
 
+      console.log("Starting evaluation for", assessmentData.completedPrompts.length, "prompts");
       const scores = await evaluateAllWritingPrompts(assessmentData.completedPrompts);
       
       if (scores.length === 0) {
@@ -44,6 +45,7 @@ export const useWritingScores = (
 
       console.log("Writing scores calculated:", scores);
       console.log("Overall writing score:", overallScore);
+      console.log("Valid scores count:", validScores.length);
 
       // Update local state first for immediate feedback
       const updatedData = {
@@ -55,6 +57,7 @@ export const useWritingScores = (
 
       // Update Firebase with the writing scores
       try {
+        console.log("Saving writing scores to Firebase for assessment", assessmentData.id);
         await updateAssessmentAnalysis(assessmentData.id, {
           writingScores: scores,
           overallWritingScore: overallScore

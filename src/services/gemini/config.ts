@@ -9,8 +9,12 @@ export const makeGeminiRequest = async (promptTemplate: string, temperature: num
   let retries = 0;
   let retryDelay = 2000; // Start with a 2-second delay
 
+  console.log(`Making Gemini request with ${promptTemplate.length} chars, temperature: ${temperature}`);
+
   while (retries <= maxRetries) {
     try {
+      console.log(`Attempt ${retries + 1} of ${maxRetries + 1}`);
+      
       const apiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
         method: "POST",
         headers: {
@@ -67,26 +71,38 @@ export const makeGeminiRequest = async (promptTemplate: string, temperature: num
       }
 
       if (!apiResponse.ok) {
-        const errorData = await apiResponse.text();
-        console.error("Gemini API error status:", apiResponse.status);
-        console.error("Error response:", errorData);
-        throw new Error(`API error: ${apiResponse.status} - ${errorData}`);
+        const errorText = await apiResponse.text();
+        console.error("Gemini API error:", apiResponse.status, errorText);
+        
+        // Log detailed error information
+        try {
+          const errorData = JSON.parse(errorText);
+          console.error("Parsed error data:", errorData);
+        } catch (e) {
+          // If it's not JSON, just log the text
+        }
+        
+        throw new Error(`API error ${apiResponse.status}: ${errorText.substring(0, 100)}...`);
       }
 
       const data = await apiResponse.json();
+      console.log("Gemini API response received successfully");
       
       if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        console.error("Invalid API response structure:", data);
         throw new Error("Invalid API response structure");
       }
 
       return data.candidates[0].content.parts[0].text;
     } catch (error) {
+      console.error(`Attempt ${retries + 1} failed:`, error);
+      
       if (retries >= maxRetries) {
-        console.error("Gemini API request failed after retries:", error);
+        console.error("Gemini API request failed after all retries:", error);
         throw error;
       }
       
-      console.warn(`Attempt ${retries + 1} failed, retrying in ${retryDelay/1000} seconds...`);
+      console.warn(`Retrying in ${retryDelay/1000} seconds...`);
       await new Promise(resolve => setTimeout(resolve, retryDelay));
       retryDelay *= 2; // Exponential backoff
       retries++;
@@ -97,14 +113,23 @@ export const makeGeminiRequest = async (promptTemplate: string, temperature: num
 };
 
 export const parseJsonResponse = (text: string) => {
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("Failed to extract JSON from response");
-  }
   try {
-    return JSON.parse(jsonMatch[0]);
+    // First try to parse directly in case it's already clean JSON
+    return JSON.parse(text);
   } catch (error) {
-    console.error("Error parsing JSON:", error);
-    throw new Error("Error parsing analysis results");
+    // If direct parsing fails, try to extract JSON from the text
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error("Failed to extract JSON from response:", text);
+      throw new Error("Failed to extract JSON from response");
+    }
+    
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch (innerError) {
+      console.error("Error parsing extracted JSON:", innerError);
+      console.error("Extracted text was:", jsonMatch[0]);
+      throw new Error("Error parsing analysis results");
+    }
   }
 };

@@ -13,9 +13,13 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
   React.useEffect(() => {
     console.log("SummaryCard - Assessment data:", {
       hasAiSummary: !!assessmentData.aiSummary,
+      summaryLength: assessmentData.aiSummary?.length || 0, 
       hasStrengths: !!(assessmentData.strengths && assessmentData.strengths.length),
+      strengthsCount: assessmentData.strengths?.length || 0,
       hasWeaknesses: !!(assessmentData.weaknesses && assessmentData.weaknesses.length),
-      hasValidWritingScores: !!(assessmentData.writingScores && assessmentData.writingScores.some(score => score.score > 0))
+      weaknessesCount: assessmentData.weaknesses?.length || 0,
+      hasValidWritingScores: !!(assessmentData.writingScores && assessmentData.writingScores.some(score => score.score > 0)),
+      writingScoresCount: assessmentData.writingScores?.length || 0
     });
   }, [assessmentData]);
   
@@ -75,7 +79,8 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
               </div>
             )}
           </div>
-        ) : assessmentData.writingScores && assessmentData.writingScores.length > 0 ? (
+        ) : assessmentData.writingScores && assessmentData.writingScores.length > 0 &&
+           assessmentData.writingScores.some((score: any) => score.score > 0) ? (
           <div className="text-center py-4">
             <p className="text-gray-500">
               Summary not generated yet. Click the "Regenerate Insights" button above to create an assessment summary.
