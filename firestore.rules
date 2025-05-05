@@ -15,11 +15,12 @@ service cloud.firestore {
       
       // Anyone can read a specific assessment by ID (needed for the assessment completion page)
       allow read: if true;
+      
+      // Allow updating assessments (needed for evaluation functionality)
+      allow update: if true;
     }
     
     // Admin access is controlled through your application logic
     // There's no need for user-specific rules since you're using a password-based admin panel
-    
-    // Note: If you eventually add Firebase Authentication, you would need to update these rules
   }
 }
