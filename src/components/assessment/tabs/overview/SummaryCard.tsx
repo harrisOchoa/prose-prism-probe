@@ -9,21 +9,6 @@ interface SummaryCardProps {
 }
 
 const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSummary }) => {
-  // Debug logging to verify data
-  React.useEffect(() => {
-    console.log("SummaryCard - Assessment data:", {
-      hasAiSummary: !!assessmentData.aiSummary,
-      summaryLength: assessmentData.aiSummary?.length || 0, 
-      hasStrengths: !!(assessmentData.strengths && assessmentData.strengths.length),
-      strengthsCount: assessmentData.strengths?.length || 0,
-      hasWeaknesses: !!(assessmentData.weaknesses && assessmentData.weaknesses.length),
-      weaknessesCount: assessmentData.weaknesses?.length || 0,
-      hasValidWritingScores: !!(assessmentData.writingScores && assessmentData.writingScores.some(score => score.score > 0)),
-      writingScoresCount: assessmentData.writingScores?.length || 0,
-      overallWritingScore: assessmentData.overallWritingScore || 0
-    });
-  }, [assessmentData]);
-  
   // Check if we have valid writing scores
   const hasValidWritingScores = assessmentData.writingScores && 
     assessmentData.writingScores.length > 0 &&
@@ -33,6 +18,19 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
   const hasErrorScores = assessmentData.writingScores && 
     assessmentData.writingScores.length > 0 &&
     assessmentData.writingScores.some((score: any) => score.score === 0);
+  
+  // Debug log to help identify issues with data display
+  React.useEffect(() => {
+    console.log("SummaryCard - Current state:", {
+      generatingSummary, 
+      hasAiSummary: !!assessmentData.aiSummary,
+      aiSummaryLength: assessmentData.aiSummary?.length || 0,
+      hasStrengths: !!(assessmentData.strengths && assessmentData.strengths.length > 0),
+      hasWeaknesses: !!(assessmentData.weaknesses && assessmentData.weaknesses.length > 0),
+      hasValidScores: hasValidWritingScores,
+      hasErrorScores: hasErrorScores
+    });
+  }, [assessmentData, generatingSummary, hasValidWritingScores, hasErrorScores]);
   
   return (
     <Card>

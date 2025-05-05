@@ -33,61 +33,16 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
     profile: false,
     aptitude: false
   });
-  const [detailedAnalysis, setDetailedAnalysis] = useState<DetailedAnalysis | null>(null);
-  const [personalityInsights, setPersonalityInsights] = useState<PersonalityInsight[] | null>(null);
-  const [interviewQuestions, setInterviewQuestions] = useState<InterviewQuestion[] | null>(null);
-  const [profileMatch, setProfileMatch] = useState<CandidateProfileMatch | null>(null);
-  const [aptitudeAnalysis, setAptitudeAnalysis] = useState<AptitudeAnalysis | null>(null);
+  
+  // Use state from assessmentData directly instead of separate state
+  // This ensures we always display what's in the parent state
+  const detailedAnalysis = assessmentData.detailedWritingAnalysis;
+  const personalityInsights = assessmentData.personalityInsights;
+  const interviewQuestions = assessmentData.interviewQuestions;
+  const profileMatch = assessmentData.profileMatch;
+  const aptitudeAnalysis = assessmentData.aptitudeAnalysis;
 
-  // Initial load and refresh from database
-  useEffect(() => {
-    const refreshDataFromFirestore = async () => {
-      if (assessmentData && assessmentData.id) {
-        try {
-          const assessmentRef = doc(db, "assessments", assessmentData.id);
-          const docSnap = await getDoc(assessmentRef);
-          
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            
-            // Update local state with data from Firestore
-            if (data.detailedWritingAnalysis) setDetailedAnalysis(data.detailedWritingAnalysis);
-            if (data.personalityInsights) setPersonalityInsights(data.personalityInsights);
-            if (data.interviewQuestions) setInterviewQuestions(data.interviewQuestions);
-            if (data.profileMatch) setProfileMatch(data.profileMatch);
-            if (data.aptitudeAnalysis) setAptitudeAnalysis(data.aptitudeAnalysis);
-            
-            console.log("Advanced analysis data refreshed from Firestore");
-          }
-        } catch (error) {
-          console.error("Error refreshing data from Firestore:", error);
-        }
-      }
-    };
-    
-    // Always try to get fresh data from Firestore when component mounts or assessment changes
-    refreshDataFromFirestore();
-    
-    // Also update from props (though this might be stale)
-    if (assessmentData) {
-      if (assessmentData.detailedWritingAnalysis) {
-        setDetailedAnalysis(assessmentData.detailedWritingAnalysis);
-      }
-      if (assessmentData.personalityInsights) {
-        setPersonalityInsights(assessmentData.personalityInsights);
-      }
-      if (assessmentData.interviewQuestions) {
-        setInterviewQuestions(assessmentData.interviewQuestions);
-      }
-      if (assessmentData.profileMatch) {
-        setProfileMatch(assessmentData.profileMatch);
-      }
-      if (assessmentData.aptitudeAnalysis) {
-        setAptitudeAnalysis(assessmentData.aptitudeAnalysis);
-      }
-    }
-  }, [assessmentData?.id]);
-
+  // Update loading state based on generatingAnalysis prop
   useEffect(() => {
     if (generatingAnalysis) {
       setLoading({
@@ -101,7 +56,7 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
   }, [generatingAnalysis]);
 
   const handleGenerateAnalysis = async (analysisType: string) => {
-    if (!assessmentData.overallWritingScore) {
+    if (!assessmentData.overallWritingScore && analysisType !== 'aptitude') {
       toast({
         title: "Writing Not Evaluated",
         description: "Please evaluate the writing first to generate advanced analysis.",
@@ -109,31 +64,20 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
       });
       return;
     }
+    
+    if (analysisType === 'aptitude' && !assessmentData.aptitudeScore) {
+      toast({
+        title: "Aptitude Results Needed",
+        description: "This candidate needs to complete the aptitude test before analysis.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
-      let result;
-      switch(analysisType) {
-        case "writing":
-          result = await generateAdvancedAnalysis("writing");
-          if (result) setDetailedAnalysis(result);
-          break;
-        case "personality":
-          result = await generateAdvancedAnalysis("personality");
-          if (result) setPersonalityInsights(result);
-          break;
-        case "questions":
-          result = await generateAdvancedAnalysis("interview");
-          if (result) setInterviewQuestions(result);
-          break;
-        case "profile":
-          result = await generateAdvancedAnalysis("profile");
-          if (result) setProfileMatch(result);
-          break;
-        case "aptitude":
-          result = await generateAdvancedAnalysis("aptitude");
-          if (result) setAptitudeAnalysis(result);
-          break;
-      }
+      await generateAdvancedAnalysis(analysisType);
+      // No need to set local state here - the parent component will update its state
+      // and pass the updated assessmentData back through props
     } catch (error) {
       console.error(`Error in handleGenerateAnalysis for ${analysisType}:`, error);
     }

@@ -89,11 +89,13 @@ export const useInsightsGeneration = (
         weaknesses: analysis.weaknesses
       };
       
-      // Update local state first
+      // Update local state immediately
       const updatedData = {
         ...data,
         ...updatePayload
       };
+      
+      // Set the updated data to update the UI immediately
       setAssessmentData(updatedData);
       
       // Update Firebase with the new insights
@@ -101,37 +103,39 @@ export const useInsightsGeneration = (
       try {
         await updateAssessmentAnalysis(data.id, updatePayload);
         console.log("Update to Firebase completed successfully");
+        
+        // Verify data was properly saved by fetching it again
+        const refreshedDoc = await getDoc(doc(db, "assessments", data.id));
+        if (refreshedDoc.exists()) {
+          const savedData = refreshedDoc.data();
+          
+          // Only update the state if the saved data is different from what we already have
+          const refreshedAssessment = {
+            id: refreshedDoc.id,
+            ...savedData
+          } as AssessmentData;
+          
+          // Log verification
+          console.log("Verification data fetched:", {
+            hasAiSummary: !!refreshedAssessment.aiSummary,
+            summaryLength: refreshedAssessment.aiSummary?.length || 0
+          });
+          
+          // Only update if necessary to avoid render loops
+          if (JSON.stringify(refreshedAssessment) !== JSON.stringify(updatedData)) {
+            setAssessmentData(refreshedAssessment);
+          }
+        }
       } catch (updateError) {
         console.error("Failed to update assessment in Firebase:", updateError);
         toast({
           title: "Update Failed",
-          description: "Failed to save insights to the database. Please try again.",
+          description: "Failed to save insights to the database, but they are available in your current session.",
           variant: "destructive",
         });
-        throw updateError;
       }
       
-      // Verify data was properly saved by fetching it again
-      try {
-        console.log("Verifying saved data...");
-        const assessmentRef = doc(db, "assessments", data.id);
-        const refreshedDoc = await getDoc(assessmentRef);
-        
-        if (refreshedDoc.exists()) {
-          const savedData = refreshedDoc.data();
-          if (!savedData.aiSummary) {
-            console.warn("Saved summary is missing!");
-            throw new Error("Failed to verify data was saved correctly");
-          } else {
-            console.log("Summary verified as successfully saved:", savedData.aiSummary.substring(0, 50) + "...");
-          }
-        } else {
-          console.warn("Could not verify - document doesn't exist");
-        }
-      } catch (verifyError) {
-        console.error("Error verifying saved data:", verifyError);
-      }
-      
+      // Show success toast
       toast({
         title: "Insights Generated",
         description: "Assessment insights have been generated successfully.",

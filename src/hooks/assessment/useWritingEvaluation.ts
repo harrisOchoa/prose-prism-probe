@@ -43,6 +43,9 @@ export const useWritingEvaluation = (
         return;
       }
       
+      // Immediately update state with the writing scores
+      setAssessmentData(updatedData);
+      
       // Step 2: Generate insights based on scores
       console.log("Step 2: Generating insights based on scores");
       const finalData = await generateInsights(updatedData);
@@ -51,6 +54,9 @@ export const useWritingEvaluation = (
         console.error("Insights generation failed");
         return;
       }
+      
+      // Immediately update the UI with the generated insights
+      setAssessmentData(finalData);
       
       // Step 3: Verify data persistence with a fresh fetch
       console.log("Step 3: Verifying data persistence");
@@ -70,6 +76,7 @@ export const useWritingEvaluation = (
               weaknessesCount: refreshedData.weaknesses?.length || 0
             });
             
+            // Update state again with the freshly fetched data to ensure UI is in sync
             setAssessmentData(refreshedData);
             
             // Add success toast if everything looks good
@@ -110,7 +117,19 @@ export const useWritingEvaluation = (
     console.log("Starting insights regeneration...");
     try {
       setGeneratingSummary(true);
+      
+      // Show initial toast
+      toast({
+        title: "Regenerating Insights",
+        description: "Please wait while we generate new insights for this assessment.",
+      });
+      
       const updatedData = await generateInsights();
+      
+      // Immediately update the UI with the generated insights
+      if (updatedData) {
+        setAssessmentData(updatedData);
+      }
       
       // Verify data persistence with a fresh fetch
       if (updatedData && updatedData.id) {
@@ -128,6 +147,7 @@ export const useWritingEvaluation = (
             weaknessesCount: refreshedData.weaknesses?.length || 0
           });
           
+          // Update state again with the freshly fetched data
           setAssessmentData(refreshedData);
           
           // Add success toast if everything looks good

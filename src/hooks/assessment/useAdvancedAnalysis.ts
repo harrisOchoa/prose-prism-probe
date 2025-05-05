@@ -1,115 +1,127 @@
 
 import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 import { 
   generateDetailedWritingAnalysis,
   generatePersonalityInsights,
   generateInterviewQuestions,
-  compareWithIdealProfile,
+  generateProfileMatch,
   generateAptitudeAnalysis
 } from "@/services/geminiService";
 import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
-import { toast } from "@/hooks/use-toast";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/firebase/config";
 import { AssessmentData } from "@/types/assessment";
 
-export const useAdvancedAnalysis = (assessmentData: AssessmentData, setAssessmentData: (data: AssessmentData) => void) => {
-  const [generatingAnalysis, setGeneratingAnalysis] = useState<Record<string, boolean>>({});
+/**
+ * Hook for handling advanced analysis generation functionality
+ */
+export const useAdvancedAnalysis = (
+  assessmentData: AssessmentData,
+  setAssessmentData: (data: AssessmentData) => void
+) => {
+  const [generatingAnalysis, setGeneratingAnalysis] = useState<{[key: string]: boolean}>({
+    writing: false,
+    personality: false,
+    interview: false,
+    profile: false,
+    aptitude: false
+  });
 
-  /**
-   * Generate advanced analysis based on type
-   */
-  const generateAdvancedAnalysis = async (type: string): Promise<any> => {
-    if (!assessmentData || !assessmentData.writingScores || assessmentData.writingScores.length === 0) {
+  const generateAdvancedAnalysis = async (type: string) => {
+    if (!assessmentData.overallWritingScore && type !== 'aptitude') {
       toast({
-        title: "Writing Evaluation Required",
-        description: "Writing must be evaluated before generating analysis.",
+        title: "Writing Not Evaluated",
+        description: "Please evaluate the writing first to generate advanced analysis.",
         variant: "destructive",
       });
-      return Promise.reject(new Error("Writing evaluation required"));
+      return null;
+    }
+    
+    // For aptitude analysis, we need aptitude scores
+    if (type === 'aptitude' && !assessmentData.aptitudeScore) {
+      toast({
+        title: "Aptitude Results Needed",
+        description: "This candidate needs to complete the aptitude test before analysis.",
+        variant: "destructive",
+      });
+      return null;
     }
 
-    const analysisType = type.toLowerCase();
-    setGeneratingAnalysis(prev => ({ ...prev, [analysisType]: true }));
-
     try {
-      let result;
-      let updateField;
+      // Set generating state for this analysis type
+      setGeneratingAnalysis(prev => ({ ...prev, [type]: true }));
       
-      switch (analysisType) {
+      toast({
+        title: "Generating Analysis",
+        description: `Generating ${type} analysis. This may take a moment.`,
+      });
+      
+      let result;
+      let updateKey = '';
+      
+      switch(type) {
         case 'writing':
-        case 'detailed':  // Add 'detailed' as an alias for 'writing'
           result = await generateDetailedWritingAnalysis(assessmentData);
-          updateField = 'detailedWritingAnalysis';
+          updateKey = 'detailedWritingAnalysis';
           break;
         case 'personality':
           result = await generatePersonalityInsights(assessmentData);
-          updateField = 'personalityInsights';
+          updateKey = 'personalityInsights';
           break;
         case 'interview':
-        case 'questions': // Add 'questions' as an alias for 'interview'
+        case 'questions':
           result = await generateInterviewQuestions(assessmentData);
-          updateField = 'interviewQuestions';
+          updateKey = 'interviewQuestions';
           break;
         case 'profile':
-          result = await compareWithIdealProfile(assessmentData);
-          updateField = 'profileMatch';
+          result = await generateProfileMatch(assessmentData);
+          updateKey = 'profileMatch';
           break;
         case 'aptitude':
           result = await generateAptitudeAnalysis(assessmentData);
-          updateField = 'aptitudeAnalysis';
+          updateKey = 'aptitudeAnalysis';
           break;
         default:
           throw new Error(`Unknown analysis type: ${type}`);
       }
       
-      // Update assessment data state
-      const updatedData = { ...assessmentData, [updateField]: result };
+      if (!result) {
+        throw new Error(`Failed to generate ${type} analysis`);
+      }
+      
+      console.log(`Generated ${type} analysis:`, result);
+      
+      // Update local state immediately
+      const updatedData = {
+        ...assessmentData,
+        [updateKey]: result
+      };
+      
       setAssessmentData(updatedData);
       
-      // Update in database with verification
-      try {
-        await updateAssessmentAnalysis(assessmentData.id, { [updateField]: result });
-        
-        // Verify that data was saved properly
-        const assessmentRef = doc(db, "assessments", assessmentData.id);
-        const refreshedDoc = await getDoc(assessmentRef);
-        
-        if (refreshedDoc.exists()) {
-          const savedData = refreshedDoc.data();
-          if (!savedData[updateField] || 
-              JSON.stringify(savedData[updateField]) !== JSON.stringify(result)) {
-            console.error(`Database verification failed for ${updateField}`);
-            throw new Error("Failed to verify data was saved correctly");
-          }
-          console.log(`${updateField} verified as saved successfully`);
-        }
-      } catch (dbError) {
-        console.error(`Error saving ${updateField} to database:`, dbError);
-        toast({
-          title: "Save Error",
-          description: `Generated analysis could not be saved. Please try again.`,
-          variant: "destructive",
-        });
-        throw dbError;
-      }
+      // Update Firebase
+      await updateAssessmentAnalysis(assessmentData.id, {
+        [updateKey]: result
+      });
       
       toast({
         title: "Analysis Complete",
-        description: `${type} analysis has been generated and saved successfully.`,
+        description: `${type.charAt(0).toUpperCase() + type.slice(1)} analysis has been generated successfully.`,
       });
       
       return result;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error generating ${type} analysis:`, error);
       toast({
         title: "Analysis Failed",
-        description: `Could not generate ${type} analysis. ${error.message}`,
+        description: error.message && error.message.includes("rate limit") 
+          ? "API rate limit reached. Please wait a few minutes and try again."
+          : `Error: ${error.message || "Unknown error"}`,
         variant: "destructive",
       });
-      throw error;
+      return null;
     } finally {
-      setGeneratingAnalysis(prev => ({ ...prev, [analysisType]: false }));
+      // Reset generating state for this analysis type
+      setGeneratingAnalysis(prev => ({ ...prev, [type]: false }));
     }
   };
 

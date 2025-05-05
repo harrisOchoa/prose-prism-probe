@@ -58,12 +58,14 @@ export const useWritingScores = (
       console.log("Overall writing score:", overallScore);
       console.log("Valid scores count:", validScores.length);
 
-      // Update local state first for immediate feedback
+      // Update local state immediately for immediate feedback
       const updatedData = {
         ...assessmentData,
         writingScores: scores,
         overallWritingScore: overallScore
       };
+      
+      // Update the UI immediately
       setAssessmentData(updatedData);
 
       // Update Firebase with the writing scores
@@ -84,10 +86,9 @@ export const useWritingScores = (
         console.error("Failed to save writing scores to database:", updateError);
         toast({
           title: "Save Failed",
-          description: "Failed to save evaluation results to database. Please try again.",
+          description: "Failed to save evaluation results to database, but they are available in your current session.",
           variant: "destructive",
         });
-        throw new Error("Failed to save evaluation results to database");
       }
 
       return updatedData;
