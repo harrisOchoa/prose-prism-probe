@@ -78,6 +78,11 @@ export const makeGeminiRequest = async (promptTemplate: string, temperature: num
         try {
           const errorData = JSON.parse(errorText);
           console.error("Parsed error data:", errorData);
+          
+          // Check if the error is related to the API key
+          if (errorData.error && errorData.error.status === 'PERMISSION_DENIED') {
+            throw new Error("API key issue: Permission denied. Your Gemini API key may be invalid or restricted.");
+          }
         } catch (e) {
           // If it's not JSON, just log the text
         }
@@ -118,17 +123,23 @@ export const parseJsonResponse = (text: string) => {
     return JSON.parse(text);
   } catch (error) {
     // If direct parsing fails, try to extract JSON from the text
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error("Failed to extract JSON from response:", text);
-      throw new Error("Failed to extract JSON from response");
-    }
-    
     try {
+      // Try to find JSON-like content with multiple regex patterns
+      let jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        // Try alternative pattern with square brackets for arrays
+        jsonMatch = text.match(/\[[\s\S]*\]/);
+      }
+      
+      if (!jsonMatch) {
+        console.error("Failed to extract JSON from response:", text);
+        throw new Error("Failed to extract JSON from response");
+      }
+      
       return JSON.parse(jsonMatch[0]);
     } catch (innerError) {
       console.error("Error parsing extracted JSON:", innerError);
-      console.error("Extracted text was:", jsonMatch[0]);
+      console.error("Raw text was:", text);
       throw new Error("Error parsing analysis results");
     }
   }

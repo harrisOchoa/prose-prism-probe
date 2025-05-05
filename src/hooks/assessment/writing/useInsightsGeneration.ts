@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { generateCandidateSummary, generateStrengthsAndWeaknesses } from "@/services/geminiService";
-import { updateAssessmentAnalysis } from "@/firebase/services/assessment";
+import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { AssessmentData } from "@/types/assessment";
@@ -36,6 +36,12 @@ export const useInsightsGeneration = (
         description: "This may take a moment. The system will automatically retry if API rate limits are reached.",
       });
       
+      // Check if we have any valid scores
+      const validScores = data.writingScores.filter(score => score.score > 0);
+      if (validScores.length === 0) {
+        throw new Error("No valid writing scores to base insights on. Try evaluating writing first.");
+      }
+      
       // Generate insights with potential retries for rate limiting
       let summary, analysis;
       try {
@@ -53,7 +59,7 @@ export const useInsightsGeneration = (
           toast({
             title: "API Rate Limit Hit",
             description: "The AI service is currently rate limited. Retrying with backoff...",
-            variant: "destructive", // Only "default" and "destructive" are valid
+            variant: "destructive", 
           });
           // For clarity, we'll try again but one at a time
           console.log("Attempting sequential generation after rate limit...");
@@ -88,6 +94,7 @@ export const useInsightsGeneration = (
         ...data,
         ...updatePayload
       };
+      setAssessmentData(updatedData);
       
       // Update Firebase with the new insights
       console.log("Saving insights to Firebase...");
@@ -116,7 +123,7 @@ export const useInsightsGeneration = (
             console.warn("Saved summary is missing!");
             throw new Error("Failed to verify data was saved correctly");
           } else {
-            console.log("Summary verified as successfully saved");
+            console.log("Summary verified as successfully saved:", savedData.aiSummary.substring(0, 50) + "...");
           }
         } else {
           console.warn("Could not verify - document doesn't exist");
@@ -124,10 +131,6 @@ export const useInsightsGeneration = (
       } catch (verifyError) {
         console.error("Error verifying saved data:", verifyError);
       }
-      
-      // Update local state
-      console.log("Updating local state with new insights");
-      setAssessmentData(updatedData);
       
       toast({
         title: "Insights Generated",

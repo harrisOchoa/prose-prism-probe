@@ -51,11 +51,15 @@ Writing Prompt: "${prompt}"
 Candidate's Response: "${userResponse}"
 `;
 
+    console.log("Sending evaluation request to Gemini API...");
     const text = await makeGeminiRequest(promptTemplate, 0.2);
+    console.log("Received evaluation response, parsing...");
     const evaluation = parseJsonResponse(text);
     
+    console.log("Parsed evaluation:", evaluation);
     const score = Number(evaluation.score);
     if (isNaN(score)) {
+      console.error("Invalid score format in response:", evaluation);
       throw new Error("Invalid score format");
     }
     
@@ -85,7 +89,7 @@ Candidate's Response: "${userResponse}"
 };
 
 export const evaluateAllWritingPrompts = async (prompts: WritingPromptItem[]): Promise<WritingScore[]> => {
-  console.log("Starting evaluation of all writing prompts:", prompts);
+  console.log("Starting evaluation of all writing prompts:", prompts.length, "prompts");
   
   if (!prompts || prompts.length === 0) {
     console.log("No prompts to evaluate");
@@ -93,28 +97,32 @@ export const evaluateAllWritingPrompts = async (prompts: WritingPromptItem[]): P
   }
   
   try {
-    const evaluationPromises = prompts.map(prompt => {
+    // Process prompts one at a time to avoid overwhelming the API
+    const results: WritingScore[] = [];
+    
+    for (const prompt of prompts) {
       console.log(`Evaluating prompt ID ${prompt.id}: "${prompt.prompt.substring(0, 30)}..."`);
-      return evaluateWritingResponse(prompt.prompt, prompt.response)
-        .then(result => {
-          console.log(`Evaluation completed for prompt ID ${prompt.id}:`, result);
-          return { ...result, promptId: prompt.id };
-        })
-        .catch(error => {
-          console.error(`Error evaluating prompt ID ${prompt.id}:`, error);
-          return { 
-            score: 0, 
-            feedback: `Evaluation failed: ${error.message}. Please check manually.`, 
-            aiDetection: {
-              probability: 0,
-              notes: "Evaluation failed"
-            },
-            promptId: prompt.id 
-          };
+      try {
+        const result = await evaluateWritingResponse(prompt.prompt, prompt.response);
+        console.log(`Evaluation completed for prompt ID ${prompt.id}:`, result);
+        results.push({ ...result, promptId: prompt.id });
+      } catch (error) {
+        console.error(`Error evaluating prompt ID ${prompt.id}:`, error);
+        results.push({ 
+          score: 0, 
+          feedback: `Evaluation failed: ${error.message}. Please check manually.`, 
+          aiDetection: {
+            probability: 0,
+            notes: "Evaluation failed"
+          },
+          promptId: prompt.id 
         });
-    });
+      }
+      
+      // Small delay between requests to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
 
-    const results = await Promise.all(evaluationPromises);
     console.log("All evaluations completed:", results);
     return results;
   } catch (error) {

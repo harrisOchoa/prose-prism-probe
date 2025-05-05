@@ -26,19 +26,25 @@ export const useWritingEvaluation = (
 
   const handleManualEvaluation = async () => {
     console.log("Starting manual evaluation process...");
+    toast({
+      title: "Evaluation Process Started",
+      description: "This will evaluate writing and generate insights. It may take a minute or two.",
+    });
+
     try {
       // Step 1: Evaluate writing responses
       console.log("Step 1: Evaluating writing responses");
+      setGeneratingSummary(true); // Show loading state from the beginning
       const updatedData = await evaluateWritingResponses();
       
       if (!updatedData) {
         console.error("Writing evaluation failed, cannot proceed to insights");
+        setGeneratingSummary(false);
         return;
       }
       
       // Step 2: Generate insights based on scores
       console.log("Step 2: Generating insights based on scores");
-      setGeneratingSummary(true);
       const finalData = await generateInsights(updatedData);
       
       if (!finalData) {
@@ -88,11 +94,11 @@ export const useWritingEvaluation = (
           console.error("Error during final verification:", verifyError);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in handleManualEvaluation:", error);
       toast({
         title: "Evaluation Error",
-        description: `An error occurred: ${(error as Error).message}`,
+        description: `An error occurred: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -140,11 +146,11 @@ export const useWritingEvaluation = (
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error regenerating insights:", error);
       toast({
         title: "Regeneration Error",
-        description: `An error occurred: ${(error as Error).message}`,
+        description: `An error occurred: ${error.message}`,
         variant: "destructive",
       });
     } finally {

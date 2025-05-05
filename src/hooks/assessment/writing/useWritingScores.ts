@@ -34,11 +34,22 @@ export const useWritingScores = (
       console.log("Starting evaluation for", assessmentData.completedPrompts.length, "prompts");
       const scores = await evaluateAllWritingPrompts(assessmentData.completedPrompts);
       
-      if (scores.length === 0) {
+      if (!scores || scores.length === 0) {
         throw new Error("No scores were returned from evaluation");
       }
 
       const validScores = scores.filter(score => score.score > 0);
+      console.log("Valid scores count:", validScores.length, "out of", scores.length);
+      
+      if (validScores.length === 0) {
+        toast({
+          title: "Evaluation Incomplete",
+          description: "Could not evaluate any writing prompts successfully. Please try again.",
+          variant: "destructive",
+        });
+        return null;
+      }
+      
       const overallScore = validScores.length > 0
         ? Number((validScores.reduce((sum, score) => sum + score.score, 0) / validScores.length).toFixed(1))
         : 0;
@@ -64,19 +75,23 @@ export const useWritingScores = (
         });
         
         console.log("Successfully saved writing scores to database");
+        toast({
+          title: "Evaluation Complete",
+          description: `Successfully evaluated ${validScores.length} of ${scores.length} writing prompts.`,
+          variant: "default",
+        });
       } catch (updateError) {
         console.error("Failed to save writing scores to database:", updateError);
+        toast({
+          title: "Save Failed",
+          description: "Failed to save evaluation results to database. Please try again.",
+          variant: "destructive",
+        });
         throw new Error("Failed to save evaluation results to database");
       }
 
-      toast({
-        title: "Evaluation Complete",
-        description: `Successfully evaluated ${validScores.length} of ${scores.length} writing prompts.`,
-        variant: "default",
-      });
-
       return updatedData;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error during writing evaluation:", error);
       toast({
         title: "Evaluation Failed",

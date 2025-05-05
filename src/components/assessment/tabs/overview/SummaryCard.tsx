@@ -19,9 +19,20 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
       hasWeaknesses: !!(assessmentData.weaknesses && assessmentData.weaknesses.length),
       weaknessesCount: assessmentData.weaknesses?.length || 0,
       hasValidWritingScores: !!(assessmentData.writingScores && assessmentData.writingScores.some(score => score.score > 0)),
-      writingScoresCount: assessmentData.writingScores?.length || 0
+      writingScoresCount: assessmentData.writingScores?.length || 0,
+      overallWritingScore: assessmentData.overallWritingScore || 0
     });
   }, [assessmentData]);
+  
+  // Check if we have valid writing scores
+  const hasValidWritingScores = assessmentData.writingScores && 
+    assessmentData.writingScores.length > 0 &&
+    assessmentData.writingScores.some((score: any) => score.score > 0);
+    
+  // Check if we have error scores (score of 0)
+  const hasErrorScores = assessmentData.writingScores && 
+    assessmentData.writingScores.length > 0 &&
+    assessmentData.writingScores.some((score: any) => score.score === 0);
   
   return (
     <Card>
@@ -79,11 +90,18 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
               </div>
             )}
           </div>
-        ) : assessmentData.writingScores && assessmentData.writingScores.length > 0 &&
-           assessmentData.writingScores.some((score: any) => score.score > 0) ? (
+        ) : hasValidWritingScores ? (
           <div className="text-center py-4">
             <p className="text-gray-500">
-              Summary not generated yet. Click the "Regenerate Insights" button above to create an assessment summary.
+              Writing has been evaluated. Click the "Regenerate Insights" button above to create an assessment summary.
+            </p>
+          </div>
+        ) : hasErrorScores ? (
+          <div className="bg-amber-50 border border-amber-100 rounded-md p-4 text-center">
+            <AlertCircle className="h-6 w-6 text-amber-500 mx-auto mb-2" />
+            <p className="text-amber-800 font-medium">Writing evaluation encountered errors</p>
+            <p className="text-amber-700 text-sm mt-1">
+              There were issues evaluating some writing responses. Please try the "Evaluate Writing" button again.
             </p>
           </div>
         ) : (
