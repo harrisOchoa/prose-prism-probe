@@ -38,5 +38,6 @@ export interface AssessmentSubmission {
   personalityInsights?: any[];
   interviewQuestions?: any[];
   profileMatch?: any;
+  aptitudeAnalysis?: any;
   antiCheatingMetrics?: AntiCheatingMetrics | null;
 }

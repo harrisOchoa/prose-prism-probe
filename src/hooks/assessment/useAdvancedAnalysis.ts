@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { 
   generateDetailedWritingAnalysis,
   generatePersonalityInsights,
   generateInterviewQuestions,
-  generateProfileMatch,
+  compareWithIdealProfile as generateProfileMatch,
   generateAptitudeAnalysis
 } from "@/services/geminiService";
 import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
