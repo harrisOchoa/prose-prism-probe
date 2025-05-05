@@ -51,7 +51,7 @@ export const useInsightsGeneration = (
           toast({
             title: "API Rate Limit Hit",
             description: "The AI service is currently rate limited. Retrying with backoff...",
-            variant: "warning",
+            variant: "destructive", // Changed from "warning" to "destructive" as only "default" and "destructive" are valid
           });
           // For clarity, we'll try again but one at a time
           summary = await generateCandidateSummary(data);
