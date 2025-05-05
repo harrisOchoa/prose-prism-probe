@@ -15,6 +15,8 @@ const AssessmentTable: React.FC<AssessmentTableProps> = memo(({
   handlePageChange,
   viewAssessmentDetails,
   getScoreColor,
+  loading = false,
+  hasNextPage = false
 }) => {
   const isMobile = useIsMobile();
 
@@ -51,6 +53,8 @@ const AssessmentTable: React.FC<AssessmentTableProps> = memo(({
           currentPage={currentPage}
           totalPages={totalPages}
           handlePageChange={handlePageChange}
+          loading={loading}
+          hasNextPage={hasNextPage}
         />
       </CardContent>
     </Card>

@@ -6,8 +6,6 @@ import DashboardHeader from "./admin/dashboard/DashboardHeader";
 import DashboardStats from "./admin/dashboard/DashboardStats";
 import AssessmentTable from "./admin/dashboard/AssessmentTable";
 import LoadingState from "./admin/dashboard/LoadingState";
-import { Button } from "./ui/button";
-import { Loader2 } from "lucide-react";
 
 const AdminDashboard = memo(() => {
   const {
@@ -27,8 +25,7 @@ const AdminDashboard = memo(() => {
     averageWordCount,
     averageWritingScore,
     getScoreColor,
-    hasMore,
-    loadMore
+    hasNextPage
   } = useAdminDashboard();
 
   if (showDetails && selectedAssessment) {
@@ -51,30 +48,16 @@ const AdminDashboard = memo(() => {
       {loading && currentItems.length === 0 ? (
         <LoadingState />
       ) : (
-        <>
-          <AssessmentTable
-            assessments={currentItems}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            handlePageChange={handlePageChange}
-            viewAssessmentDetails={viewAssessmentDetails}
-            getScoreColor={getScoreColor}
-          />
-          
-          {hasMore && (
-            <div className="flex justify-center my-6">
-              <Button 
-                onClick={loadMore} 
-                variant="outline"
-                disabled={loading}
-                className="flex items-center gap-2"
-              >
-                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {loading ? "Loading more..." : "Load More Assessments"}
-              </Button>
-            </div>
-          )}
-        </>
+        <AssessmentTable
+          assessments={currentItems}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          handlePageChange={handlePageChange}
+          viewAssessmentDetails={viewAssessmentDetails}
+          getScoreColor={getScoreColor}
+          loading={loading}
+          hasNextPage={hasNextPage}
+        />
       )}
     </div>
   );

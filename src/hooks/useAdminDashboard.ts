@@ -13,55 +13,80 @@ export const useAdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAssessment, setSelectedAssessment] = useState<AssessmentData | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot | null>(null);
-  const [hasMore, setHasMore] = useState(true);
+  const [lastVisibleByPage, setLastVisibleByPage] = useState<{[page: number]: QueryDocumentSnapshot | null}>({1: null});
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const itemsPerPage = 10;
   
-  const fetchAssessments = useCallback(async (isFirstPage = false) => {
+  const fetchAssessments = useCallback(async (page: number = 1) => {
     try {
       setLoading(true);
       
-      const { assessments: newAssessments, lastDoc, hasMore: moreAvailable } = 
-        await fetchAssessmentBatch(isFirstPage ? null : lastVisible, itemsPerPage);
+      // Determine the starting point for this page
+      const startDoc = page === 1 ? null : lastVisibleByPage[page - 1] || null;
       
-      if (newAssessments.length === 0) {
-        setHasMore(false);
-        setLoading(false);
+      if (page > 1 && !startDoc) {
+        console.error(`No starting document found for page ${page}`);
+        // We need to fetch the previous page first to get its last document
+        await fetchAssessments(page - 1);
         return;
       }
       
-      setLastVisible(lastDoc);
-      setHasMore(moreAvailable);
+      const { assessments: newAssessments, lastDoc, hasMore: moreAvailable } = 
+        await fetchAssessmentBatch(startDoc, itemsPerPage);
       
-      if (isFirstPage) {
-        setAssessments(newAssessments);
+      // Store the new assessments
+      setAssessments(newAssessments);
+      
+      // Store the last visible document for the next page
+      if (lastDoc) {
+        setLastVisibleByPage(prev => ({...prev, [page]: lastDoc}));
+        
+        // We have more pages if there are more results
+        setHasNextPage(moreAvailable);
+        
+        // Update total pages estimate
+        if (moreAvailable) {
+          setTotalPages(Math.max(totalPages, page + 1));
+        } else {
+          setTotalPages(page);
+        }
       } else {
-        setAssessments(prev => [...prev, ...newAssessments]);
+        setHasNextPage(false);
+        setTotalPages(page);
       }
       
-      // Calculate benchmarks with all assessments
-      const allAssessments = isFirstPage ? newAssessments : [...assessments, ...newAssessments];
-      if (allAssessments.length > 0) {
-        const benchmarks = calculateBenchmarks(allAssessments);
-        console.log('Calculated benchmarks:', benchmarks);
+      // Calculate benchmarks with the assessments
+      if (newAssessments.length > 0) {
+        const benchmarks = calculateBenchmarks(newAssessments);
+        console.log('Calculated benchmarks for page', page, benchmarks);
       }
+      
+      setCurrentPage(page);
     } catch (error) {
       console.error("Error in fetchAssessments:", error);
     } finally {
       setLoading(false);
     }
-  }, [lastVisible, assessments]);
+  }, [lastVisibleByPage, totalPages]);
 
   // Initial load
   useEffect(() => {
-    fetchAssessments(true);
+    fetchAssessments(1);
   }, []);
 
-  const loadMore = useCallback(() => {
-    if (!loading && hasMore) {
-      fetchAssessments(false);
+  // Handle page change
+  const handlePageChange = (pageNumber: number) => {
+    if (pageNumber < 1 || pageNumber > totalPages + (hasNextPage ? 1 : 0)) {
+      return;
     }
-  }, [fetchAssessments, loading, hasMore]);
+    
+    if (pageNumber === currentPage) {
+      return;
+    }
+    
+    fetchAssessments(pageNumber);
+  };
 
   // Filter assessments based on search term
   const filteredAssessments = assessments.filter((assessment) => 
@@ -69,16 +94,9 @@ export const useAdminDashboard = () => {
     assessment.candidatePosition.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Paginate filtered assessments (client-side)
-  const totalPages = Math.ceil(filteredAssessments.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredAssessments.slice(indexOfFirstItem, indexOfLastItem);
+  // Use the filtered assessments (for the current page only)
+  const currentItems = filteredAssessments;
   
-  const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-  };
-
   const viewAssessmentDetails = (assessment: AssessmentData) => {
     setSelectedAssessment(assessment);
     setShowDetails(true);
@@ -110,7 +128,6 @@ export const useAdminDashboard = () => {
     averageWritingScore,
     getScoreColor,
     assessments,
-    hasMore,
-    loadMore
+    hasNextPage
   };
 };

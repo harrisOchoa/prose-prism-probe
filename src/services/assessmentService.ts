@@ -50,7 +50,7 @@ export const fetchAssessmentBatch = async (
     const processedResults = processAssessmentData(results);
     const uniqueAssessments = removeDuplicateSubmissions(processedResults);
     
-    console.log(`Filtered ${processedResults.length - uniqueAssessments.length} duplicate submissions`);
+    console.log(`Fetched ${uniqueAssessments.length} assessments (page size: ${itemsPerPage})`);
     
     return {
       assessments: uniqueAssessments,
