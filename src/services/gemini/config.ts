@@ -1,5 +1,5 @@
 
-export const GEMINI_API_KEY = "AIzaSyA1KWr9RQr4Zz-mD0X_g_vSgM7j6uVywqU";
+export const GEMINI_API_KEY = "AIzaSyDo5WgNl3Taqjen8a2O0pDEdFsveKQUGAo";
 export const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 /**
