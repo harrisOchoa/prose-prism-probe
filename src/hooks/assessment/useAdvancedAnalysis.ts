@@ -9,8 +9,11 @@ import {
 } from "@/services/geminiService";
 import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
 import { toast } from "@/hooks/use-toast";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/firebase/config";
+import { AssessmentData } from "@/types/assessment";
 
-export const useAdvancedAnalysis = (assessmentData: any, setAssessmentData: (data: any) => void) => {
+export const useAdvancedAnalysis = (assessmentData: AssessmentData, setAssessmentData: (data: AssessmentData) => void) => {
   const [generatingAnalysis, setGeneratingAnalysis] = useState<Record<string, boolean>>({});
 
   /**
@@ -64,12 +67,36 @@ export const useAdvancedAnalysis = (assessmentData: any, setAssessmentData: (dat
       const updatedData = { ...assessmentData, [updateField]: result };
       setAssessmentData(updatedData);
       
-      // Update in database
-      await updateAssessmentAnalysis(assessmentData.id, { [updateField]: result });
+      // Update in database with verification
+      try {
+        await updateAssessmentAnalysis(assessmentData.id, { [updateField]: result });
+        
+        // Verify that data was saved properly
+        const assessmentRef = doc(db, "assessments", assessmentData.id);
+        const refreshedDoc = await getDoc(assessmentRef);
+        
+        if (refreshedDoc.exists()) {
+          const savedData = refreshedDoc.data();
+          if (!savedData[updateField] || 
+              JSON.stringify(savedData[updateField]) !== JSON.stringify(result)) {
+            console.error(`Database verification failed for ${updateField}`);
+            throw new Error("Failed to verify data was saved correctly");
+          }
+          console.log(`${updateField} verified as saved successfully`);
+        }
+      } catch (dbError) {
+        console.error(`Error saving ${updateField} to database:`, dbError);
+        toast({
+          title: "Save Error",
+          description: `Generated analysis could not be saved. Please try again.`,
+          variant: "destructive",
+        });
+        throw dbError;
+      }
       
       toast({
         title: "Analysis Complete",
-        description: `${type} analysis has been generated successfully.`,
+        description: `${type} analysis has been generated and saved successfully.`,
       });
       
       return result;
@@ -77,7 +104,7 @@ export const useAdvancedAnalysis = (assessmentData: any, setAssessmentData: (dat
       console.error(`Error generating ${type} analysis:`, error);
       toast({
         title: "Analysis Failed",
-        description: `Could not generate ${type} analysis. Please try again.`,
+        description: `Could not generate ${type} analysis. ${error.message}`,
         variant: "destructive",
       });
       throw error;

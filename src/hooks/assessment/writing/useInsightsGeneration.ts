@@ -51,7 +51,7 @@ export const useInsightsGeneration = (
           toast({
             title: "API Rate Limit Hit",
             description: "The AI service is currently rate limited. Retrying with backoff...",
-            variant: "destructive", // Changed from "warning" to "destructive" as only "default" and "destructive" are valid
+            variant: "destructive", // Only "default" and "destructive" are valid
           });
           // For clarity, we'll try again but one at a time
           summary = await generateCandidateSummary(data);
@@ -91,6 +91,23 @@ export const useInsightsGeneration = (
           description: "Failed to save insights to the database. Please try again.",
           variant: "destructive",
         });
+      } else {
+        // Verify data was properly saved by fetching it again
+        try {
+          const assessmentRef = doc(db, "assessments", data.id);
+          const refreshedDoc = await getDoc(assessmentRef);
+          
+          if (refreshedDoc.exists()) {
+            const savedData = refreshedDoc.data();
+            if (!savedData.aiSummary || savedData.aiSummary !== summary) {
+              console.warn("Saved summary doesn't match what we tried to save");
+            } else {
+              console.log("Summary verified as successfully saved");
+            }
+          }
+        } catch (verifyError) {
+          console.error("Error verifying saved data:", verifyError);
+        }
       }
       
       // Update local state

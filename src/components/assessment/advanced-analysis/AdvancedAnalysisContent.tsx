@@ -10,6 +10,8 @@ import {
   CandidateProfileMatch,
   AptitudeAnalysis
 } from "@/services/geminiService";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/firebase/config";
 
 interface AdvancedAnalysisContentProps {
   assessmentData: any;
@@ -37,7 +39,36 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
   const [profileMatch, setProfileMatch] = useState<CandidateProfileMatch | null>(null);
   const [aptitudeAnalysis, setAptitudeAnalysis] = useState<AptitudeAnalysis | null>(null);
 
+  // Initial load and refresh from database
   useEffect(() => {
+    const refreshDataFromFirestore = async () => {
+      if (assessmentData && assessmentData.id) {
+        try {
+          const assessmentRef = doc(db, "assessments", assessmentData.id);
+          const docSnap = await getDoc(assessmentRef);
+          
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            
+            // Update local state with data from Firestore
+            if (data.detailedWritingAnalysis) setDetailedAnalysis(data.detailedWritingAnalysis);
+            if (data.personalityInsights) setPersonalityInsights(data.personalityInsights);
+            if (data.interviewQuestions) setInterviewQuestions(data.interviewQuestions);
+            if (data.profileMatch) setProfileMatch(data.profileMatch);
+            if (data.aptitudeAnalysis) setAptitudeAnalysis(data.aptitudeAnalysis);
+            
+            console.log("Advanced analysis data refreshed from Firestore");
+          }
+        } catch (error) {
+          console.error("Error refreshing data from Firestore:", error);
+        }
+      }
+    };
+    
+    // Always try to get fresh data from Firestore when component mounts or assessment changes
+    refreshDataFromFirestore();
+    
+    // Also update from props (though this might be stale)
     if (assessmentData) {
       if (assessmentData.detailedWritingAnalysis) {
         setDetailedAnalysis(assessmentData.detailedWritingAnalysis);
@@ -55,7 +86,7 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
         setAptitudeAnalysis(assessmentData.aptitudeAnalysis);
       }
     }
-  }, [assessmentData]);
+  }, [assessmentData?.id]);
 
   useEffect(() => {
     if (generatingAnalysis) {
