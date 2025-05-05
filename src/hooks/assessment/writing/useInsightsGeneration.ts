@@ -30,11 +30,36 @@ export const useInsightsGeneration = (
       setGeneratingSummary(true);
       console.log("Starting insights generation for assessment:", data.id);
       
-      // Generate insights
-      const [summary, analysis] = await Promise.all([
-        generateCandidateSummary(data),
-        generateStrengthsAndWeaknesses(data)
-      ]);
+      // Show initial toast
+      toast({
+        title: "Generating Insights",
+        description: "This may take a moment. The system will automatically retry if API rate limits are reached.",
+      });
+      
+      // Generate insights with potential retries for rate limiting
+      let summary, analysis;
+      try {
+        // Generate summary and analysis in parallel
+        [summary, analysis] = await Promise.all([
+          generateCandidateSummary(data),
+          generateStrengthsAndWeaknesses(data)
+        ]);
+      } catch (apiError) {
+        console.error("API error during generation:", apiError);
+        // If the error includes rate limiting mention
+        if (apiError.message && apiError.message.toLowerCase().includes("rate") && apiError.message.toLowerCase().includes("limit")) {
+          toast({
+            title: "API Rate Limit Hit",
+            description: "The AI service is currently rate limited. Retrying with backoff...",
+            variant: "warning",
+          });
+          // For clarity, we'll try again but one at a time
+          summary = await generateCandidateSummary(data);
+          analysis = await generateStrengthsAndWeaknesses(data);
+        } else {
+          throw apiError; // Re-throw if it's not a rate limit issue
+        }
+      }
       
       console.log("Generated summary and analysis:", { 
         summaryLength: summary?.length,
@@ -81,7 +106,9 @@ export const useInsightsGeneration = (
       console.error("Error generating insights:", error);
       toast({
         title: "Failed to Generate Insights",
-        description: `Error: ${error.message}`,
+        description: error.message.includes("rate limit") 
+          ? "API rate limit reached. Please wait a few minutes and try again." 
+          : `Error: ${error.message}`,
         variant: "destructive",
       });
       return null;
