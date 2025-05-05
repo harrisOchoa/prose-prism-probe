@@ -3,47 +3,23 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Base rules
+    // Base rules - deny by default
     match /{document=**} {
-      allow read, write: if false; // Deny by default
-    }
-    
-    // Admin users have full access to all documents
-    function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
-    }
-    
-    // User is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
+      allow read, write: if false;
     }
     
     // Assessment rules
     match /assessments/{assessmentId} {
-      // Anyone can create an assessment (for candidates taking tests)
+      // Anyone can create an assessment (this is when candidates submit their completed assessments)
       allow create: if true;
       
-      // Allow reading assessments for authenticated users
-      allow read: if isAuthenticated();
-      
-      // Only admins can update or delete assessments
-      allow update, delete: if isAdmin();
+      // Anyone can read a specific assessment by ID (needed for the assessment completion page)
+      allow read: if true;
     }
     
-    // User profile rules
-    match /users/{userId} {
-      // Users can read and write their own data
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      
-      // Admins can access all user data
-      allow read, write: if isAdmin();
-    }
+    // Admin access is controlled through your application logic
+    // There's no need for user-specific rules since you're using a password-based admin panel
     
-    // Allow access to any other collections required by admins
-    match /analytics/{document=**} {
-      allow read, write: if isAdmin();
-    }
-    
-    // Add any other collection-specific rules as needed
+    // Note: If you eventually add Firebase Authentication, you would need to update these rules
   }
 }
