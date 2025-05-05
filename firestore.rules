@@ -1,0 +1,49 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Base rules
+    match /{document=**} {
+      allow read, write: if false; // Deny by default
+    }
+    
+    // Admin users have full access to all documents
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+    
+    // User is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Assessment rules
+    match /assessments/{assessmentId} {
+      // Anyone can create an assessment (for candidates taking tests)
+      allow create: if true;
+      
+      // Allow reading assessments for authenticated users
+      allow read: if isAuthenticated();
+      
+      // Only admins can update or delete assessments
+      allow update, delete: if isAdmin();
+    }
+    
+    // User profile rules
+    match /users/{userId} {
+      // Users can read and write their own data
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Admins can access all user data
+      allow read, write: if isAdmin();
+    }
+    
+    // Allow access to any other collections required by admins
+    match /analytics/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Add any other collection-specific rules as needed
+  }
+}
