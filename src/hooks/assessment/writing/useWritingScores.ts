@@ -70,7 +70,7 @@ export const useWritingScores = (
         console.warn("Failed to save scores to localStorage:", e);
       }
 
-      // Update local state immediately for immediate feedback
+      // Create a new object for the updated assessment data to ensure React detects the change
       const updatedData = {
         ...assessmentData,
         writingScores: scores,
@@ -79,6 +79,7 @@ export const useWritingScores = (
       
       // Update the UI immediately
       setAssessmentData(updatedData);
+      console.log("Local state updated with writing scores");
 
       // Update Firebase with the writing scores - with retry mechanism
       let saveSuccess = false;

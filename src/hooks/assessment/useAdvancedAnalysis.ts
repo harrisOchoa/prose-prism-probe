@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { 
   generateDetailedWritingAnalysis,
   generatePersonalityInsights,
   generateInterviewQuestions,
-  compareWithIdealProfile, // Using the proper export name
+  compareWithIdealProfile, 
   generateAptitudeAnalysis
 } from "@/services/geminiService";
 import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
@@ -96,7 +95,6 @@ export const useAdvancedAnalysis = (
               updateKey = 'interviewQuestions';
               break;
             case 'profile':
-              // Use the correct function name that's imported
               result = await compareWithIdealProfile(assessmentData);
               updateKey = 'profileMatch';
               break;
@@ -138,13 +136,14 @@ export const useAdvancedAnalysis = (
       
       console.log(`Generated ${type} analysis:`, result);
       
-      // Update local state immediately
+      // Create a new object for updated assessment data to ensure React detects the change
       const updatedData = {
         ...assessmentData,
         [updateKey]: result
       };
       
-      console.log(`Updating local state with new ${type} analysis`);
+      // Update UI immediately with new analysis
+      console.log(`Updating UI with new ${type} analysis`);
       setAssessmentData(updatedData);
       
       // Update Firebase
@@ -160,24 +159,16 @@ export const useAdvancedAnalysis = (
           description: `${type.charAt(0).toUpperCase() + type.slice(1)} analysis has been generated successfully.`,
         });
         
-        // Ensure UI updates by returning the result
         return result;
       } catch (updateError: any) {
         console.error(`Error updating ${type} analysis in Firebase:`, updateError);
         
-        if (updateError.message && updateError.message.includes("permission-denied")) {
-          toast({
-            title: "Permission Error",
-            description: "You don't have permission to update this assessment. Please check your Firestore security rules.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Update Failed",
-            description: "Analysis was generated but could not be saved to the database. The analysis will still be available until you refresh the page.",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Update Failed",
+          description: "Analysis was generated but could not be saved to the database. The analysis will still be available until you refresh the page.",
+          variant: "destructive",
+        });
+        
         // Still return the result even if saving to Firebase failed
         return result;
       }

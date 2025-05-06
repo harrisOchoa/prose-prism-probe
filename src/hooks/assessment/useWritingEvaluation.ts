@@ -3,8 +3,6 @@ import { useState } from "react";
 import { AssessmentData } from "@/types/assessment";
 import { useWritingScores, useInsightsGeneration } from "./writing";
 import { toast } from "@/hooks/use-toast";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/firebase/config";
 
 /**
  * Hook for handling writing evaluation functionality
@@ -52,74 +50,24 @@ export const useWritingEvaluation = (
         return;
       }
       
-      // Immediately update state with the writing scores
+      // Immediately update UI with writing scores
+      console.log("Updating UI with writing scores");
       setAssessmentData(updatedData);
       
       // Step 2: Generate insights based on scores
       console.log("Step 2: Generating insights based on scores");
       const finalData = await generateInsights(updatedData);
       
-      if (!finalData) {
-        console.error("Insights generation failed");
-        return;
+      if (finalData) {
+        // Immediately update the UI with the generated insights
+        console.log("Updating UI with generated insights");
+        setAssessmentData(finalData);
       }
       
-      // Immediately update the UI with the generated insights
-      setAssessmentData(finalData);
-      
-      // Step 3: Verify data persistence with a fresh fetch
-      console.log("Step 3: Verifying data persistence");
-      if (finalData && finalData.id) {
-        try {
-          const refreshedDoc = await getDoc(doc(db, "assessments", finalData.id));
-          if (refreshedDoc.exists()) {
-            const refreshedData = {
-              id: refreshedDoc.id,
-              ...refreshedDoc.data()
-            } as AssessmentData;
-            
-            console.log("Final verification - refreshed assessment data:", {
-              hasAiSummary: !!refreshedData.aiSummary,
-              summaryLength: refreshedData.aiSummary?.length || 0,
-              strengthsCount: refreshedData.strengths?.length || 0,
-              weaknessesCount: refreshedData.weaknesses?.length || 0
-            });
-            
-            // Update state again with the freshly fetched data to ensure UI is in sync
-            setAssessmentData(refreshedData);
-            
-            // Add success toast if everything looks good
-            if (refreshedData.aiSummary && refreshedData.strengths && refreshedData.weaknesses) {
-              toast({
-                title: "Evaluation Complete",
-                description: "Assessment has been successfully evaluated and insights generated.",
-              });
-            } else {
-              // Something is missing in the saved data
-              console.error("Final verification shows missing data");
-              toast({
-                title: "Partial Success",
-                description: "Some data may not have saved correctly. Try regenerating insights if summary is missing.",
-                variant: "destructive",
-              });
-            }
-          } else {
-            console.error("Document not found during verification");
-            toast({
-              title: "Document Error",
-              description: "Could not verify the assessment document after evaluation.",
-              variant: "destructive",
-            });
-          }
-        } catch (verifyError) {
-          console.error("Error during final verification:", verifyError);
-          toast({
-            title: "Verification Error",
-            description: "Error checking the updated assessment.",
-            variant: "destructive",
-          });
-        }
-      }
+      toast({
+        title: "Evaluation Complete",
+        description: "Assessment has been successfully evaluated and insights generated.",
+      });
     } catch (error: any) {
       console.error("Error in handleManualEvaluation:", error);
       toast({
@@ -145,45 +93,15 @@ export const useWritingEvaluation = (
       
       const updatedData = await generateInsights();
       
-      // Immediately update the UI with the generated insights
+      // If we got updated data, make sure it's reflected in the UI
       if (updatedData) {
+        console.log("Updating UI with regenerated insights");
         setAssessmentData(updatedData);
-      }
-      
-      // Verify data persistence with a fresh fetch
-      if (updatedData && updatedData.id) {
-        const refreshedDoc = await getDoc(doc(db, "assessments", updatedData.id));
-        if (refreshedDoc.exists()) {
-          const refreshedData = {
-            id: refreshedDoc.id,
-            ...refreshedDoc.data()
-          } as AssessmentData;
-          
-          console.log("After regenerate - refreshed assessment data:", {
-            hasAiSummary: !!refreshedData.aiSummary,
-            summaryLength: refreshedData.aiSummary?.length || 0,
-            strengthsCount: refreshedData.strengths?.length || 0,
-            weaknessesCount: refreshedData.weaknesses?.length || 0
-          });
-          
-          // Update state again with the freshly fetched data
-          setAssessmentData(refreshedData);
-          
-          // Add success toast if everything looks good
-          if (refreshedData.aiSummary && refreshedData.strengths && refreshedData.weaknesses) {
-            toast({
-              title: "Insights Regenerated",
-              description: "Assessment insights have been successfully regenerated.",
-            });
-          } else {
-            // Something is missing in the saved data
-            toast({
-              title: "Partial Success",
-              description: "Some insights may not have saved correctly.",
-              variant: "destructive",
-            });
-          }
-        }
+        
+        toast({
+          title: "Insights Regenerated",
+          description: "Assessment insights have been successfully regenerated.",
+        });
       }
     } catch (error: any) {
       console.error("Error regenerating insights:", error);

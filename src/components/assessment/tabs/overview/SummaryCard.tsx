@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Sparkles, ThumbsUp, ThumbsDown, AlertCircle, Loader2 } from "lucide-react";
 
@@ -20,7 +20,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
     assessmentData.writingScores.some((score: any) => score.score === 0);
   
   // Debug log to help identify issues with data display
-  React.useEffect(() => {
+  useEffect(() => {
     console.log("SummaryCard - Current state:", {
       generatingSummary, 
       hasAiSummary: !!assessmentData.aiSummary,
@@ -28,7 +28,8 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
       hasStrengths: !!(assessmentData.strengths && assessmentData.strengths.length > 0),
       hasWeaknesses: !!(assessmentData.weaknesses && assessmentData.weaknesses.length > 0),
       hasValidScores: hasValidWritingScores,
-      hasErrorScores: hasErrorScores
+      hasErrorScores: hasErrorScores,
+      assessmentId: assessmentData.id
     });
   }, [assessmentData, generatingSummary, hasValidWritingScores, hasErrorScores]);
   

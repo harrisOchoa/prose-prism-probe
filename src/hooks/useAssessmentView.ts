@@ -45,10 +45,15 @@ export const useAssessmentView = (id: string | undefined) => {
             weaknesses: analysis.weaknesses
           };
           
+          // Create a new object to ensure React detects the change
           updatedData = {
             ...updatedData,
             ...updateData
           };
+          
+          // Update state immediately to show the UI with generated insights
+          setAssessment(updatedData);
+          console.log("Local state updated with auto-generated insights");
 
           await updateAssessmentAnalysis(updatedData.id, updateData);
           console.log("Auto-generated insights saved to assessment:", updatedData);
@@ -80,6 +85,7 @@ export const useAssessmentView = (id: string | undefined) => {
       }
 
       if (JSON.stringify(updatedData) !== JSON.stringify(assessment)) {
+        console.log("Assessment data has changed, updating state");
         setAssessment(updatedData);
       }
     };

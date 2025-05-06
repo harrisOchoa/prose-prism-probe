@@ -89,13 +89,14 @@ export const useInsightsGeneration = (
         weaknesses: analysis.weaknesses
       };
       
-      // Update local state immediately
+      // Create a new object for the assessment data to ensure React detects the change
       const updatedData = {
         ...data,
         ...updatePayload
       };
       
-      // Set the updated data to update the UI immediately
+      // Update UI immediately with generated insights
+      console.log("Updating UI with generated insights:", updatePayload);
       setAssessmentData(updatedData);
       
       // Update Firebase with the new insights
@@ -104,28 +105,11 @@ export const useInsightsGeneration = (
         await updateAssessmentAnalysis(data.id, updatePayload);
         console.log("Update to Firebase completed successfully");
         
-        // Verify data was properly saved by fetching it again
-        const refreshedDoc = await getDoc(doc(db, "assessments", data.id));
-        if (refreshedDoc.exists()) {
-          const savedData = refreshedDoc.data();
-          
-          // Only update the state if the saved data is different from what we already have
-          const refreshedAssessment = {
-            id: refreshedDoc.id,
-            ...savedData
-          } as AssessmentData;
-          
-          // Log verification
-          console.log("Verification data fetched:", {
-            hasAiSummary: !!refreshedAssessment.aiSummary,
-            summaryLength: refreshedAssessment.aiSummary?.length || 0
-          });
-          
-          // Only update if necessary to avoid render loops
-          if (JSON.stringify(refreshedAssessment) !== JSON.stringify(updatedData)) {
-            setAssessmentData(refreshedAssessment);
-          }
-        }
+        toast({
+          title: "Insights Generated",
+          description: "Assessment insights have been generated successfully.",
+        });
+        
       } catch (updateError) {
         console.error("Failed to update assessment in Firebase:", updateError);
         toast({
@@ -134,12 +118,6 @@ export const useInsightsGeneration = (
           variant: "destructive",
         });
       }
-      
-      // Show success toast
-      toast({
-        title: "Insights Generated",
-        description: "Assessment insights have been generated successfully.",
-      });
 
       return updatedData;
     } catch (error: any) {

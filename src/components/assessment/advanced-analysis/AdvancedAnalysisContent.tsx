@@ -47,7 +47,8 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
       hasPersonalityInsights: !!personalityInsights,
       hasInterviewQuestions: !!interviewQuestions,
       hasProfileMatch: !!profileMatch,
-      hasAptitudeAnalysis: !!aptitudeAnalysis
+      hasAptitudeAnalysis: !!aptitudeAnalysis,
+      assessmentId: assessmentData.id
     });
   }, [assessmentData, detailedAnalysis, personalityInsights, interviewQuestions, profileMatch, aptitudeAnalysis]);
 
