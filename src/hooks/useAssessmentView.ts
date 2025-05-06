@@ -45,27 +45,19 @@ export const useAssessmentView = (id: string | undefined) => {
             weaknesses: analysis.weaknesses
           };
           
-          // Create a new object to ensure React detects the change
+          // Create a new object reference to ensure React detects the change
           updatedData = {
             ...updatedData,
             ...updateData
           };
           
-          // Update state immediately to show the UI with generated insights
-          setAssessment(updatedData);
+          // Update state immediately with a new object reference to trigger rerender
           console.log("Local state updated with auto-generated insights");
+          setAssessment({...updatedData});
 
+          // Update database in background
           await updateAssessmentAnalysis(updatedData.id, updateData);
           console.log("Auto-generated insights saved to assessment:", updatedData);
-          
-          // Refresh assessment data after update to ensure we have the latest
-          if (id) {
-            const refreshedData = await refreshAssessment(id);
-            if (refreshedData) {
-              console.log("Assessment refreshed after auto-generation");
-              return; // Skip the setAssessment below as refreshAssessment will handle it
-            }
-          }
         } catch (aiError) {
           console.error("Error auto-generating insights:", aiError);
         } finally {
@@ -84,9 +76,10 @@ export const useAssessmentView = (id: string | undefined) => {
         });
       }
 
+      // Always update state with processed data
       if (JSON.stringify(updatedData) !== JSON.stringify(assessment)) {
-        console.log("Assessment data has changed, updating state");
-        setAssessment(updatedData);
+        console.log("Assessment data has changed, updating state with a new object reference");
+        setAssessment({...updatedData});
       }
     };
 
@@ -98,6 +91,7 @@ export const useAssessmentView = (id: string | undefined) => {
   // Function to manually refresh assessment data
   const refresh = async () => {
     if (id) {
+      console.log("Manually refreshing assessment data");
       return await refreshAssessment(id);
     }
     return null;

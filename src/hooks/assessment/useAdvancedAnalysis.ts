@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { 
@@ -136,18 +137,19 @@ export const useAdvancedAnalysis = (
       
       console.log(`Generated ${type} analysis:`, result);
       
-      // Create a new object for updated assessment data to ensure React detects the change
+      // Create a new object reference to ensure React detects the change
       const updatedData = {
         ...assessmentData,
         [updateKey]: result
       };
       
-      // Update UI immediately with new analysis
-      console.log(`Updating UI with new ${type} analysis`);
-      setAssessmentData(updatedData);
+      // Immediately update UI
+      console.log(`Immediately updating UI with new ${type} analysis`);
+      setAssessmentData({...updatedData});
       
-      // Update Firebase
+      // Update Firebase in background
       try {
+        console.log(`Starting Firebase update for ${type} analysis`);
         await updateAssessmentAnalysis(assessmentData.id, {
           [updateKey]: result
         });

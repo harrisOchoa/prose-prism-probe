@@ -50,12 +50,23 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
       hasAptitudeAnalysis: !!aptitudeAnalysis,
       assessmentId: assessmentData.id
     });
+    
+    // Force re-render if we have new data
+    const forceRerender = Math.random();
   }, [assessmentData, detailedAnalysis, personalityInsights, interviewQuestions, profileMatch, aptitudeAnalysis]);
 
   // Update loading state based on generatingAnalysis prop
   useEffect(() => {
     if (generatingAnalysis) {
       setLoading({
+        writing: generatingAnalysis.writing || generatingAnalysis.detailed || false,
+        personality: generatingAnalysis.personality || false,
+        questions: generatingAnalysis.interview || generatingAnalysis.questions || false,
+        profile: generatingAnalysis.profile || false,
+        aptitude: generatingAnalysis.aptitude || false
+      });
+      
+      console.log("Updated loading states:", {
         writing: generatingAnalysis.writing || generatingAnalysis.detailed || false,
         personality: generatingAnalysis.personality || false,
         questions: generatingAnalysis.interview || generatingAnalysis.questions || false,
@@ -106,10 +117,8 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
     } catch (error) {
       console.error(`Error in handleGenerateAnalysis for ${analysisType}:`, error);
     } finally {
-      // Reset loading state after a short delay to ensure UI updates properly
-      setTimeout(() => {
-        setLoading(prev => ({...prev, [analysisType]: false}));
-      }, 500);
+      // Reset loading state immediately
+      setLoading(prev => ({...prev, [analysisType]: false}));
     }
   };
 
@@ -131,8 +140,17 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
     }
   };
 
+  // Force re-render key to ensure component updates when data changes
+  const renderKey = `advanced-analysis-${JSON.stringify({
+    hasDetailedAnalysis: !!detailedAnalysis,
+    hasPersonalityInsights: !!personalityInsights,
+    hasInterviewQuestions: !!interviewQuestions,
+    hasProfileMatch: !!profileMatch,
+    hasAptitudeAnalysis: !!aptitudeAnalysis
+  })}`;
+
   return (
-    <div className="space-y-6">
+    <div key={renderKey} className="space-y-6">
       <AnalysisTabs 
         assessmentData={assessmentData}
         loading={loading}
@@ -151,4 +169,4 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
   );
 };
 
-export default AdvancedAnalysisContent;
+export default React.memo(AdvancedAnalysisContent);

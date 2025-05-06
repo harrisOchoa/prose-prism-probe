@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Sparkles, ThumbsUp, ThumbsDown, AlertCircle, Loader2 } from "lucide-react";
 
@@ -19,6 +19,9 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
     assessmentData.writingScores.length > 0 &&
     assessmentData.writingScores.some((score: any) => score.score === 0);
   
+  // State to force re-renders
+  const [renderKey, setRenderKey] = useState(Date.now());
+  
   // Debug log to help identify issues with data display
   useEffect(() => {
     console.log("SummaryCard - Current state:", {
@@ -31,10 +34,13 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
       hasErrorScores: hasErrorScores,
       assessmentId: assessmentData.id
     });
+    
+    // Force component to re-render when assessmentData changes
+    setRenderKey(Date.now());
   }, [assessmentData, generatingSummary, hasValidWritingScores, hasErrorScores]);
   
   return (
-    <Card>
+    <Card key={renderKey}>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center">
           <Sparkles className="mr-2 h-5 w-5 text-indigo-500" />
@@ -66,7 +72,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
                   </h3>
                   <ul className="space-y-2 text-sm">
                     {assessmentData.strengths.map((strength: string, index: number) => (
-                      <li key={`strength-${index}`} className="flex items-start">
+                      <li key={`strength-${index}-${renderKey}`} className="flex items-start">
                         <ThumbsUp className="h-4 w-4 mr-2 text-green-500 mt-0.5 flex-shrink-0" />
                         <span>{strength}</span>
                       </li>
@@ -79,7 +85,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
                   </h3>
                   <ul className="space-y-2 text-sm">
                     {assessmentData.weaknesses.map((weakness: string, index: number) => (
-                      <li key={`weakness-${index}`} className="flex items-start">
+                      <li key={`weakness-${index}-${renderKey}`} className="flex items-start">
                         <AlertCircle className="h-4 w-4 mr-2 text-amber-500 mt-0.5 flex-shrink-0" />
                         <span>{weakness}</span>
                       </li>

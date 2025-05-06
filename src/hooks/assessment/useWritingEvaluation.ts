@@ -50,18 +50,18 @@ export const useWritingEvaluation = (
         return;
       }
       
-      // Immediately update UI with writing scores
+      // Force immediate UI update after writing scores are available
       console.log("Updating UI with writing scores");
-      setAssessmentData(updatedData);
+      setAssessmentData({...updatedData});
       
       // Step 2: Generate insights based on scores
       console.log("Step 2: Generating insights based on scores");
       const finalData = await generateInsights(updatedData);
       
       if (finalData) {
-        // Immediately update the UI with the generated insights
+        // Force immediate UI update with the generated insights using a new object reference
         console.log("Updating UI with generated insights");
-        setAssessmentData(finalData);
+        setAssessmentData({...finalData});
       }
       
       toast({
@@ -93,10 +93,10 @@ export const useWritingEvaluation = (
       
       const updatedData = await generateInsights();
       
-      // If we got updated data, make sure it's reflected in the UI
+      // If we got updated data, force a UI update with a new object reference
       if (updatedData) {
         console.log("Updating UI with regenerated insights");
-        setAssessmentData(updatedData);
+        setAssessmentData({...updatedData});
         
         toast({
           title: "Insights Regenerated",

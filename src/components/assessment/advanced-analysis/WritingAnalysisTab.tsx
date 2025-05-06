@@ -21,13 +21,14 @@ const WritingAnalysisTab: React.FC<WritingAnalysisTabProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [localLoading, setLocalLoading] = useState(false);
   
-  // Sync loading state with props
+  // Sync loading state with props and log analysis data for debugging
   useEffect(() => {
     setLocalLoading(loading);
     
-    // If we were loading but now we're not, log that analysis should be visible
+    // If loading finished, log the analysis data
     if (localLoading && !loading) {
-      console.log("Writing analysis loading complete, analysis should be visible:", {detailedAnalysis});
+      console.log("Loading complete. Analysis data available:", !!detailedAnalysis);
+      console.log("Analysis data:", detailedAnalysis);
     }
   }, [loading, detailedAnalysis, localLoading]);
   
@@ -66,7 +67,7 @@ const WritingAnalysisTab: React.FC<WritingAnalysisTabProps> = ({
         if (localLoading) {
           setLocalLoading(false);
         }
-      }, 2000);
+      }, 1000);
     }
   };
   
@@ -117,7 +118,7 @@ const WritingAnalysisTab: React.FC<WritingAnalysisTabProps> = ({
       ) : detailedAnalysis ? (
         <div className="space-y-4">
           {/* Writing Style Section */}
-          <div className="border rounded-lg overflow-hidden">
+          <div key="writing-style" className="border rounded-lg overflow-hidden">
             <div className="bg-blue-50 p-3 border-b">
               <h3 className="font-semibold">Writing Style</h3>
             </div>
@@ -127,7 +128,7 @@ const WritingAnalysisTab: React.FC<WritingAnalysisTabProps> = ({
           </div>
 
           {/* Vocabulary Level Section */}
-          <div className="border rounded-lg overflow-hidden">
+          <div key="vocabulary-level" className="border rounded-lg overflow-hidden">
             <div className="bg-purple-50 p-3 border-b">
               <h3 className="font-semibold">Vocabulary Level</h3>
             </div>
@@ -137,7 +138,7 @@ const WritingAnalysisTab: React.FC<WritingAnalysisTabProps> = ({
           </div>
 
           {/* Critical Thinking Section */}
-          <div className="border rounded-lg overflow-hidden">
+          <div key="critical-thinking" className="border rounded-lg overflow-hidden">
             <div className="bg-amber-50 p-3 border-b">
               <h3 className="font-semibold">Critical Thinking</h3>
             </div>
@@ -147,28 +148,28 @@ const WritingAnalysisTab: React.FC<WritingAnalysisTabProps> = ({
           </div>
 
           {/* Strengths Section */}
-          <div className="border rounded-lg overflow-hidden">
+          <div key="strengths" className="border rounded-lg overflow-hidden">
             <div className="bg-green-50 p-3 border-b">
               <h3 className="font-semibold">Strengths</h3>
             </div>
             <div className="p-3">
               <ul className="list-disc pl-5 space-y-1">
                 {detailedAnalysis?.strengthAreas.map((strength, index) => (
-                  <li key={index} className="text-gray-700">{strength}</li>
+                  <li key={`strength-${index}`} className="text-gray-700">{strength}</li>
                 ))}
               </ul>
             </div>
           </div>
 
           {/* Areas for Improvement Section */}
-          <div className="border rounded-lg overflow-hidden">
+          <div key="improvement" className="border rounded-lg overflow-hidden">
             <div className="bg-red-50 p-3 border-b">
               <h3 className="font-semibold">Areas for Improvement</h3>
             </div>
             <div className="p-3">
               <ul className="list-disc pl-5 space-y-1">
                 {detailedAnalysis?.improvementAreas.map((area, index) => (
-                  <li key={index} className="text-gray-700">{area}</li>
+                  <li key={`improvement-${index}`} className="text-gray-700">{area}</li>
                 ))}
               </ul>
             </div>
