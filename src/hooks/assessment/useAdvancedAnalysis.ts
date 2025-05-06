@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { 
@@ -65,7 +66,7 @@ export const useAdvancedAnalysis = (
       
       toast({
         title: "Generating Analysis",
-        description: `Generating ${type} analysis. This may take a moment.`,
+        description: `Generating ${type} analysis. This may take up to 30 seconds.`,
       });
       
       let result;
@@ -143,6 +144,7 @@ export const useAdvancedAnalysis = (
         [updateKey]: result
       };
       
+      console.log(`Updating local state with new ${type} analysis`);
       setAssessmentData(updatedData);
       
       // Update Firebase
@@ -157,6 +159,9 @@ export const useAdvancedAnalysis = (
           title: "Analysis Complete",
           description: `${type.charAt(0).toUpperCase() + type.slice(1)} analysis has been generated successfully.`,
         });
+        
+        // Ensure UI updates by returning the result
+        return result;
       } catch (updateError: any) {
         console.error(`Error updating ${type} analysis in Firebase:`, updateError);
         
@@ -169,14 +174,13 @@ export const useAdvancedAnalysis = (
         } else {
           toast({
             title: "Update Failed",
-            description: "Analysis was generated but could not be saved to the database. Please try again.",
+            description: "Analysis was generated but could not be saved to the database. The analysis will still be available until you refresh the page.",
             variant: "destructive",
           });
         }
         // Still return the result even if saving to Firebase failed
+        return result;
       }
-      
-      return result;
     } catch (error: any) {
       console.error(`Error generating ${type} analysis:`, error);
       
@@ -203,7 +207,7 @@ export const useAdvancedAnalysis = (
       
       return null;
     } finally {
-      // Reset generating state for this analysis type
+      // Reset generating state for this analysis type regardless of success/failure
       setGeneratingAnalysis(prev => ({ ...prev, [type]: false }));
     }
   };

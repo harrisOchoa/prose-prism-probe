@@ -63,14 +63,18 @@ Return your analysis as a JSON object with this exact structure:
     const analysis = parseJsonResponse(text);
     
     if (!analysis) {
-      throw new Error("Failed to parse response from Gemini API");
+      console.error("Failed to parse JSON response:", text);
+      throw new Error("Failed to parse response from Gemini API - invalid format received");
     }
     
     // Validate that we have all the required fields
     if (!analysis.writingStyle || !analysis.vocabularyLevel || !analysis.criticalThinking) {
       console.error("Missing critical fields in analysis:", analysis);
-      throw new Error("Incomplete analysis result received");
+      throw new Error("Incomplete analysis result received from Gemini API");
     }
+    
+    // Log success for debugging
+    console.log("Successfully generated writing analysis:", analysis);
     
     return { 
       writingStyle: analysis.writingStyle || "Unable to analyze writing style",

@@ -10,8 +10,6 @@ import {
   CandidateProfileMatch,
   AptitudeAnalysis
 } from "@/services/geminiService";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/firebase/config";
 
 interface AdvancedAnalysisContentProps {
   assessmentData: any;
@@ -41,6 +39,17 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
   const interviewQuestions = assessmentData.interviewQuestions;
   const profileMatch = assessmentData.profileMatch;
   const aptitudeAnalysis = assessmentData.aptitudeAnalysis;
+
+  // Debug logs to help track state updates
+  useEffect(() => {
+    console.log("AdvancedAnalysisContent received updated assessmentData:", {
+      hasDetailedAnalysis: !!detailedAnalysis,
+      hasPersonalityInsights: !!personalityInsights,
+      hasInterviewQuestions: !!interviewQuestions,
+      hasProfileMatch: !!profileMatch,
+      hasAptitudeAnalysis: !!aptitudeAnalysis
+    });
+  }, [assessmentData, detailedAnalysis, personalityInsights, interviewQuestions, profileMatch, aptitudeAnalysis]);
 
   // Update loading state based on generatingAnalysis prop
   useEffect(() => {
@@ -75,11 +84,31 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
     }
 
     try {
-      await generateAdvancedAnalysis(analysisType);
-      // No need to set local state here - the parent component will update its state
-      // and pass the updated assessmentData back through props
+      // Set local loading state
+      setLoading(prev => ({...prev, [analysisType]: true}));
+      
+      console.log(`Starting generation of ${analysisType} analysis...`);
+      
+      // Call the parent's generateAdvancedAnalysis function
+      const result = await generateAdvancedAnalysis(analysisType);
+      
+      console.log(`Analysis generation complete for ${analysisType}:`, result);
+      
+      if (!result) {
+        console.error(`No result returned for ${analysisType} analysis`);
+        toast({
+          title: "Analysis Failed",
+          description: `Failed to generate ${analysisType} analysis. Please try again.`,
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error(`Error in handleGenerateAnalysis for ${analysisType}:`, error);
+    } finally {
+      // Reset loading state after a short delay to ensure UI updates properly
+      setTimeout(() => {
+        setLoading(prev => ({...prev, [analysisType]: false}));
+      }, 500);
     }
   };
 

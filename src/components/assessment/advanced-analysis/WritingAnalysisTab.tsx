@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, BookOpen, AlertTriangle } from "lucide-react";
@@ -23,7 +24,12 @@ const WritingAnalysisTab: React.FC<WritingAnalysisTabProps> = ({
   // Sync loading state with props
   useEffect(() => {
     setLocalLoading(loading);
-  }, [loading]);
+    
+    // If we were loading but now we're not, log that analysis should be visible
+    if (localLoading && !loading) {
+      console.log("Writing analysis loading complete, analysis should be visible:", {detailedAnalysis});
+    }
+  }, [loading, detailedAnalysis, localLoading]);
   
   // Debug log
   console.log("WritingAnalysisTab rendering with:", { 
