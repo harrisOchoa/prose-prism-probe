@@ -1,4 +1,3 @@
-
 import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData } from 'firebase/firestore';
 import { db } from '../../config';
 import { AntiCheatingMetrics, AssessmentSubmission } from './types';
@@ -20,7 +19,8 @@ const sanitizeMetricsForFirestore = (metrics: AntiCheatingMetrics | undefined): 
       copyAttempts: metrics.copyAttempts || 0,
       pasteAttempts: metrics.pasteAttempts || 0,
       rightClickAttempts: metrics.rightClickAttempts || 0,
-      suspiciousActivity: !!metrics.suspiciousActivity
+      suspiciousActivity: !!metrics.suspiciousActivity,
+      wordsPerMinute: metrics.wordsPerMinute || 0 // Add this property with a fallback to 0
     };
     
     // Convert to JSON and back to ensure it's serializable

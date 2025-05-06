@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,7 +90,8 @@ const AssessmentComplete = ({
       copyAttempts: metrics.copyAttempts || 0,
       pasteAttempts: metrics.pasteAttempts || 0,
       rightClickAttempts: metrics.rightClickAttempts || 0,
-      suspiciousActivity: !!metrics.suspiciousActivity
+      suspiciousActivity: !!metrics.suspiciousActivity,
+      wordsPerMinute: metrics.wordsPerMinute || 0 // Add this property with a fallback to 0
     };
   };
 
