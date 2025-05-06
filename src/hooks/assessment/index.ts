@@ -1,6 +1,6 @@
 
 import { useWritingEvaluation } from './useWritingEvaluation';
-import { useAdvancedAnalysis } from './useAdvancedAnalysis';
+import { useAdvancedAnalysis } from './advanced-analysis';
 import { useAptitudeRecovery } from './useAptitudeRecovery';
 import { useAptitudeCategories } from './useAptitudeCategories';
 
