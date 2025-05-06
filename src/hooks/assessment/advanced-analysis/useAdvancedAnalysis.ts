@@ -3,7 +3,7 @@ import { useState } from "react";
 import { AssessmentData } from "@/types/assessment";
 import { useGenerateAnalysis } from "./useGenerateAnalysis";
 import { useAnalysisValidation } from "./useAnalysisValidation";
-import { AnalysisStateMap } from "./types";
+import type { AnalysisStateMap } from "./types";
 import { 
   generateDetailedWritingAnalysis,
   generatePersonalityInsights,
@@ -23,6 +23,7 @@ export const useAdvancedAnalysis = (
     writing: false,
     personality: false,
     interview: false,
+    questions: false,
     profile: false,
     aptitude: false
   });
