@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { saveAssessmentResult } from "@/firebase/services/assessment";
 import { toast } from "@/components/ui/use-toast";
 import { WritingPromptItem } from "./AssessmentManager";
-import { CheckCircle, AlertCircle } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { AntiCheatingMetrics } from "@/firebase/services/assessment";
 
 interface AssessmentCompleteProps {
@@ -34,6 +34,7 @@ const AssessmentComplete = ({
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [submissionStartTime, setSubmissionStartTime] = useState<number | null>(null);
 
   // Check if we've previously submitted this assessment
   useEffect(() => {
@@ -56,11 +57,50 @@ const AssessmentComplete = ({
     }
   }, [isSubmitted]);
 
+  // Add a timeout to detect slow submissions
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    if (isSubmitting && submissionStartTime) {
+      timeoutId = setTimeout(() => {
+        if (isSubmitting) {
+          console.log("Submission is taking longer than expected");
+          toast({
+            title: "Submission is taking longer than expected",
+            description: "We're still trying to save your assessment. Please wait a moment.",
+          });
+        }
+      }, 5000); // Show message after 5 seconds
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isSubmitting, submissionStartTime]);
+
+  const sanitizeAntiCheatingMetrics = (metrics?: AntiCheatingMetrics): AntiCheatingMetrics | undefined => {
+    if (!metrics) return undefined;
+    
+    // Create a sanitized copy with only primitive values
+    return {
+      keystrokes: metrics.keystrokes || 0,
+      pauses: metrics.pauses || 0,
+      tabSwitches: metrics.tabSwitches || 0,
+      windowBlurs: metrics.windowBlurs || 0,
+      windowFocuses: metrics.windowFocuses || 0,
+      copyAttempts: metrics.copyAttempts || 0,
+      pasteAttempts: metrics.pasteAttempts || 0,
+      rightClickAttempts: metrics.rightClickAttempts || 0,
+      suspiciousActivity: !!metrics.suspiciousActivity
+    };
+  };
+
   const handleSubmit = async () => {
     if (isSubmitting || isSubmitted) return;
     
     setIsSubmitting(true);
     setSubmissionError(null);
+    setSubmissionStartTime(Date.now());
     
     try {
       console.log("Submitting assessment with aptitude score:", aptitudeScore, "out of", aptitudeTotal);
@@ -69,6 +109,9 @@ const AssessmentComplete = ({
       console.log("Anti-cheating metrics present:", !!antiCheatingMetrics);
       console.log("Completed prompts count:", completedPrompts.length);
       
+      // Sanitize the anti-cheating metrics to ensure they're Firestore-compatible
+      const sanitizedMetrics = sanitizeAntiCheatingMetrics(antiCheatingMetrics);
+      
       const id = await saveAssessmentResult(
         candidateName,
         candidatePosition,
@@ -76,7 +119,7 @@ const AssessmentComplete = ({
         aptitudeScore,
         aptitudeTotal,
         undefined, // No writing scores at this stage
-        antiCheatingMetrics
+        sanitizedMetrics
       );
       
       console.log("Assessment successfully submitted with ID:", id);
@@ -102,6 +145,7 @@ const AssessmentComplete = ({
       });
     } finally {
       setIsSubmitting(false);
+      setSubmissionStartTime(null);
     }
   };
   
@@ -146,7 +190,14 @@ const AssessmentComplete = ({
                 className="min-w-[200px] mb-2"
                 disabled={isSubmitting}
               >
-                Retry Submission
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Retrying...
+                  </>
+                ) : (
+                  "Retry Submission"
+                )}
               </Button>
             </div>
           ) : isSubmitted ? (
@@ -154,9 +205,12 @@ const AssessmentComplete = ({
               Your assessment has been successfully recorded. We appreciate your participation!
             </p>
           ) : isSubmitting ? (
-            <p className="text-center text-gray-600">
-              Submitting your assessment... Please wait.
-            </p>
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+              <p className="text-gray-600">
+                Submitting your assessment... Please wait.
+              </p>
+            </div>
           ) : (
             <div className="text-center">
               <p className="text-yellow-600 mb-4">

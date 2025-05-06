@@ -5,6 +5,32 @@ import { AntiCheatingMetrics, AssessmentSubmission } from './types';
 import { WritingScore } from '@/services/geminiService';
 import { WritingPromptItem } from '@/components/AssessmentManager';
 
+// Helper function to sanitize antiCheatingMetrics for Firestore
+const sanitizeMetricsForFirestore = (metrics: AntiCheatingMetrics | undefined): AntiCheatingMetrics | null => {
+  if (!metrics) return null;
+  
+  try {
+    // Create a sanitized copy that only includes primitive values
+    const sanitized: AntiCheatingMetrics = {
+      keystrokes: metrics.keystrokes || 0,
+      pauses: metrics.pauses || 0,
+      tabSwitches: metrics.tabSwitches || 0,
+      windowBlurs: metrics.windowBlurs || 0,
+      windowFocuses: metrics.windowFocuses || 0,
+      copyAttempts: metrics.copyAttempts || 0,
+      pasteAttempts: metrics.pasteAttempts || 0,
+      rightClickAttempts: metrics.rightClickAttempts || 0,
+      suspiciousActivity: !!metrics.suspiciousActivity
+    };
+    
+    // Convert to JSON and back to ensure it's serializable
+    return JSON.parse(JSON.stringify(sanitized));
+  } catch (error) {
+    console.error("Error sanitizing metrics:", error);
+    return null;
+  }
+};
+
 export const saveAssessmentResult = async (
   candidateName: string,
   candidatePosition: string,
@@ -106,6 +132,10 @@ export const saveAssessmentResult = async (
     console.log("Word count:", wordCount);
     console.log("Anti-cheating metrics present:", !!antiCheatingMetrics);
     
+    // Sanitize the anti-cheating metrics to ensure they're Firestore-compatible
+    const sanitizedMetrics = sanitizeMetricsForFirestore(antiCheatingMetrics);
+    console.log("Sanitized metrics:", sanitizedMetrics);
+    
     const submission: AssessmentSubmission = {
       candidateName,
       candidatePosition,
@@ -114,7 +144,7 @@ export const saveAssessmentResult = async (
       completedPrompts,
       wordCount,
       submittedAt: serverTimestamp(),
-      antiCheatingMetrics: antiCheatingMetrics || null
+      antiCheatingMetrics: sanitizedMetrics
     };
 
     if (writingScores && writingScores.length > 0) {

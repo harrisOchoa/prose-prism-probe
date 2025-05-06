@@ -54,7 +54,18 @@ export const mapFirebaseDocToAssessment = (doc: DocumentData): AssessmentData =>
 export const removeDuplicateSubmissions = (assessments: AssessmentData[]): AssessmentData[] => {
   console.log("Checking for duplicate submissions among", assessments.length, "assessments");
   
-  const groupedByName = assessments.reduce((groups: {[key: string]: AssessmentData[]}, assessment) => {
+  // First, filter out assessments with missing essential data
+  const validAssessments = assessments.filter(assessment => {
+    const hasName = !!assessment.candidateName;
+    const hasPosition = !!assessment.candidatePosition;
+    if (!hasName || !hasPosition) {
+      console.log(`Skipping assessment ${assessment.id} due to missing name or position`);
+      return false;
+    }
+    return true;
+  });
+  
+  const groupedByName = validAssessments.reduce((groups: {[key: string]: AssessmentData[]}, assessment) => {
     // Use unique key combining name and position
     const key = `${assessment.candidateName}:${assessment.candidatePosition}`;
     if (!groups[key]) {
