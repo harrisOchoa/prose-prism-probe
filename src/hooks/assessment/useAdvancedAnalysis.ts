@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { 
   generateDetailedWritingAnalysis,
   generatePersonalityInsights,
   generateInterviewQuestions,
-  compareWithIdealProfile as generateProfileMatch,
+  compareWithIdealProfile, // Using the proper export name
   generateAptitudeAnalysis
 } from "@/services/geminiService";
 import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
@@ -26,26 +27,38 @@ export const useAdvancedAnalysis = (
   });
 
   const generateAdvancedAnalysis = async (type: string) => {
-    if (!assessmentData.overallWritingScore && type !== 'aptitude') {
-      toast({
-        title: "Writing Not Evaluated",
-        description: "Please evaluate the writing first to generate advanced analysis.",
-        variant: "destructive",
-      });
-      return null;
-    }
-    
-    // For aptitude analysis, we need aptitude scores
-    if (type === 'aptitude' && !assessmentData.aptitudeScore) {
-      toast({
-        title: "Aptitude Results Needed",
-        description: "This candidate needs to complete the aptitude test before analysis.",
-        variant: "destructive",
-      });
-      return null;
-    }
-
     try {
+      console.log(`Starting ${type} analysis generation...`);
+      
+      if (!assessmentData?.id) {
+        console.error("Missing assessment ID");
+        toast({
+          title: "Error",
+          description: "Assessment data is not properly loaded. Please refresh the page.",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      if (!assessmentData.overallWritingScore && type !== 'aptitude') {
+        toast({
+          title: "Writing Not Evaluated",
+          description: "Please evaluate the writing first to generate advanced analysis.",
+          variant: "destructive",
+        });
+        return null;
+      }
+      
+      // For aptitude analysis, we need aptitude scores
+      if (type === 'aptitude' && !assessmentData.aptitudeScore) {
+        toast({
+          title: "Aptitude Results Needed",
+          description: "This candidate needs to complete the aptitude test before analysis.",
+          variant: "destructive",
+        });
+        return null;
+      }
+
       // Set generating state for this analysis type
       setGeneratingAnalysis(prev => ({ ...prev, [type]: true }));
       
@@ -72,7 +85,8 @@ export const useAdvancedAnalysis = (
           updateKey = 'interviewQuestions';
           break;
         case 'profile':
-          result = await generateProfileMatch(assessmentData);
+          // Use the correct function name that's imported
+          result = await compareWithIdealProfile(assessmentData);
           updateKey = 'profileMatch';
           break;
         case 'aptitude':
@@ -98,14 +112,35 @@ export const useAdvancedAnalysis = (
       setAssessmentData(updatedData);
       
       // Update Firebase
-      await updateAssessmentAnalysis(assessmentData.id, {
-        [updateKey]: result
-      });
-      
-      toast({
-        title: "Analysis Complete",
-        description: `${type.charAt(0).toUpperCase() + type.slice(1)} analysis has been generated successfully.`,
-      });
+      try {
+        await updateAssessmentAnalysis(assessmentData.id, {
+          [updateKey]: result
+        });
+        
+        console.log(`Successfully updated ${type} analysis in Firebase`);
+        
+        toast({
+          title: "Analysis Complete",
+          description: `${type.charAt(0).toUpperCase() + type.slice(1)} analysis has been generated successfully.`,
+        });
+      } catch (updateError: any) {
+        console.error(`Error updating ${type} analysis in Firebase:`, updateError);
+        
+        if (updateError.message && updateError.message.includes("permission-denied")) {
+          toast({
+            title: "Permission Error",
+            description: "You don't have permission to update this assessment. Check your Firestore security rules.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Update Failed",
+            description: "Analysis was generated but could not be saved to the database. Please try again.",
+            variant: "destructive",
+          });
+        }
+        // Still return the result even if saving to Firebase failed
+      }
       
       return result;
     } catch (error: any) {

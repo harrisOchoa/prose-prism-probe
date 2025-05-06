@@ -62,6 +62,7 @@ export const updateAssessmentAnalysis = async (
     
     // Check if we have Firestore write permission
     try {
+      console.log("Attempting to update document in Firestore...");
       // Use direct update instead of transaction for simpler code and fewer retries
       await updateDoc(assessmentRef, updateData);
       console.log(`Successfully updated assessment ${assessmentId}`);
@@ -131,16 +132,20 @@ export const updateAssessmentAnalysis = async (
         return false;
       }
     } catch (writeError: any) {
-      console.error(`Firebase write error: ${writeError.message}`);
+      console.error(`Firebase write error: ${writeError.code} - ${writeError.message}`);
       // If it's a permission error
       if (writeError.code === 'permission-denied') {
-        throw new Error("Firestore permission denied. You may need to update your security rules.");
+        throw new Error("Firestore permission denied. You may need to update your security rules to allow writes to the assessments collection.");
       } else {
         throw writeError;
       }
     }
   } catch (error: any) {
     console.error(`Error updating assessment ${assessmentId}:`, error);
+    // Pass the error up with a clear message
+    if (error.code === 'permission-denied') {
+      throw new Error("Insufficient permissions to update assessment. Please check your Firestore security rules.");
+    }
     throw new Error(`Failed to update assessment analysis: ${error.message}`);
   }
 };

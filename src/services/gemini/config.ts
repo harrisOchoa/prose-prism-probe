@@ -11,14 +11,14 @@ export const makeGeminiRequest = async (promptTemplate: string, temperature: num
 
   console.log(`Making Gemini request with ${promptTemplate.length} chars, temperature: ${temperature}`);
 
+  // Check if API key is valid before making any request
+  if (!GEMINI_API_KEY || GEMINI_API_KEY.length < 10) {
+    throw new Error("Invalid Gemini API key configuration. Please check your API key settings.");
+  }
+
   while (retries <= maxRetries) {
     try {
       console.log(`Attempt ${retries + 1} of ${maxRetries + 1}`);
-      
-      // Check if API key is valid before making request
-      if (!GEMINI_API_KEY || GEMINI_API_KEY.length < 10) {
-        throw new Error("Invalid Gemini API key. Please check your configuration.");
-      }
       
       const apiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
         method: "POST",
@@ -104,7 +104,7 @@ export const makeGeminiRequest = async (promptTemplate: string, temperature: num
       
       if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
         console.error("Invalid API response structure:", data);
-        throw new Error("Invalid API response structure");
+        throw new Error("Invalid API response structure. The AI model returned an unexpected format.");
       }
 
       return data.candidates[0].content.parts[0].text;
