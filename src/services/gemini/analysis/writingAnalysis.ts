@@ -7,9 +7,20 @@ export const generateDetailedWritingAnalysis = async (assessmentData: any): Prom
   try {
     console.log("Generating detailed writing analysis for:", assessmentData.candidateName);
     
+    if (!assessmentData.completedPrompts || assessmentData.completedPrompts.length === 0) {
+      throw new Error("No writing samples found for analysis");
+    }
+    
     const writingResponses = assessmentData.completedPrompts
       .map((prompt: WritingPromptItem) => `Prompt: ${prompt.prompt}\nResponse: ${prompt.response}`)
       .join("\n\n---\n\n");
+    
+    // If the writing responses are too short, throw error
+    if (writingResponses.length < 50) {
+      throw new Error("Writing samples are too short for meaningful analysis");
+    }
+    
+    console.log(`Preparing analysis request with ${writingResponses.length} characters of writing samples`);
     
     const promptTemplate = `
 You are an objective writing analyst for job candidate assessments. Your task is to analyze writing samples in a consistent, fair manner without making assumptions about the candidate.
@@ -41,8 +52,25 @@ Return your analysis as a JSON object with this exact structure:
 }
 `;
 
+    console.log("Sending request to Gemini API...");
     const text = await makeGeminiRequest(promptTemplate, 0.2);
+    
+    if (!text || text.trim() === '') {
+      throw new Error("Empty response received from Gemini API");
+    }
+    
+    console.log("Received response, parsing JSON...");
     const analysis = parseJsonResponse(text);
+    
+    if (!analysis) {
+      throw new Error("Failed to parse response from Gemini API");
+    }
+    
+    // Validate that we have all the required fields
+    if (!analysis.writingStyle || !analysis.vocabularyLevel || !analysis.criticalThinking) {
+      console.error("Missing critical fields in analysis:", analysis);
+      throw new Error("Incomplete analysis result received");
+    }
     
     return { 
       writingStyle: analysis.writingStyle || "Unable to analyze writing style",
@@ -51,14 +79,8 @@ Return your analysis as a JSON object with this exact structure:
       strengthAreas: analysis.strengthAreas || ["No specific strengths identified"],
       improvementAreas: analysis.improvementAreas || ["No specific areas for improvement identified"]
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating detailed writing analysis:", error);
-    return {
-      writingStyle: "Analysis failed",
-      vocabularyLevel: "Analysis failed",
-      criticalThinking: "Analysis failed",
-      strengthAreas: ["Unable to analyze strengths at this time"],
-      improvementAreas: ["Unable to analyze areas for improvement at this time"]
-    };
+    throw new Error(`Writing analysis failed: ${error.message}`);
   }
 };

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { 
@@ -41,6 +40,7 @@ export const useAdvancedAnalysis = (
       }
 
       if (!assessmentData.overallWritingScore && type !== 'aptitude') {
+        console.error("Writing not evaluated yet");
         toast({
           title: "Writing Not Evaluated",
           description: "Please evaluate the writing first to generate advanced analysis.",
@@ -51,6 +51,7 @@ export const useAdvancedAnalysis = (
       
       // For aptitude analysis, we need aptitude scores
       if (type === 'aptitude' && !assessmentData.aptitudeScore) {
+        console.error("Missing aptitude score");
         toast({
           title: "Aptitude Results Needed",
           description: "This candidate needs to complete the aptitude test before analysis.",
@@ -70,35 +71,68 @@ export const useAdvancedAnalysis = (
       let result;
       let updateKey = '';
       
-      switch(type) {
-        case 'writing':
-          result = await generateDetailedWritingAnalysis(assessmentData);
-          updateKey = 'detailedWritingAnalysis';
-          break;
-        case 'personality':
-          result = await generatePersonalityInsights(assessmentData);
-          updateKey = 'personalityInsights';
-          break;
-        case 'interview':
-        case 'questions':
-          result = await generateInterviewQuestions(assessmentData);
-          updateKey = 'interviewQuestions';
-          break;
-        case 'profile':
-          // Use the correct function name that's imported
-          result = await compareWithIdealProfile(assessmentData);
-          updateKey = 'profileMatch';
-          break;
-        case 'aptitude':
-          result = await generateAptitudeAnalysis(assessmentData);
-          updateKey = 'aptitudeAnalysis';
-          break;
-        default:
-          throw new Error(`Unknown analysis type: ${type}`);
+      // Try up to 2 times with backoff in case of rate limiting
+      let attempt = 0;
+      const maxAttempts = 2;
+      
+      while (attempt < maxAttempts) {
+        try {
+          attempt++;
+          console.log(`${type} analysis attempt ${attempt}...`);
+          
+          switch(type) {
+            case 'writing':
+              result = await generateDetailedWritingAnalysis(assessmentData);
+              updateKey = 'detailedWritingAnalysis';
+              break;
+            case 'personality':
+              result = await generatePersonalityInsights(assessmentData);
+              updateKey = 'personalityInsights';
+              break;
+            case 'interview':
+            case 'questions':
+              result = await generateInterviewQuestions(assessmentData);
+              updateKey = 'interviewQuestions';
+              break;
+            case 'profile':
+              // Use the correct function name that's imported
+              result = await compareWithIdealProfile(assessmentData);
+              updateKey = 'profileMatch';
+              break;
+            case 'aptitude':
+              result = await generateAptitudeAnalysis(assessmentData);
+              updateKey = 'aptitudeAnalysis';
+              break;
+            default:
+              throw new Error(`Unknown analysis type: ${type}`);
+          }
+          
+          // If we got a result, break out of retry loop
+          if (result) break;
+          
+        } catch (attemptError: any) {
+          console.error(`Error in attempt ${attempt}:`, attemptError);
+          
+          // If this is our last attempt, or it's not a rate limit error, throw the error
+          if (attempt >= maxAttempts || !attemptError.message?.toLowerCase().includes('rate limit')) {
+            throw attemptError;
+          }
+          
+          // Otherwise, wait before trying again
+          const waitTime = attempt * 2000; // 2 seconds, 4 seconds, etc.
+          console.log(`Rate limit detected. Waiting ${waitTime}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          
+          // Notify user of retry
+          toast({
+            title: "Retrying Analysis",
+            description: `API rate limit reached. Retrying in ${waitTime/1000} seconds...`,
+          });
+        }
       }
       
       if (!result) {
-        throw new Error(`Failed to generate ${type} analysis`);
+        throw new Error(`Failed to generate ${type} analysis after ${maxAttempts} attempts.`);
       }
       
       console.log(`Generated ${type} analysis:`, result);
@@ -129,7 +163,7 @@ export const useAdvancedAnalysis = (
         if (updateError.message && updateError.message.includes("permission-denied")) {
           toast({
             title: "Permission Error",
-            description: "You don't have permission to update this assessment. Check your Firestore security rules.",
+            description: "You don't have permission to update this assessment. Please check your Firestore security rules.",
             variant: "destructive",
           });
         } else {
@@ -145,13 +179,28 @@ export const useAdvancedAnalysis = (
       return result;
     } catch (error: any) {
       console.error(`Error generating ${type} analysis:`, error);
+      
+      // Determine specific error message based on error type
+      let errorMessage = "Unknown error occurred";
+      
+      if (error.message) {
+        if (error.message.includes("rate limit")) {
+          errorMessage = "API rate limit reached. Please wait a few minutes and try again.";
+        } else if (error.message.includes("API key")) {
+          errorMessage = "Invalid or missing API key. Check your Gemini API configuration.";
+        } else if (error.message.includes("network")) {
+          errorMessage = "Network error. Please check your internet connection and try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Analysis Failed",
-        description: error.message && error.message.includes("rate limit") 
-          ? "API rate limit reached. Please wait a few minutes and try again."
-          : `Error: ${error.message || "Unknown error"}`,
+        description: errorMessage,
         variant: "destructive",
       });
+      
       return null;
     } finally {
       // Reset generating state for this analysis type

@@ -1,8 +1,8 @@
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, BookOpen } from "lucide-react";
+import { Loader2, BookOpen, AlertTriangle } from "lucide-react";
 import { DetailedAnalysis } from "@/services/geminiService";
+import { toast } from "@/hooks/use-toast";
 
 interface WritingAnalysisTabProps {
   detailedAnalysis: DetailedAnalysis | null;
@@ -17,27 +17,84 @@ const WritingAnalysisTab: React.FC<WritingAnalysisTabProps> = ({
   handleGenerateAnalysis,
   getAnalysisButtonLabel
 }) => {
+  const [error, setError] = useState<string | null>(null);
+  const [localLoading, setLocalLoading] = useState(false);
+  
+  // Sync loading state with props
+  useEffect(() => {
+    setLocalLoading(loading);
+  }, [loading]);
+  
   // Debug log
   console.log("WritingAnalysisTab rendering with:", { 
     hasAnalysis: !!detailedAnalysis, 
-    loading, 
-    buttonLabel: getAnalysisButtonLabel() 
+    loading: localLoading, 
+    buttonLabel: getAnalysisButtonLabel(),
+    error
   });
+  
+  const handleClick = async () => {
+    try {
+      setError(null);
+      setLocalLoading(true);
+      
+      console.log("Generate Writing Analysis button clicked");
+      toast({
+        title: "Generating Analysis",
+        description: "Please wait while we analyze the writing samples...",
+      });
+      
+      await handleGenerateAnalysis();
+    } catch (err: any) {
+      console.error("Error generating writing analysis:", err);
+      setError(err.message || "Failed to generate analysis");
+      toast({
+        title: "Analysis Failed",
+        description: err.message || "An error occurred while generating the analysis",
+        variant: "destructive",
+      });
+    } finally {
+      // Keep local loading state true until parent component updates
+      // This prevents flickering UI states
+      setTimeout(() => {
+        if (localLoading) {
+          setLocalLoading(false);
+        }
+      }, 2000);
+    }
+  };
   
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
         <Button 
-          onClick={handleGenerateAnalysis}
-          disabled={loading}
+          onClick={handleClick}
+          disabled={localLoading}
           className="relative"
         >
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {localLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {getAnalysisButtonLabel()}
         </Button>
       </div>
 
-      {!detailedAnalysis && !loading ? (
+      {error && (
+        <div className="flex flex-col items-center justify-center p-6 text-center border border-red-200 bg-red-50 rounded-lg">
+          <AlertTriangle className="h-12 w-12 text-red-400 mb-2" />
+          <h3 className="text-lg font-medium text-red-700">Analysis Error</h3>
+          <p className="text-sm text-red-600 max-w-md mt-1">
+            {error}
+          </p>
+          <Button 
+            variant="outline" 
+            className="mt-4" 
+            onClick={() => setError(null)}
+          >
+            Dismiss
+          </Button>
+        </div>
+      )}
+
+      {!detailedAnalysis && !localLoading && !error ? (
         <div className="flex flex-col items-center justify-center p-6 text-center border border-dashed rounded-lg">
           <BookOpen className="h-12 w-12 text-gray-300 mb-2" />
           <h3 className="text-lg font-medium text-gray-600">No Writing Analysis Available</h3>
@@ -45,12 +102,13 @@ const WritingAnalysisTab: React.FC<WritingAnalysisTabProps> = ({
             Generate detailed analysis of the candidate's writing style, vocabulary level, and critical thinking abilities.
           </p>
         </div>
-      ) : loading ? (
+      ) : localLoading ? (
         <div className="flex flex-col items-center justify-center p-6">
           <Loader2 className="h-12 w-12 animate-spin text-amber-500 mb-3" />
           <p className="text-gray-600">Analyzing writing samples...</p>
+          <p className="text-xs text-gray-400 mt-2">This may take up to a minute depending on the length of the writing samples</p>
         </div>
-      ) : (
+      ) : detailedAnalysis ? (
         <div className="space-y-4">
           {/* Writing Style Section */}
           <div className="border rounded-lg overflow-hidden">
@@ -110,7 +168,7 @@ const WritingAnalysisTab: React.FC<WritingAnalysisTabProps> = ({
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };
