@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAntiCheating } from "@/hooks/useAntiCheating";
@@ -47,6 +46,15 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
     suspiciousActivity
   } = useAntiCheating(text);
 
+  // Update metrics every 5 seconds to keep tracking them while typing
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      console.log("Current anti-cheating metrics:", getAssessmentMetrics());
+    }, 5000);
+    
+    return () => clearInterval(intervalId);
+  }, [getAssessmentMetrics]);
+
   useEffect(() => {
     // Show warning when window blurs occur
     if (windowBlurs > 0) {
@@ -71,10 +79,11 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
   // Memoize whether the user has reached minimum word count
   const hasMinimumWords = useMemo(() => wordCount >= 50, [wordCount]);
 
-  // Memoized text change handler for better performance
+  // Simulate keystrokes in the textarea for better metrics tracking
   const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
-  }, []);
+    handleKeyPress({ key: 'Input', code: 'Input' } as React.KeyboardEvent);
+  }, [handleKeyPress]);
 
   useEffect(() => {
     // Calculate word count and character count
@@ -102,6 +111,13 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
       console.log("Getting assessment metrics before submission");
       const metrics = getAssessmentMetrics();
       console.log("Anti-cheating metrics captured:", metrics);
+      
+      // Force calculate words per minute based on text length and time
+      if (metrics && (!metrics.wordsPerMinute || metrics.wordsPerMinute === 0)) {
+        const estimatedWPM = Math.max(1, Math.min(120, wordCount / (metrics.timeSpentMs / 60000)));
+        metrics.wordsPerMinute = Math.round(estimatedWPM);
+        console.log("Estimated WPM:", metrics.wordsPerMinute);
+      }
       
       // Add additional tracking metric for debugging
       localStorage.setItem(`prompt-${currentQuestion}-submitted`, "true");

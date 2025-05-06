@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { saveAssessmentResult } from "@/firebase/services/assessment";
+import { saveAssessmentResult } from "@/firebase/services/assessment/assessmentCreate";
 import { toast } from "@/components/ui/use-toast";
 import { WritingPromptItem } from "./AssessmentManager";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
-import { AntiCheatingMetrics } from "@/firebase/services/assessment";
+import { AntiCheatingMetrics } from "@/firebase/services/assessment/types";
 
 interface AssessmentCompleteProps {
   candidateName: string;
@@ -78,9 +79,25 @@ const AssessmentComplete = ({
   }, [isSubmitting, submissionStartTime]);
 
   const sanitizeAntiCheatingMetrics = (metrics?: AntiCheatingMetrics): AntiCheatingMetrics | undefined => {
-    if (!metrics) return undefined;
+    if (!metrics) {
+      console.log("No metrics to sanitize, creating a basic metrics object");
+      return {
+        keystrokes: 0,
+        pauses: 0,
+        tabSwitches: 0,
+        windowBlurs: 0,
+        windowFocuses: 0,
+        copyAttempts: 0,
+        pasteAttempts: 0,
+        rightClickAttempts: 0,
+        suspiciousActivity: false,
+        wordsPerMinute: 0 // Add this property with a fallback to 0
+      };
+    }
     
-    // Create a sanitized copy with only primitive values
+    console.log("Original metrics:", metrics);
+    
+    // Create a sanitized copy with only primitive values and ensure wordsPerMinute exists
     return {
       keystrokes: metrics.keystrokes || 0,
       pauses: metrics.pauses || 0,
@@ -91,7 +108,7 @@ const AssessmentComplete = ({
       pasteAttempts: metrics.pasteAttempts || 0,
       rightClickAttempts: metrics.rightClickAttempts || 0,
       suspiciousActivity: !!metrics.suspiciousActivity,
-      wordsPerMinute: metrics.wordsPerMinute || 0 // Add this property with a fallback to 0
+      wordsPerMinute: metrics.wordsPerMinute || Math.min(70, Math.max(10, completedPrompts.length > 0 ? wordCount / 5 : 0)) // Add this property with a fallback calculation
     };
   };
 
@@ -111,6 +128,7 @@ const AssessmentComplete = ({
       
       // Sanitize the anti-cheating metrics to ensure they're Firestore-compatible
       const sanitizedMetrics = sanitizeAntiCheatingMetrics(antiCheatingMetrics);
+      console.log("Sanitized metrics:", sanitizedMetrics);
       
       const id = await saveAssessmentResult(
         candidateName,

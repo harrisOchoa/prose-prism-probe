@@ -1,3 +1,4 @@
+
 import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData } from 'firebase/firestore';
 import { db } from '../../config';
 import { AntiCheatingMetrics, AssessmentSubmission } from './types';
@@ -6,7 +7,21 @@ import { WritingPromptItem } from '@/components/AssessmentManager';
 
 // Helper function to sanitize antiCheatingMetrics for Firestore
 const sanitizeMetricsForFirestore = (metrics: AntiCheatingMetrics | undefined): AntiCheatingMetrics | null => {
-  if (!metrics) return null;
+  if (!metrics) {
+    console.log("No metrics provided to sanitize");
+    return {
+      keystrokes: 0,
+      pauses: 0,
+      tabSwitches: 0,
+      windowBlurs: 0,
+      windowFocuses: 0,
+      copyAttempts: 0,
+      pasteAttempts: 0,
+      rightClickAttempts: 0,
+      suspiciousActivity: false,
+      wordsPerMinute: 0
+    };
+  }
   
   try {
     // Create a sanitized copy that only includes primitive values
@@ -22,6 +37,9 @@ const sanitizeMetricsForFirestore = (metrics: AntiCheatingMetrics | undefined): 
       suspiciousActivity: !!metrics.suspiciousActivity,
       wordsPerMinute: metrics.wordsPerMinute || 0 // Add this property with a fallback to 0
     };
+    
+    // Log sanitized metrics
+    console.log("Sanitized metrics:", sanitized);
     
     // Convert to JSON and back to ensure it's serializable
     return JSON.parse(JSON.stringify(sanitized));
@@ -50,6 +68,7 @@ export const saveAssessmentResult = async (
     console.log("Position:", candidatePosition);
     console.log("Aptitude score:", aptitudeScore, "out of", aptitudeTotal);
     console.log("Completed prompts:", completedPrompts.length);
+    console.log("Original metrics provided:", antiCheatingMetrics);
     
     // Check for recent submissions to avoid duplicates
     const recentSubmissionsQuery = query(
@@ -153,6 +172,8 @@ export const saveAssessmentResult = async (
     }
     
     console.log("Attempting to add document to Firestore...");
+    console.log("Final submission object:", JSON.stringify(submission));
+    
     const docRef = await addDoc(collection(db, 'assessments'), submission);
     console.log("New assessment saved with ID:", docRef.id);
     

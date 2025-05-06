@@ -58,6 +58,18 @@ export const useWritingScores = (
       console.log("Overall writing score:", overallScore);
       console.log("Valid scores count:", validScores.length);
 
+      // Save scores to localStorage as a backup
+      try {
+        localStorage.setItem(`assessmentScores_${assessmentData.id}`, JSON.stringify({
+          writingScores: scores,
+          overallWritingScore: overallScore,
+          timestamp: Date.now(),
+        }));
+        console.log("Scores saved to localStorage as backup");
+      } catch (e) {
+        console.warn("Failed to save scores to localStorage:", e);
+      }
+
       // Update local state immediately for immediate feedback
       const updatedData = {
         ...assessmentData,
@@ -68,27 +80,41 @@ export const useWritingScores = (
       // Update the UI immediately
       setAssessmentData(updatedData);
 
-      // Update Firebase with the writing scores
-      try {
-        console.log("Saving writing scores to Firebase for assessment", assessmentData.id);
-        await updateAssessmentAnalysis(assessmentData.id, {
-          writingScores: scores,
-          overallWritingScore: overallScore
-        });
-        
-        console.log("Successfully saved writing scores to database");
-        toast({
-          title: "Evaluation Complete",
-          description: `Successfully evaluated ${validScores.length} of ${scores.length} writing prompts.`,
-          variant: "default",
-        });
-      } catch (updateError) {
-        console.error("Failed to save writing scores to database:", updateError);
-        toast({
-          title: "Save Failed",
-          description: "Failed to save evaluation results to database, but they are available in your current session.",
-          variant: "destructive",
-        });
+      // Update Firebase with the writing scores - with retry mechanism
+      let saveSuccess = false;
+      let retryCount = 0;
+      
+      while (!saveSuccess && retryCount < 3) {
+        try {
+          console.log("Saving writing scores to Firebase for assessment", assessmentData.id, "- Attempt", retryCount + 1);
+          await updateAssessmentAnalysis(assessmentData.id, {
+            writingScores: scores,
+            overallWritingScore: overallScore
+          });
+          
+          console.log("Successfully saved writing scores to database");
+          saveSuccess = true;
+          
+          toast({
+            title: "Evaluation Complete",
+            description: `Successfully evaluated ${validScores.length} of ${scores.length} writing prompts.`,
+            variant: "default",
+          });
+        } catch (updateError) {
+          console.error(`Failed to save scores to database (attempt ${retryCount + 1}):`, updateError);
+          retryCount++;
+          
+          if (retryCount >= 3) {
+            toast({
+              title: "Save Failed",
+              description: "Failed to save evaluation results to database, but they are available in your current session.",
+              variant: "destructive",
+            });
+          } else {
+            // Wait briefly before retry
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
       }
 
       return updatedData;
