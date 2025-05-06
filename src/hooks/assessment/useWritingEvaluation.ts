@@ -25,6 +25,15 @@ export const useWritingEvaluation = (
   } = useInsightsGeneration(assessmentData, setAssessmentData);
 
   const handleManualEvaluation = async () => {
+    if (!assessmentData || !assessmentData.completedPrompts || assessmentData.completedPrompts.length === 0) {
+      toast({
+        title: "No Writing Prompts",
+        description: "There are no completed writing prompts to evaluate.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     console.log("Starting manual evaluation process...");
     toast({
       title: "Evaluation Process Started",
@@ -96,9 +105,19 @@ export const useWritingEvaluation = (
             }
           } else {
             console.error("Document not found during verification");
+            toast({
+              title: "Document Error",
+              description: "Could not verify the assessment document after evaluation.",
+              variant: "destructive",
+            });
           }
         } catch (verifyError) {
           console.error("Error during final verification:", verifyError);
+          toast({
+            title: "Verification Error",
+            description: "Error checking the updated assessment.",
+            variant: "destructive",
+          });
         }
       }
     } catch (error: any) {

@@ -15,6 +15,11 @@ export const makeGeminiRequest = async (promptTemplate: string, temperature: num
     try {
       console.log(`Attempt ${retries + 1} of ${maxRetries + 1}`);
       
+      // Check if API key is valid before making request
+      if (!GEMINI_API_KEY || GEMINI_API_KEY.length < 10) {
+        throw new Error("Invalid Gemini API key. Please check your configuration.");
+      }
+      
       const apiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
         method: "POST",
         headers: {
@@ -82,6 +87,10 @@ export const makeGeminiRequest = async (promptTemplate: string, temperature: num
           // Check if the error is related to the API key
           if (errorData.error && errorData.error.status === 'PERMISSION_DENIED') {
             throw new Error("API key issue: Permission denied. Your Gemini API key may be invalid or restricted.");
+          }
+          
+          if (errorData.error && errorData.error.message) {
+            throw new Error(`API error: ${errorData.error.message}`);
           }
         } catch (e) {
           // If it's not JSON, just log the text

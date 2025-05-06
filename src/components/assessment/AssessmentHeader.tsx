@@ -36,13 +36,29 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
   handleExportPdf
 }) => {
   // Check if writing scores exist and if they are valid
-  const hasValidWritingScores = assessmentData.writingScores && 
+  const hasValidWritingScores = assessmentData?.writingScores && 
     assessmentData.writingScores.length > 0 && 
     assessmentData.writingScores.some(score => score.score > 0);
 
   // Log for debugging
-  console.log("Assessment Header - Writing Scores:", assessmentData.writingScores);
+  console.log("Assessment Header - Writing Scores:", assessmentData?.writingScores);
   console.log("Has Valid Writing Scores:", hasValidWritingScores);
+  console.log("Evaluating state:", evaluating);
+  console.log("GeneratingSummary state:", generatingSummary);
+  
+  // Disable button conditions
+  const isEvaluateDisabled = evaluating || generatingSummary;
+  const isRegenerateDisabled = generatingSummary || !hasValidWritingScores;
+  
+  const handleEvaluateClick = () => {
+    console.log("Evaluate button clicked");
+    handleManualEvaluation();
+  };
+  
+  const handleRegenerateClick = () => {
+    console.log("Regenerate button clicked");
+    regenerateInsights();
+  };
   
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-lg border shadow-subtle animate-fade-in hover:shadow-elevation-1 transition-all">
@@ -56,9 +72,11 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-xl font-semibold gradient-text">{assessmentData.candidateName}</h1>
+          <h1 className="text-xl font-semibold gradient-text">
+            {assessmentData?.candidateName || "Candidate Name"}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            {assessmentData.candidatePosition || "Position not specified"}
+            {assessmentData?.candidatePosition || "Position not specified"}
           </p>
         </div>
       </div>
@@ -69,8 +87,8 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
             variant="outline"
             onClick={() => handleExportPdf(
               {
-                candidateName: assessmentData.candidateName,
-                candidatePosition: assessmentData.candidatePosition
+                candidateName: assessmentData?.candidateName || "Candidate",
+                candidatePosition: assessmentData?.candidatePosition || "Unknown Position"
               },
               "Overview" // Default to Overview, can be made dynamic if needed
             )}
@@ -87,8 +105,8 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
         {hasValidWritingScores ? (
           <Button 
             variant="secondary" 
-            onClick={regenerateInsights} 
-            disabled={generatingSummary}
+            onClick={handleRegenerateClick} 
+            disabled={isRegenerateDisabled}
             className={cn(
               "flex-1 sm:flex-none pdf-hide shadow-subtle hover:shadow-elevation-1 transition-all",
               "bg-hirescribe-secondary/10 hover:bg-hirescribe-secondary/20 text-hirescribe-primary"
@@ -109,14 +127,14 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
         ) : (
           <Button 
             variant="default" 
-            onClick={handleManualEvaluation} 
-            disabled={evaluating}
+            onClick={handleEvaluateClick} 
+            disabled={isEvaluateDisabled}
             className="flex-1 sm:flex-none pdf-hide bg-hirescribe-primary hover:bg-hirescribe-accent transition-colors shadow-subtle hover:shadow-elevation-1"
           >
-            {evaluating ? (
+            {evaluating || generatingSummary ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Evaluating...
+                {evaluating ? "Evaluating..." : "Generating..."}
               </>
             ) : (
               <>
@@ -132,4 +150,3 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
 };
 
 export default AssessmentHeader;
-
