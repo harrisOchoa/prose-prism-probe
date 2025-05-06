@@ -8,7 +8,14 @@ export const generateDetailedWritingAnalysis = async (assessmentData: any): Prom
     console.log("Generating detailed writing analysis for:", assessmentData.candidateName);
     
     if (!assessmentData.completedPrompts || assessmentData.completedPrompts.length === 0) {
+      console.error("No writing samples found for analysis");
       throw new Error("No writing samples found for analysis");
+    }
+    
+    // Check if we already have a detailed analysis (to avoid duplicating work)
+    if (assessmentData.detailedWritingAnalysis) {
+      console.log("Detailed writing analysis already exists, returning existing analysis");
+      return assessmentData.detailedWritingAnalysis;
     }
     
     const writingResponses = assessmentData.completedPrompts
@@ -17,6 +24,7 @@ export const generateDetailedWritingAnalysis = async (assessmentData: any): Prom
     
     // If the writing responses are too short, throw error
     if (writingResponses.length < 50) {
+      console.error("Writing samples are too short for meaningful analysis");
       throw new Error("Writing samples are too short for meaningful analysis");
     }
     
@@ -56,6 +64,7 @@ Return your analysis as a JSON object with this exact structure:
     const text = await makeGeminiRequest(promptTemplate, 0.2);
     
     if (!text || text.trim() === '') {
+      console.error("Empty response received from Gemini API");
       throw new Error("Empty response received from Gemini API");
     }
     

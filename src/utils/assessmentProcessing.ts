@@ -53,7 +53,8 @@ export const mapFirebaseDocToAssessment = (doc: DocumentData): AssessmentData =>
 
 export const removeDuplicateSubmissions = (assessments: AssessmentData[]): AssessmentData[] => {
   const groupedByName = assessments.reduce((groups: {[key: string]: AssessmentData[]}, assessment) => {
-    const key = assessment.candidateName;
+    // Use unique key combining name and position
+    const key = `${assessment.candidateName}:${assessment.candidatePosition}`;
     if (!groups[key]) {
       groups[key] = [];
     }
@@ -64,30 +65,44 @@ export const removeDuplicateSubmissions = (assessments: AssessmentData[]): Asses
   const uniqueAssessments: AssessmentData[] = [];
   
   Object.values(groupedByName).forEach((group: AssessmentData[]) => {
+    // Sort by submission date, most recent first
     const sortedGroup = [...group].sort((a, b) => {
       const dateA = a.submittedAt?.toDate?.() ?? new Date(0);
       const dateB = b.submittedAt?.toDate?.() ?? new Date(0);
       return dateB.getTime() - dateA.getTime();
     });
     
+    // More sophisticated deduplication logic
     const filtered: AssessmentData[] = [];
     sortedGroup.forEach(assessment => {
       const isDuplicate = filtered.some(kept => {
+        // Check for criteria that would indicate this is a true duplicate
         if (kept.candidatePosition !== assessment.candidatePosition) return false;
         if (kept.aptitudeScore !== assessment.aptitudeScore) return false;
-        if (Math.abs(kept.wordCount - assessment.wordCount) > 5) return false;
+        
+        // If word counts are significantly different, not a duplicate
+        const wordCountDiff = Math.abs(kept.wordCount - assessment.wordCount);
+        const wordCountThreshold = Math.max(kept.wordCount, assessment.wordCount) * 0.1; // 10% threshold
+        if (wordCountDiff > wordCountThreshold) return false;
+        
+        // Check submission timestamps - if within 30 minutes, likely a duplicate
         const keptDate = kept.submittedAt?.toDate?.() ?? new Date(0);
         const currDate = assessment.submittedAt?.toDate?.() ?? new Date(0);
-        return Math.abs(keptDate - currDate) < 2 * 60 * 1000;
+        const timeDiffMinutes = Math.abs(keptDate.getTime() - currDate.getTime()) / (60 * 1000);
+        
+        return timeDiffMinutes < 30; // Consider duplicate if within 30 minutes
       });
       
       if (!isDuplicate) {
         filtered.push(assessment);
+      } else {
+        console.log(`Filtered duplicate assessment ${assessment.id} for ${assessment.candidateName}`);
       }
     });
     
     uniqueAssessments.push(...filtered);
   });
   
+  console.log(`Removed ${assessments.length - uniqueAssessments.length} duplicate assessments`);
   return uniqueAssessments;
 };

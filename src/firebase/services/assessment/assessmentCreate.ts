@@ -15,6 +15,7 @@ export const saveAssessmentResult = async (
   antiCheatingMetrics?: AntiCheatingMetrics
 ): Promise<string> => {
   try {
+    // Check for recent submissions to avoid duplicates
     const recentSubmissionsQuery = query(
       collection(db, 'assessments'),
       where('candidateName', '==', candidateName),
@@ -22,25 +23,49 @@ export const saveAssessmentResult = async (
     );
     
     const querySnapshot = await getDocs(recentSubmissionsQuery);
+    
+    // Extract all existing submissions for this candidate
     const recentSubmissions = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data() as AssessmentSubmission
     }));
     
+    console.log(`Found ${recentSubmissions.length} existing submissions for ${candidateName}`);
+    
     const now = new Date();
     const potentialDuplicates = recentSubmissions.filter(submission => {
       if (submission.submittedAt && submission.submittedAt.toDate) {
         const submissionTime = submission.submittedAt.toDate();
-        const timeDiffSeconds = (now.getTime() - submissionTime.getTime()) / 1000;
-        return timeDiffSeconds < 60 && 
-               submission.aptitudeScore === aptitudeScore && 
-               submission.aptitudeTotal === aptitudeTotal;
+        // More stringent duplicate detection:
+        // 1. Submitted within the last 30 minutes
+        // 2. Same aptitude score and total
+        // 3. Similar word count (within 10% variance)
+        const timeDiffMinutes = (now.getTime() - submissionTime.getTime()) / (60 * 1000);
+        const wordCount = completedPrompts.reduce((total, prompt) => total + prompt.wordCount, 0);
+        
+        const similarAptitudeScore = submission.aptitudeScore === aptitudeScore;
+        const similarAptitudeTotal = submission.aptitudeTotal === aptitudeTotal;
+        
+        // If word counts within 10% of each other - indicates same submission
+        let similarWordCount = false;
+        if (submission.wordCount && wordCount) {
+          const wordCountDiffPercent = Math.abs(submission.wordCount - wordCount) / Math.max(submission.wordCount, wordCount);
+          similarWordCount = wordCountDiffPercent < 0.1; // Within 10% difference
+        }
+        
+        return timeDiffMinutes < 30 && 
+               similarAptitudeScore && 
+               similarAptitudeTotal &&
+               similarWordCount;
       }
       return false;
     });
     
     if (potentialDuplicates.length > 0) {
-      console.log("Potential duplicate submission detected, using existing record ID:", potentialDuplicates[0].id);
+      console.log("Detected duplicate submission for:", candidateName);
+      console.log("Using existing record ID:", potentialDuplicates[0].id);
+      console.log("Time since original submission:", potentialDuplicates[0].submittedAt.toDate ? 
+        Math.round((now.getTime() - potentialDuplicates[0].submittedAt.toDate().getTime()) / (60 * 1000)) + " minutes" : "unknown");
       return potentialDuplicates[0].id;
     }
     
@@ -52,8 +77,9 @@ export const saveAssessmentResult = async (
       overallWritingScore = Number((totalScore / writingScores.length).toFixed(1));
     }
     
-    console.log("Saving assessment with aptitude score:", aptitudeScore);
-    console.log("Saving assessment with metrics:", antiCheatingMetrics);
+    console.log("Saving new assessment for:", candidateName);
+    console.log("Aptitude score:", aptitudeScore);
+    console.log("Anti-cheating metrics present:", !!antiCheatingMetrics);
     
     const submission: AssessmentSubmission = {
       candidateName,
@@ -71,10 +97,8 @@ export const saveAssessmentResult = async (
       submission.overallWritingScore = overallWritingScore;
     }
     
-    console.log("Final submission object:", submission);
-    
     const docRef = await addDoc(collection(db, 'assessments'), submission);
-    console.log("Assessment saved with ID:", docRef.id);
+    console.log("New assessment saved with ID:", docRef.id);
     
     return docRef.id;
   } catch (error) {

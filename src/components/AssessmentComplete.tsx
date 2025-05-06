@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ interface AssessmentCompleteProps {
   aptitudeTotal: number;
   restartAssessment: () => void;
   antiCheatingMetrics?: AntiCheatingMetrics;
-  wordCount: number; // Added wordCount prop
+  wordCount: number;
 }
 
 const AssessmentComplete = ({
@@ -26,15 +27,19 @@ const AssessmentComplete = ({
   aptitudeTotal,
   restartAssessment,
   antiCheatingMetrics,
-  wordCount // Added to destructuring
+  wordCount
 }: AssessmentCompleteProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
-  // Auto-submit the assessment when component mounts
+  // Auto-submit the assessment when component mounts, but only once
   useEffect(() => {
-    handleSubmit();
+    if (!submitAttempted) {
+      setSubmitAttempted(true);
+      handleSubmit();
+    }
   }, []);
 
   const handleSubmit = async () => {
@@ -62,6 +67,10 @@ const AssessmentComplete = ({
         title: "Assessment Submitted",
         description: "Your assessment has been successfully submitted.",
       });
+      
+      // Save the submission ID to localStorage to prevent duplicate submissions
+      localStorage.setItem(`assessment-submitted-${candidateName}-${candidatePosition}`, id);
+      
     } catch (error) {
       console.error("Error submitting assessment:", error);
       toast({
