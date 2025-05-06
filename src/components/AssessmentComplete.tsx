@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { saveAssessmentResult } from "@/firebase/services/assessment";
 import { toast } from "@/components/ui/use-toast";
 import { WritingPromptItem } from "./AssessmentManager";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, AlertCircle } from "lucide-react";
 import { AntiCheatingMetrics } from "@/firebase/services/assessment";
 
 interface AssessmentCompleteProps {
@@ -33,22 +33,41 @@ const AssessmentComplete = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
-  // Auto-submit the assessment when component mounts, but only once
+  // Check if we've previously submitted this assessment
   useEffect(() => {
-    if (!submitAttempted) {
+    const localStorageKey = `assessment-submitted-${candidateName}-${candidatePosition}`;
+    const previouslySubmittedId = localStorage.getItem(localStorageKey);
+    
+    if (previouslySubmittedId) {
+      console.log("Found previously submitted assessment:", previouslySubmittedId);
+      setIsSubmitted(true);
+      setAssessmentId(previouslySubmittedId);
+    }
+  }, [candidateName, candidatePosition]);
+
+  // Auto-submit the assessment when component mounts, but only once and only if not previously submitted
+  useEffect(() => {
+    if (!submitAttempted && !isSubmitted) {
+      console.log("Attempting to auto-submit assessment...");
       setSubmitAttempted(true);
       handleSubmit();
     }
-  }, []);
+  }, [isSubmitted]);
 
   const handleSubmit = async () => {
     if (isSubmitting || isSubmitted) return;
     
     setIsSubmitting(true);
+    setSubmissionError(null);
     
     try {
       console.log("Submitting assessment with aptitude score:", aptitudeScore, "out of", aptitudeTotal);
+      console.log("Candidate:", candidateName, "Position:", candidatePosition);
+      console.log("Word count:", wordCount);
+      console.log("Anti-cheating metrics present:", !!antiCheatingMetrics);
+      console.log("Completed prompts count:", completedPrompts.length);
       
       const id = await saveAssessmentResult(
         candidateName,
@@ -60,6 +79,7 @@ const AssessmentComplete = ({
         antiCheatingMetrics
       );
       
+      console.log("Assessment successfully submitted with ID:", id);
       setAssessmentId(id);
       setIsSubmitted(true);
       
@@ -71,8 +91,10 @@ const AssessmentComplete = ({
       // Save the submission ID to localStorage to prevent duplicate submissions
       localStorage.setItem(`assessment-submitted-${candidateName}-${candidatePosition}`, id);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting assessment:", error);
+      setSubmissionError(error?.message || "Unknown error occurred");
+      
       toast({
         title: "Submission Error",
         description: "There was an error submitting your assessment. Please try again.",
@@ -82,12 +104,25 @@ const AssessmentComplete = ({
       setIsSubmitting(false);
     }
   };
+  
+  // Manual retry option if auto-submission failed
+  const handleManualSubmit = () => {
+    if (!isSubmitted) {
+      handleSubmit();
+    }
+  };
 
   return (
     <div className="assessment-card max-w-4xl mx-auto">
       <div className="flex justify-center mb-6">
-        <div className="rounded-full bg-green-100 p-3">
-          <CheckCircle className="h-12 w-12 text-green-500" />
+        <div className={`rounded-full p-3 ${isSubmitted ? 'bg-green-100' : submissionError ? 'bg-red-100' : 'bg-green-100'}`}>
+          {isSubmitted ? (
+            <CheckCircle className="h-12 w-12 text-green-500" />
+          ) : submissionError ? (
+            <AlertCircle className="h-12 w-12 text-red-500" />
+          ) : (
+            <CheckCircle className="h-12 w-12 text-green-500" />
+          )}
         </div>
       </div>
       
@@ -100,9 +135,42 @@ const AssessmentComplete = ({
 
       <Card className="mb-8">
         <CardContent className="pt-6">
-          <p className="text-center text-gray-600">
-            Your assessment has been successfully recorded. We appreciate your participation!
-          </p>
+          {submissionError ? (
+            <div className="text-center">
+              <p className="text-red-600 mb-4">
+                There was an error submitting your assessment: {submissionError}
+              </p>
+              <Button 
+                onClick={handleManualSubmit}
+                variant="default"
+                className="min-w-[200px] mb-2"
+                disabled={isSubmitting}
+              >
+                Retry Submission
+              </Button>
+            </div>
+          ) : isSubmitted ? (
+            <p className="text-center text-gray-600">
+              Your assessment has been successfully recorded. We appreciate your participation!
+            </p>
+          ) : isSubmitting ? (
+            <p className="text-center text-gray-600">
+              Submitting your assessment... Please wait.
+            </p>
+          ) : (
+            <div className="text-center">
+              <p className="text-yellow-600 mb-4">
+                Your assessment hasn't been submitted yet. Please try submitting manually.
+              </p>
+              <Button 
+                onClick={handleManualSubmit}
+                variant="default"
+                className="min-w-[200px] mb-2"
+              >
+                Submit Assessment
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

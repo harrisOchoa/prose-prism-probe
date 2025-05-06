@@ -15,6 +15,16 @@ export const saveAssessmentResult = async (
   antiCheatingMetrics?: AntiCheatingMetrics
 ): Promise<string> => {
   try {
+    if (!candidateName || !candidatePosition) {
+      console.error("Missing required fields for assessment submission:", { candidateName, candidatePosition });
+      throw new Error('Missing required candidate information');
+    }
+
+    console.log("Starting assessment submission for:", candidateName);
+    console.log("Position:", candidatePosition);
+    console.log("Aptitude score:", aptitudeScore, "out of", aptitudeTotal);
+    console.log("Completed prompts:", completedPrompts.length);
+    
     // Check for recent submissions to avoid duplicates
     const recentSubmissionsQuery = query(
       collection(db, 'assessments'),
@@ -22,6 +32,7 @@ export const saveAssessmentResult = async (
       where('candidatePosition', '==', candidatePosition)
     );
     
+    console.log("Checking for existing submissions...");
     const querySnapshot = await getDocs(recentSubmissionsQuery);
     
     // Extract all existing submissions for this candidate
@@ -37,7 +48,7 @@ export const saveAssessmentResult = async (
       if (submission.submittedAt && submission.submittedAt.toDate) {
         const submissionTime = submission.submittedAt.toDate();
         // More stringent duplicate detection:
-        // 1. Submitted within the last 30 minutes
+        // 1. Submitted within the last hour (extended from 30 min)
         // 2. Same aptitude score and total
         // 3. Similar word count (within 10% variance)
         const timeDiffMinutes = (now.getTime() - submissionTime.getTime()) / (60 * 1000);
@@ -53,10 +64,23 @@ export const saveAssessmentResult = async (
           similarWordCount = wordCountDiffPercent < 0.1; // Within 10% difference
         }
         
-        return timeDiffMinutes < 30 && 
+        const isDuplicate = timeDiffMinutes < 60 && 
                similarAptitudeScore && 
                similarAptitudeTotal &&
                similarWordCount;
+               
+        if (isDuplicate) {
+          console.log("Detected duplicate submission with details:", {
+            timeDiffMinutes,
+            originalId: submission.id,
+            originalAptitude: submission.aptitudeScore,
+            newAptitude: aptitudeScore, 
+            originalWordCount: submission.wordCount,
+            newWordCount: wordCount
+          });
+        }
+        
+        return isDuplicate;
       }
       return false;
     });
@@ -79,6 +103,7 @@ export const saveAssessmentResult = async (
     
     console.log("Saving new assessment for:", candidateName);
     console.log("Aptitude score:", aptitudeScore);
+    console.log("Word count:", wordCount);
     console.log("Anti-cheating metrics present:", !!antiCheatingMetrics);
     
     const submission: AssessmentSubmission = {
@@ -97,12 +122,13 @@ export const saveAssessmentResult = async (
       submission.overallWritingScore = overallWritingScore;
     }
     
+    console.log("Attempting to add document to Firestore...");
     const docRef = await addDoc(collection(db, 'assessments'), submission);
     console.log("New assessment saved with ID:", docRef.id);
     
     return docRef.id;
   } catch (error) {
     console.error('Error saving assessment:', error);
-    throw new Error('Failed to save assessment results');
+    throw new Error('Failed to save assessment results: ' + (error instanceof Error ? error.message : String(error)));
   }
 };
