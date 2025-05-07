@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import AssessmentDetailsDialog from "./assessments/AssessmentDetailsDialog";
 
 const AssessmentsPage = () => {
   const { 
@@ -29,6 +30,19 @@ const AssessmentsPage = () => {
     setActiveTab,
     counts 
   } = useAdminAssessments();
+  
+  // Add state for the dialog
+  const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const openAssessmentDetails = (assessment: any) => {
+    setSelectedAssessment(assessment);
+    setIsDialogOpen(true);
+  };
+
+  const closeAssessmentDetails = () => {
+    setIsDialogOpen(false);
+  };
 
   const getBadgeStyle = (status: string) => {
     switch(status) {
@@ -143,7 +157,7 @@ const AssessmentsPage = () => {
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => window.open(`/view/${assessment.id}`, '_blank')}
+                  onClick={() => openAssessmentDetails(assessment)}
                 >
                   View
                 </Button>
@@ -220,6 +234,13 @@ const AssessmentsPage = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {/* Add the Assessment Details Dialog */}
+      <AssessmentDetailsDialog
+        assessment={selectedAssessment}
+        isOpen={isDialogOpen}
+        onClose={closeAssessmentDetails}
+      />
     </div>
   );
 };
