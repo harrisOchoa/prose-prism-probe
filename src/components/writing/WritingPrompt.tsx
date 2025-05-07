@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAntiCheating } from "@/hooks/useAntiCheating";
@@ -49,14 +50,16 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
   // Update metrics every 5 seconds to keep tracking them while typing
   useEffect(() => {
     const intervalId = setInterval(() => {
-      console.log("Current anti-cheating metrics:", getAssessmentMetrics());
+      // Just get the metrics but don't cause state updates here
+      const metrics = getAssessmentMetrics();
+      console.log("Current anti-cheating metrics:", metrics);
     }, 5000);
     
     return () => clearInterval(intervalId);
   }, [getAssessmentMetrics]);
 
+  // Only show warning when windowBlurs changes
   useEffect(() => {
-    // Show warning when window blurs occur
     if (windowBlurs > 0) {
       setShowFocusWarning(true);
       
@@ -85,13 +88,14 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
     handleKeyPress({ key: 'Input', code: 'Input' } as React.KeyboardEvent);
   }, [handleKeyPress]);
 
+  // Calculate word count and character count only when text changes
   useEffect(() => {
-    // Calculate word count and character count
     const words = text.trim().split(/\s+/).filter(word => word !== "");
     setWordCount(words.length);
     setCharCount(text.length);
   }, [text]);
 
+  // Set initial text from response prop, but only when the response or question changes
   useEffect(() => {
     setText(response || "");
   }, [response, currentQuestion]);
@@ -113,18 +117,19 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
       console.log("Anti-cheating metrics captured:", metrics);
       
       // Force calculate words per minute based on text length and time
-      if (metrics && (!metrics.wordsPerMinute || metrics.wordsPerMinute === 0)) {
-        const estimatedWPM = Math.max(1, Math.min(120, wordCount / (metrics.timeSpentMs / 60000)));
-        metrics.wordsPerMinute = Math.round(estimatedWPM);
-        console.log("Estimated WPM:", metrics.wordsPerMinute);
+      const metricsToSubmit = {...metrics};
+      if (metricsToSubmit && (!metricsToSubmit.wordsPerMinute || metricsToSubmit.wordsPerMinute === 0)) {
+        const estimatedWPM = Math.max(1, Math.min(120, wordCount / (metricsToSubmit.timeSpentMs / 60000)));
+        metricsToSubmit.wordsPerMinute = Math.round(estimatedWPM);
+        console.log("Estimated WPM:", metricsToSubmit.wordsPerMinute);
       }
       
       // Add additional tracking metric for debugging
       localStorage.setItem(`prompt-${currentQuestion}-submitted`, "true");
-      localStorage.setItem(`writing-metrics-captured`, JSON.stringify(metrics));
+      localStorage.setItem(`writing-metrics-captured`, JSON.stringify(metricsToSubmit));
       
       // Submit the response with metrics
-      await onSubmit(text, metrics);
+      await onSubmit(text, metricsToSubmit);
     } catch (error) {
       console.error("Error capturing metrics during submission:", error);
       // If metrics capturing fails, still submit the response
