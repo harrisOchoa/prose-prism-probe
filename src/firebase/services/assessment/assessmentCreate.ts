@@ -1,5 +1,5 @@
 
-import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, DocumentData, Timestamp, limit, orderBy } from 'firebase/firestore';
 import { db } from '../../config';
 import { AntiCheatingMetrics, AssessmentSubmission } from './types';
 import { WritingScore } from '@/services/geminiService';
@@ -70,41 +70,47 @@ export const saveAssessmentResult = async (
     console.log("Completed prompts:", completedPrompts.length);
     console.log("Original metrics provided:", antiCheatingMetrics);
     
-    // ENHANCED: More aggressive duplicate detection
-    // Check for any submissions from this candidate for this position
+    // ENHANCED: Even more aggressive duplicate detection with proper name/position normalization
+    // Generate normalized versions of candidate name and position to avoid case/whitespace duplicates
+    const normalizedName = candidateName.toLowerCase().trim();
+    const normalizedPosition = candidatePosition.toLowerCase().trim();
+    
+    // Check for any submissions from this candidate for this position within the last 24 hours
     const candidateSubmissionsQuery = query(
       collection(db, 'assessments'),
-      where('candidateName', '==', candidateName),
-      where('candidatePosition', '==', candidatePosition)
+      where('candidateNameNormalized', '==', normalizedName),
+      where('candidatePositionNormalized', '==', normalizedPosition),
+      orderBy('submittedAt', 'desc'),
+      limit(5) // Get most recent 5 to examine
     );
     
     console.log(`Checking for existing submissions for ${candidateName} as ${candidatePosition}...`);
     const querySnapshot = await getDocs(candidateSubmissionsQuery);
     
-    // Extract all existing submissions for this candidate
-    const existingSubmissions = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data() as AssessmentSubmission
-    }));
-    
-    console.log(`Found ${existingSubmissions.length} existing submissions for ${candidateName}`);
-    
-    // If there's any existing submission for this exact candidate and position,
-    // return the ID of the most recent one (to prevent duplicates)
-    if (existingSubmissions.length > 0) {
-      console.log("Existing submission found, preventing duplicate creation");
+    // Fallback query if normalized fields aren't found in older entries
+    if (querySnapshot.empty) {
+      console.log("No results with normalized fields, trying with original fields...");
+      const fallbackQuery = query(
+        collection(db, 'assessments'),
+        where('candidateName', '==', candidateName),
+        where('candidatePosition', '==', candidatePosition),
+        orderBy('submittedAt', 'desc'),
+        limit(5)
+      );
       
-      // Sort by submission date, most recent first
-      const sortedSubmissions = existingSubmissions.sort((a, b) => {
-        const dateA = a.submittedAt?.toDate?.() ?? new Date(0);
-        const dateB = b.submittedAt?.toDate?.() ?? new Date(0);
-        return dateB.getTime() - dateA.getTime();
-      });
+      const fallbackSnapshot = await getDocs(fallbackQuery);
       
-      // Return the most recent submission ID
-      console.log("Using existing assessment with ID:", sortedSubmissions[0].id);
-      console.log("This prevents creating a duplicate entry");
-      return sortedSubmissions[0].id;
+      if (!fallbackSnapshot.empty) {
+        console.log(`Found ${fallbackSnapshot.docs.length} existing submissions for ${candidateName}`);
+        const mostRecentDoc = fallbackSnapshot.docs[0];
+        console.log("Using existing assessment with ID:", mostRecentDoc.id);
+        return mostRecentDoc.id;
+      }
+    } else {
+      console.log(`Found ${querySnapshot.docs.length} existing submissions for ${candidateName}`);
+      const mostRecentDoc = querySnapshot.docs[0];
+      console.log("Using existing assessment with ID:", mostRecentDoc.id);
+      return mostRecentDoc.id;
     }
     
     const wordCount = completedPrompts.reduce((total, prompt) => total + prompt.wordCount, 0);
@@ -127,12 +133,15 @@ export const saveAssessmentResult = async (
     const submission: AssessmentSubmission = {
       candidateName,
       candidatePosition,
+      candidateNameNormalized: normalizedName, // Add normalized fields for better matching
+      candidatePositionNormalized: normalizedPosition,
       aptitudeScore,
       aptitudeTotal,
       completedPrompts,
       wordCount,
       submittedAt: serverTimestamp(),
-      antiCheatingMetrics: sanitizedMetrics
+      antiCheatingMetrics: sanitizedMetrics,
+      submissionId: `${normalizedName}-${normalizedPosition}-${Date.now()}` // Add unique submission ID
     };
 
     if (writingScores && writingScores.length > 0) {
@@ -141,7 +150,7 @@ export const saveAssessmentResult = async (
     }
     
     console.log("Attempting to add document to Firestore...");
-    console.log("Final submission object:", JSON.stringify(submission));
+    console.log("Final submission object properties:", Object.keys(submission));
     
     const docRef = await addDoc(collection(db, 'assessments'), submission);
     console.log("New assessment saved with ID:", docRef.id);

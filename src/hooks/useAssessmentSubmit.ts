@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { saveAssessmentResult } from "@/firebase/services/assessment/assessmentCreate";
 import { toast } from "@/components/ui/use-toast";
@@ -19,10 +18,17 @@ export const useAssessmentSubmit = (
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [submissionStartTime, setSubmissionStartTime] = useState<number | null>(null);
+  const [submissionLock, setSubmissionLock] = useState(false);
+
+  // Generate a consistent submission ID key
+  const getSubmissionKey = () => {
+    // Create a stable key that's consistent for the same candidate+position
+    return `assessment-submitted-${candidateName.toLowerCase().trim()}-${candidatePosition.toLowerCase().trim()}`;
+  };
 
   // Check for previously submitted assessment
   useEffect(() => {
-    const localStorageKey = `assessment-submitted-${candidateName}-${candidatePosition}`;
+    const localStorageKey = getSubmissionKey();
     const previouslySubmittedId = localStorage.getItem(localStorageKey);
     
     if (previouslySubmittedId) {
@@ -34,12 +40,12 @@ export const useAssessmentSubmit = (
 
   // Auto-submit when component mounts if not already submitted
   useEffect(() => {
-    if (!submitAttempted && !isSubmitted) {
+    if (!submitAttempted && !isSubmitted && !submissionLock) {
       console.log("Attempting to auto-submit assessment...");
       setSubmitAttempted(true);
       handleSubmit();
     }
-  }, [isSubmitted]);
+  }, [isSubmitted, submissionLock]);
 
   const sanitizeAntiCheatingMetrics = (metrics?: AntiCheatingMetrics): AntiCheatingMetrics | undefined => {
     if (!metrics) {
@@ -77,14 +83,20 @@ export const useAssessmentSubmit = (
   };
 
   const handleSubmit = async () => {
-    if (isSubmitting || isSubmitted) return;
+    // ENHANCED: Multiple guards against duplicate submission
+    if (isSubmitting || isSubmitted || submissionLock) {
+      console.log("Submission prevented - already in progress or completed");
+      return assessmentId || null;
+    }
     
+    // Set lock immediately to prevent parallel submissions
+    setSubmissionLock(true);
     setIsSubmitting(true);
     setSubmissionError(null);
     setSubmissionStartTime(Date.now());
     
     // Add a check to prevent creating a duplicate if we've already processed this assessment
-    const localStorageKey = `assessment-submitted-${candidateName}-${candidatePosition}`;
+    const localStorageKey = getSubmissionKey();
     const previouslySubmittedId = localStorage.getItem(localStorageKey);
     
     if (previouslySubmittedId) {
@@ -92,8 +104,26 @@ export const useAssessmentSubmit = (
       setIsSubmitted(true);
       setAssessmentId(previouslySubmittedId);
       setIsSubmitting(false);
+      setSubmissionLock(false);
       return previouslySubmittedId;
     }
+    
+    // Additional session-based lock to prevent duplicate submissions
+    const sessionLockKey = `assessment-lock-${candidateName.toLowerCase().trim()}-${candidatePosition.toLowerCase().trim()}`;
+    if (sessionStorage.getItem(sessionLockKey)) {
+      console.log("Submission prevented by session lock");
+      const existingId = localStorage.getItem(localStorageKey);
+      if (existingId) {
+        setIsSubmitted(true);
+        setAssessmentId(existingId);
+      }
+      setIsSubmitting(false);
+      setSubmissionLock(false);
+      return existingId || null;
+    }
+    
+    // Set the session lock
+    sessionStorage.setItem(sessionLockKey, Date.now().toString());
     
     try {
       console.log("Submitting assessment with aptitude score:", aptitudeScore, "out of", aptitudeTotal);
@@ -139,10 +169,14 @@ export const useAssessmentSubmit = (
         description: "There was an error submitting your assessment. Please try again.",
         variant: "destructive",
       });
+
+      // Clear session lock on error
+      sessionStorage.removeItem(sessionLockKey);
       return null;
     } finally {
       setIsSubmitting(false);
       setSubmissionStartTime(null);
+      // Keep the lock in submissionLock state to prevent future auto-submissions
     }
   };
 
