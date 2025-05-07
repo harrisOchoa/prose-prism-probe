@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, Routes, Route, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -27,8 +28,11 @@ const Admin = () => {
   
   // Check if we're at the exact /admin route and redirect to dashboard
   useEffect(() => {
-    if (isAuthenticated && window.location.pathname === "/admin") {
-      navigate("/admin/");
+    if (isAuthenticated) {
+      // Make sure we're redirecting to the dashboard from any admin route
+      if (window.location.pathname === "/admin" || window.location.pathname === "/admin/") {
+        navigate("/admin/", { replace: true });
+      }
     }
   }, [isAuthenticated, navigate]);
 
@@ -48,6 +52,9 @@ const Admin = () => {
         description: "Welcome to the HireScribe admin dashboard",
         variant: "default",
       });
+      
+      // Navigate explicitly to dashboard after authentication
+      navigate("/admin/", { replace: true });
     } else {
       toast({
         title: "Authentication failed",
@@ -130,7 +137,7 @@ const Admin = () => {
                   <Route path="/analytics" element={<AnalyticsPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/help" element={<HelpPage />} />
-                  <Route path="" element={<Navigate to="./" replace />} />
+                  <Route path="*" element={<Navigate to="./" replace />} />
                 </Routes>
               </div>
             </div>
