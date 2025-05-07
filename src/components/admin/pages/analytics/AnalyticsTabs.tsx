@@ -40,7 +40,7 @@ const AnalyticsTabs: React.FC<AnalyticsTabsProps> = ({ analytics }) => {
         </div>
       </TabsContent>
       
-      <TabsContent value="performance" className="mt-4">
+      <TabsContent value="performance" className="mt-4 overflow-visible">
         <PerformanceContent analytics={analytics} />
       </TabsContent>
       

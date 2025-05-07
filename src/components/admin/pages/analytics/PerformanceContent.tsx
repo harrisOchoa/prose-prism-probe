@@ -7,6 +7,7 @@ import { AnalyticsData } from "@/types/analytics";
 import { LineChart } from "lucide-react";
 import PerformanceTrendsChart from "./PerformanceTrendsChart";
 import PerformanceScoreDistribution from "./PerformanceScoreDistribution";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PerformanceContentProps {
   analytics: AnalyticsData;
@@ -14,23 +15,25 @@ interface PerformanceContentProps {
 
 const PerformanceContent: React.FC<PerformanceContentProps> = ({ analytics }) => {
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Performance Analysis</h2>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <PerformanceTrendsChart analytics={analytics} />
-        <PerformanceScoreDistribution analytics={analytics} />
+    <ScrollArea className="scrollbar-none">
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold">Performance Analysis</h2>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <PerformanceTrendsChart analytics={analytics} />
+          <PerformanceScoreDistribution analytics={analytics} />
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Category Performance Comparison</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[400px]">
+            <CategoryPerformanceChart analytics={analytics} />
+          </CardContent>
+        </Card>
       </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Category Performance Comparison</CardTitle>
-        </CardHeader>
-        <CardContent className="h-[400px]">
-          <CategoryPerformanceChart analytics={analytics} />
-        </CardContent>
-      </Card>
-    </div>
+    </ScrollArea>
   );
 };
 

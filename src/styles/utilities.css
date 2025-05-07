@@ -26,6 +26,16 @@
     @apply w-full sm:w-auto;
   }
 
+  /* Scrollbar utilities */
+  .scrollbar-none {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+
   /* Progress bar styles */
   .progress-bar-success {
     --progress-background: theme('colors.green.500');
