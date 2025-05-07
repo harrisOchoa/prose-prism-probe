@@ -12,7 +12,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarTrigger,
-  SidebarProvider
+  useSidebar
 } from "@/components/ui/sidebar";
 import { 
   LayoutDashboard, 
@@ -24,7 +24,7 @@ import {
   LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSidebar } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 const AdminSidebar = () => {
   const navigate = useNavigate();
@@ -47,24 +47,23 @@ const AdminSidebar = () => {
   return (
     <Sidebar 
       collapsible="icon"
-      className="group hover:w-[--sidebar-width] data-[state=collapsed]:hover:w-[--sidebar-width] transition-all duration-300"
+      className="group hover:w-[--sidebar-width] hover:data-[state=collapsed]:w-[--sidebar-width] transition-all duration-300"
     >
       <SidebarHeader className="px-4 pt-4 flex items-center justify-between">
         <div className="overflow-hidden">
-          <h2 className={`text-xl font-bold gradient-text whitespace-nowrap transition-all duration-300 ${isCollapsed ? "text-sm" : "text-xl"}`}>
+          <h2 className={`font-bold whitespace-nowrap transition-all duration-300 gradient-text ${isCollapsed ? "text-sm" : "text-xl"}`}>
             {isCollapsed ? "HS" : "HireScribe Admin"}
           </h2>
-          <p className={`text-xs text-muted-foreground mt-1 transition-opacity duration-300 ${isCollapsed ? "opacity-0" : "opacity-100"}`}>
+          <p className={`text-xs text-muted-foreground mt-1 transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>
             Assessment Management
           </p>
         </div>
-        {/* Add sidebar trigger for collapsing */}
         <SidebarTrigger className="ml-2" />
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0" : "opacity-100"}`}>Main Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Main Navigation</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton 
@@ -110,7 +109,7 @@ const AdminSidebar = () => {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0" : "opacity-100"}`}>Settings</SidebarGroupLabel>
+          <SidebarGroupLabel className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Settings</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton 
