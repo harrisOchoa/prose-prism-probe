@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, Routes, Route } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -53,9 +54,8 @@ const Admin = () => {
   };
 
   return (
-    <div className={`container mx-auto ${isMobile ? 'py-6 px-3' : 'py-10 px-4'} max-w-full`}>
+    <div className={`container mx-auto ${isMobile ? 'py-6 px-3' : 'py-10 px-4'} max-w-full h-full p-0`}>
       {!isAuthenticated ? (
-        
         <div className="flex justify-center items-center min-h-[80vh]">
           <Card className="w-full max-w-md shadow-md bg-card border animate-fade-in">
             <CardHeader className="space-y-1 pb-3">
@@ -112,21 +112,19 @@ const Admin = () => {
           </Card>
         </div>
       ) : (
-        <SidebarProvider defaultOpen={false}>
-          <div className="flex min-h-[80vh] w-full bg-background">
-            <AdminSidebar />
-            <SidebarInset className="p-0">
-              <Routes>
-                <Route path="/" element={<AdminDashboard />} />
-                <Route path="/candidates" element={<CandidatesPage />} />
-                <Route path="/assessments" element={<AssessmentsPage />} />
-                <Route path="/analytics" element={<AnalyticsPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/help" element={<HelpPage />} />
-              </Routes>
-            </SidebarInset>
+        <div className="flex min-h-[80vh] w-full bg-background overflow-hidden">
+          <AdminSidebar />
+          <div className="flex-1 p-6 overflow-auto">
+            <Routes>
+              <Route path="/" element={<AdminDashboard />} />
+              <Route path="/candidates" element={<CandidatesPage />} />
+              <Route path="/assessments" element={<AssessmentsPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/help" element={<HelpPage />} />
+            </Routes>
           </div>
-        </SidebarProvider>
+        </div>
       )}
     </div>
   );

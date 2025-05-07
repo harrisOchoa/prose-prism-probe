@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -11,7 +11,6 @@ import {
   SidebarMenuButton,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { 
   LayoutDashboard, 
@@ -74,11 +73,11 @@ const AdminSidebar = () => {
   ];
 
   return (
-    <Sidebar className="sidebar-container border-r border-gray-200 h-screen">
+    <Sidebar className="bg-sidebar border-r border-gray-200 h-screen">
       <SidebarHeader className="p-4">
         <div className="flex items-center">
           <div className="text-hirescribe-primary text-xl font-bold">HS</div>
-          <div className="sidebar-header-text ml-1 text-hirescribe-primary">
+          <div className="ml-1 text-hirescribe-primary">
             <span>ireScribe Admin</span>
           </div>
         </div>
@@ -86,7 +85,7 @@ const AdminSidebar = () => {
 
       <SidebarContent className="py-4">
         <SidebarGroup>
-          <SidebarGroupLabel className="px-4 mb-2 hidden sidebar-container:hover:block">
+          <SidebarGroupLabel className="px-4 mb-2">
             Main Navigation
           </SidebarGroupLabel>
           <SidebarMenu>
@@ -94,11 +93,11 @@ const AdminSidebar = () => {
               <SidebarMenuItem key={item.path}>
                 <SidebarMenuButton 
                   onClick={() => navigate(item.path)}
-                  className={`flex items-center px-4 py-2 w-full ${pathname === item.path ? 'bg-gray-100 text-hirescribe-primary' : ''}`}
+                  className={cn("flex items-center px-4 py-2 w-full", pathname === item.path ? 'bg-gray-100 text-hirescribe-primary' : '')}
                 >
                   <div className="flex items-center">
                     {item.icon}
-                    <span className="sidebar-item-text ml-3">{item.label}</span>
+                    <span className="ml-3">{item.label}</span>
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -107,7 +106,7 @@ const AdminSidebar = () => {
         </SidebarGroup>
 
         <SidebarGroup className="mt-6">
-          <SidebarGroupLabel className="px-4 mb-2 hidden sidebar-container:hover:block">
+          <SidebarGroupLabel className="px-4 mb-2">
             Settings
           </SidebarGroupLabel>
           <SidebarMenu>
@@ -115,11 +114,11 @@ const AdminSidebar = () => {
               <SidebarMenuItem key={item.path}>
                 <SidebarMenuButton 
                   onClick={() => navigate(item.path)}
-                  className={`flex items-center px-4 py-2 w-full ${pathname === item.path ? 'bg-gray-100 text-hirescribe-primary' : ''}`}
+                  className={cn("flex items-center px-4 py-2 w-full", pathname === item.path ? 'bg-gray-100 text-hirescribe-primary' : '')}
                 >
                   <div className="flex items-center">
                     {item.icon}
-                    <span className="sidebar-item-text ml-3">{item.label}</span>
+                    <span className="ml-3">{item.label}</span>
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -136,7 +135,7 @@ const AdminSidebar = () => {
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4" />
-          <span className="sidebar-item-text ml-2">Logout</span>
+          <span className="ml-2">Logout</span>
         </Button>
       </SidebarFooter>
     </Sidebar>

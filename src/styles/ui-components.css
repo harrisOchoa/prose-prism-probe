@@ -58,4 +58,9 @@
   .sidebar-container:hover .sidebar-header-text {
     max-width: 200px;
   }
+
+  /* Additional sidebar styles for better visibility */
+  .bg-sidebar {
+    @apply bg-white border-r border-gray-200;
+  }
 }
