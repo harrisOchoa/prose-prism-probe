@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Search, UserPlus, Filter, ArrowUpDown, Calendar } from "lucide-react";
+import { Users, Search, UserPlus, Filter, ArrowUpDown, Calendar, Briefcase, FileText } from "lucide-react";
 import EmptyState from "@/components/admin/dashboard/components/EmptyState";
 import { useAdminCandidates } from "@/hooks/useAdminCandidates";
 import {
@@ -100,84 +100,48 @@ const CandidatesPage = () => {
     }
 
     return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[250px] cursor-pointer" onClick={() => handleSort('name')}>
-              <div className="flex items-center">
-                Candidate Name
-                {sortColumn === 'name' && (
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                )}
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer" onClick={() => handleSort('position')}>
-              <div className="flex items-center">
-                Position
-                {sortColumn === 'position' && (
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                )}
-              </div>
-            </TableHead>
-            <TableHead className="text-center cursor-pointer" onClick={() => handleSort('submissions')}>
-              <div className="flex items-center justify-center">
-                Submissions
-                {sortColumn === 'submissions' && (
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                )}
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer" onClick={() => handleSort('date')}>
-              <div className="flex items-center">
-                Latest Submission
-                {sortColumn === 'date' && (
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                )}
-              </div>
-            </TableHead>
-            <TableHead className="text-center cursor-pointer" onClick={() => handleSort('score')}>
-              <div className="flex items-center justify-center">
-                Avg. Score
-                {sortColumn === 'score' && (
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                )}
-              </div>
-            </TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedCandidates.map((candidate) => (
-            <TableRow key={candidate.id}>
-              <TableCell className="font-medium">{candidate.name}</TableCell>
-              <TableCell>{candidate.position}</TableCell>
-              <TableCell className="text-center">
-                <Badge variant="outline" className="bg-gray-50">
-                  {candidate.submissions}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center">
-                  <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                  {format(candidate.latestSubmission, 'MMM d, yyyy')}
-                </div>
-              </TableCell>
-              <TableCell className="text-center">
-                {candidate.averageScore !== undefined ? (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {sortedCandidates.map((candidate) => (
+          <Card key={candidate.id} className="overflow-hidden hover:shadow-md transition-shadow">
+            <CardContent className="p-0">
+              <div className="p-4 border-b">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1">
+                    <h3 className="font-medium text-lg">{candidate.name}</h3>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Briefcase className="h-4 w-4 mr-1" />
+                      {candidate.position}
+                    </div>
+                  </div>
                   <Badge variant="outline" className={getScoreColor(candidate.averageScore)}>
-                    {candidate.averageScore.toFixed(1)}
+                    {candidate.averageScore !== undefined 
+                      ? `${candidate.averageScore.toFixed(1)}/5.0`
+                      : "N/A"}
                   </Badge>
-                ) : (
-                  <Badge variant="outline" className="bg-gray-50">N/A</Badge>
-                )}
-              </TableCell>
-              <TableCell className="text-right">
-                <Button variant="ghost" size="sm">View</Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                </div>
+              </div>
+              <div className="bg-muted/30 px-4 py-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">Assessments</span>
+                    <div className="flex items-center mt-1">
+                      <FileText className="h-4 w-4 mr-1.5 text-primary" />
+                      <span className="font-medium">{candidate.submissions}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">Last Submission</span>
+                    <div className="flex items-center mt-1">
+                      <Calendar className="h-4 w-4 mr-1.5 text-primary" />
+                      <span className="font-medium text-sm">{format(candidate.latestSubmission, 'MMM d, yyyy')}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     );
   };
 
@@ -217,7 +181,7 @@ const CandidatesPage = () => {
         <CardHeader>
           <CardTitle className="text-lg flex items-center">
             <Users className="mr-2 h-5 w-5" />
-            Candidate List
+            Candidate Overview
           </CardTitle>
         </CardHeader>
         <CardContent>
