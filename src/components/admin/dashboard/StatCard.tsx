@@ -1,26 +1,55 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface StatCardProps {
   title: string;
   value: string | number;
   description: string;
   icon: LucideIcon;
+  trend?: "up" | "down" | "neutral";
+  trendValue?: string;
   className?: string;
+  iconColor?: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, description, icon: Icon, className = "" }) => {
+const StatCard: React.FC<StatCardProps> = ({ 
+  title, 
+  value, 
+  description, 
+  icon: Icon, 
+  trend,
+  trendValue,
+  className = "",
+  iconColor = "text-hirescribe-primary"
+}) => {
   return (
-    <Card className={`card-hover ${className} w-full`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm md:text-base font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 md:h-5 md:w-5 text-hirescribe-primary" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl md:text-3xl font-bold">{value}</div>
-        <p className="text-xs md:text-sm text-muted-foreground mt-1">{description}</p>
+    <Card className={cn("overflow-hidden transition-all duration-200 hover:shadow-md", className)}>
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <div className="flex items-end gap-2">
+              <h3 className="text-2xl font-bold tracking-tight">{value}</h3>
+              {trend && (
+                <div className={cn(
+                  "flex items-center text-xs",
+                  trend === "up" ? "text-green-500" : 
+                  trend === "down" ? "text-red-500" : 
+                  "text-gray-500"
+                )}>
+                  <span>{trendValue}</span>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">{description}</p>
+          </div>
+          <div className={cn("p-2 rounded-full bg-muted/50", iconColor)}>
+            <Icon className="h-5 w-5" />
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

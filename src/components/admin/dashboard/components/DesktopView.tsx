@@ -2,9 +2,11 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Filter } from "lucide-react";
+import { Eye } from "lucide-react";
 import { getAptitudeScoreColor } from "../utils/assessment-table-utils";
 import type { AssessmentTableProps } from "../utils/assessment-table-utils";
+import EmptyState from "./EmptyState";
+import { formatDateToLocaleString } from "@/utils/dateFormatters";
 
 const DesktopView: React.FC<AssessmentTableProps> = ({
   assessments,
@@ -12,17 +14,17 @@ const DesktopView: React.FC<AssessmentTableProps> = ({
   getScoreColor,
 }) => {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-md border">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead className="font-semibold">Candidate Name</TableHead>
+          <TableRow className="bg-muted/50">
+            <TableHead className="font-semibold">Candidate</TableHead>
             <TableHead className="font-semibold">Position</TableHead>
-            <TableHead className="font-semibold">Aptitude Score</TableHead>
-            <TableHead className="font-semibold">Writing Score</TableHead>
-            <TableHead className="font-semibold">Word Count</TableHead>
-            <TableHead className="font-semibold">Submission Date</TableHead>
-            <TableHead className="font-semibold">Actions</TableHead>
+            <TableHead className="font-semibold">Aptitude</TableHead>
+            <TableHead className="font-semibold">Writing</TableHead>
+            <TableHead className="font-semibold">Words</TableHead>
+            <TableHead className="font-semibold">Submitted</TableHead>
+            <TableHead className="font-semibold w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -30,7 +32,9 @@ const DesktopView: React.FC<AssessmentTableProps> = ({
             assessments.map((assessment) => (
               <TableRow key={assessment.id} className="hover:bg-muted/50">
                 <TableCell className="font-medium">{assessment.candidateName}</TableCell>
-                <TableCell>{assessment.candidatePosition}</TableCell>
+                <TableCell className="max-w-[200px] truncate" title={assessment.candidatePosition}>
+                  {assessment.candidatePosition}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center">
                     <div className="mr-2 h-2 w-full max-w-[60px] bg-gray-200 rounded-full overflow-hidden">
@@ -48,34 +52,32 @@ const DesktopView: React.FC<AssessmentTableProps> = ({
                       {assessment.overallWritingScore}/5
                     </span>
                   ) : (
-                    <span className="text-gray-400">N/A</span>
+                    <span className="text-muted-foreground">N/A</span>
                   )}
                 </TableCell>
                 <TableCell>{assessment.wordCount}</TableCell>
                 <TableCell>
                   {assessment.submittedAt && assessment.submittedAt.toDate 
-                    ? new Date(assessment.submittedAt.toDate()).toLocaleString() 
+                    ? formatDateToLocaleString(assessment.submittedAt.toDate())
                     : "N/A"}
                 </TableCell>
                 <TableCell>
                   <Button 
-                    variant="outline" 
+                    variant="ghost" 
                     size="sm"
                     onClick={() => viewAssessmentDetails(assessment)}
-                    className="shadow-subtle hover:shadow-elevation-1 transition-all"
+                    className="text-hirescribe-primary hover:text-hirescribe-primary hover:bg-hirescribe-primary/10"
                   >
-                    View Details
+                    <Eye className="h-4 w-4 mr-1" />
+                    Details
                   </Button>
                 </TableCell>
               </TableRow>
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-4">
-                <div className="flex flex-col items-center justify-center py-8">
-                  <Filter className="h-12 w-12 text-muted-foreground mb-2 opacity-25" />
-                  <p>No matching assessments found</p>
-                </div>
+              <TableCell colSpan={7}>
+                <EmptyState />
               </TableCell>
             </TableRow>
           )}

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import AdminDashboard from "@/components/AdminDashboard";
-import { LockKeyhole, Home } from "lucide-react";
+import { LockKeyhole, Home, ArrowRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const Admin = () => {
@@ -29,14 +29,14 @@ const Admin = () => {
     if (password === "hirescribe123") {
       setIsAuthenticated(true);
       toast({
-        title: "Logged in successfully",
-        description: "Welcome to the admin dashboard",
+        title: "Authenticated successfully",
+        description: "Welcome to the HireScribe admin dashboard",
         variant: "default",
       });
     } else {
       toast({
         title: "Authentication failed",
-        description: "Please check your password and try again",
+        description: "The password you entered is incorrect",
         variant: "destructive",
       });
     }
@@ -45,16 +45,16 @@ const Admin = () => {
   };
 
   return (
-    <div className={`container mx-auto ${isMobile ? 'py-4 px-3' : 'py-10 px-4'}`}>
+    <div className={`container mx-auto ${isMobile ? 'py-6 px-3' : 'py-10 px-4'} max-w-7xl`}>
       {!isAuthenticated ? (
         <div className="flex justify-center items-center min-h-[80vh]">
-          <Card className="w-full max-w-md shadow-elevation-1 animate-fade-in">
-            <CardHeader className="space-y-1">
+          <Card className="w-full max-w-md shadow-md bg-card border animate-fade-in">
+            <CardHeader className="space-y-1 pb-3">
               <CardTitle className={`${isMobile ? 'text-xl' : 'text-2xl'} text-center gradient-text`}>
                 HireScribe Admin
               </CardTitle>
               <CardDescription className={`text-center ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                Enter your password to access the admin dashboard
+                Enter your password to access the administrative dashboard
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -81,10 +81,12 @@ const Admin = () => {
                   {isLoading ? (
                     <>
                       <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin mr-2"></div>
-                      Logging in...
+                      Authenticating...
                     </>
                   ) : (
-                    'Login'
+                    <>
+                      Sign In <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
                   )}
                 </Button>
                 <Button 
@@ -94,7 +96,7 @@ const Admin = () => {
                   disabled={isLoading}
                 >
                   <Home className="mr-2 h-4 w-4" />
-                  Return to Home
+                  Return Home
                 </Button>
               </form>
             </CardContent>

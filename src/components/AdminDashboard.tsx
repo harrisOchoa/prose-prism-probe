@@ -6,6 +6,7 @@ import DashboardHeader from "./admin/dashboard/DashboardHeader";
 import DashboardStats from "./admin/dashboard/DashboardStats";
 import AssessmentTable from "./admin/dashboard/AssessmentTable";
 import LoadingState from "./admin/dashboard/LoadingState";
+import AdminWelcome from "./admin/dashboard/AdminWelcome";
 
 const AdminDashboard = memo(() => {
   const {
@@ -33,17 +34,17 @@ const AdminDashboard = memo(() => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in px-2 md:px-0">
+    <div className="space-y-6 animate-fade-in px-2 md:px-0 max-w-7xl mx-auto">
       <DashboardHeader searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      
+      <AdminWelcome />
 
-      <div className="w-full">
-        <DashboardStats 
-          totalAssessments={totalAssessments}
-          averageAptitudeScore={averageAptitudeScore}
-          averageWordCount={averageWordCount}
-          averageWritingScore={averageWritingScore}
-        />
-      </div>
+      <DashboardStats 
+        totalAssessments={totalAssessments}
+        averageAptitudeScore={averageAptitudeScore}
+        averageWordCount={averageWordCount}
+        averageWritingScore={averageWritingScore}
+      />
 
       {loading && currentItems.length === 0 ? (
         <LoadingState />

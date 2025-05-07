@@ -6,7 +6,6 @@ import MobileView from "./components/MobileView";
 import DesktopView from "./components/DesktopView";
 import TablePagination from "./components/TablePagination";
 import type { AssessmentTableProps } from "./utils/assessment-table-utils";
-import { AssessmentData } from "@/types/assessment";
 
 const AssessmentTable: React.FC<AssessmentTableProps> = memo(({
   assessments,
@@ -21,14 +20,14 @@ const AssessmentTable: React.FC<AssessmentTableProps> = memo(({
   const isMobile = useIsMobile();
 
   return (
-    <Card className="shadow-subtle hover:shadow-elevation-1 transition-all">
-      <CardHeader>
-        <CardTitle>{isMobile ? "Assessments" : "Assessment Results"}</CardTitle>
+    <Card className="border shadow-sm">
+      <CardHeader className="bg-card border-b pb-3">
+        <CardTitle className="text-lg">Assessment Results</CardTitle>
         <CardDescription className={isMobile ? "text-xs" : ""}>
-          {isMobile ? "All submissions" : "Comprehensive view of all candidate assessments"}
+          Complete overview of candidate submissions
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
         {isMobile ? (
           <MobileView
             assessments={assessments}
@@ -49,13 +48,15 @@ const AssessmentTable: React.FC<AssessmentTableProps> = memo(({
           />
         )}
 
-        <TablePagination 
-          currentPage={currentPage}
-          totalPages={totalPages}
-          handlePageChange={handlePageChange}
-          loading={loading}
-          hasNextPage={hasNextPage}
-        />
+        {assessments.length > 0 && (
+          <TablePagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            handlePageChange={handlePageChange}
+            loading={loading}
+            hasNextPage={hasNextPage}
+          />
+        )}
       </CardContent>
     </Card>
   );
