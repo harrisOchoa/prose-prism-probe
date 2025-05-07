@@ -2,12 +2,14 @@
 import { useState, useEffect } from "react";
 import { getAllAssessments } from "@/firebase/services/assessment/assessmentQuery";
 import { AssessmentData } from "@/types/assessment";
+import { 
+  AssessmentStatus, 
+  AssessmentWithStatus, 
+  addStatusToAssessments, 
+  countAssessmentsByStatus 
+} from "@/utils/assessmentStatus";
 
-export type AssessmentStatus = 'active' | 'completed' | 'archived';
-
-export interface AssessmentWithStatus extends AssessmentData {
-  status: AssessmentStatus;
-}
+export type { AssessmentStatus, AssessmentWithStatus };
 
 export const useAdminAssessments = () => {
   const [assessments, setAssessments] = useState<AssessmentWithStatus[]>([]);
@@ -22,29 +24,8 @@ export const useAdminAssessments = () => {
         setLoading(true);
         const assessmentData = await getAllAssessments();
         
-        // Determine status for each assessment
-        const processedAssessments = assessmentData.map(assessment => {
-          let status: AssessmentStatus = 'completed';
-          
-          // Check if assessment is recent (< 24 hours) and not fully analyzed
-          const submittedAt = assessment.submittedAt?.toDate?.() ?? new Date();
-          const isRecent = (Date.now() - submittedAt.getTime()) < 24 * 60 * 60 * 1000;
-          const isFullyAnalyzed = assessment.analysisStatus === 'completed';
-          
-          if (isRecent && !isFullyAnalyzed) {
-            status = 'active';
-          } else if (assessment.analysisStatus === 'failed' || 
-                    (assessment.submittedAt && 
-                     submittedAt.getTime() < Date.now() - 90 * 24 * 60 * 60 * 1000)) {
-            // Mark as archived if analysis failed or older than 90 days
-            status = 'archived';
-          }
-          
-          return {
-            ...assessment,
-            status
-          } as AssessmentWithStatus;
-        });
+        // Process assessments and add status
+        const processedAssessments = addStatusToAssessments(assessmentData);
         
         setAssessments(processedAssessments);
       } catch (err) {
@@ -70,12 +51,7 @@ export const useAdminAssessments = () => {
   });
 
   // Count assessments by status
-  const counts = {
-    active: assessments.filter(a => a.status === 'active').length,
-    completed: assessments.filter(a => a.status === 'completed').length,
-    archived: assessments.filter(a => a.status === 'archived').length,
-    total: assessments.length
-  };
+  const counts = countAssessmentsByStatus(assessments);
 
   return {
     assessments: filteredAssessments,
