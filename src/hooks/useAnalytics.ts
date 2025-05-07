@@ -15,6 +15,7 @@ interface AnalyticsData {
   recentActivity: {
     type: string;
     description: string;
+    position: string; // Added position property
     time: string;
     color: string;
   }[];
@@ -148,7 +149,7 @@ export const useAnalytics = () => {
             return {
               type: "completion",
               description: `${assessment.candidateName} completed assessment`,
-              position: `${assessment.candidatePosition}`,
+              position: `${assessment.candidatePosition}`, // Make sure position is included
               time,
               color: colors[index]
             };
