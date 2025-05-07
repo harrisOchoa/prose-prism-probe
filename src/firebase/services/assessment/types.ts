@@ -33,6 +33,8 @@ export interface AntiCheatingMetrics {
 export interface AssessmentSubmission {
   candidateName: string;
   candidatePosition: string;
+  candidateNameNormalized: string; // Added for better duplicate detection
+  candidatePositionNormalized: string; // Added for better duplicate detection
   aptitudeScore: number;
   aptitudeTotal: number;
   completedPrompts: any[];
@@ -51,4 +53,5 @@ export interface AssessmentSubmission {
   antiCheatingMetrics?: AntiCheatingMetrics | null;
   analysisStatus?: AnalysisStatus;
   analysisError?: string;
+  submissionId?: string; // Added for unique submission identification
 }
