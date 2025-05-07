@@ -31,4 +31,13 @@
   .gradient-text {
     @apply font-bold text-transparent bg-clip-text bg-gradient-to-r from-hirescribe-primary to-hirescribe-accent;
   }
+  
+  /* Sidebar specific styles */
+  .sidebar-container {
+    @apply w-[--sidebar-width-icon] hover:w-[--sidebar-width] transition-all duration-300;
+  }
+  
+  .sidebar-container:hover {
+    @apply w-[--sidebar-width];
+  }
 }

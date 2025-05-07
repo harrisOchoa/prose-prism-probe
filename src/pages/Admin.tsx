@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate, Routes, Route } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -56,6 +55,7 @@ const Admin = () => {
   return (
     <div className={`container mx-auto ${isMobile ? 'py-6 px-3' : 'py-10 px-4'} max-w-full`}>
       {!isAuthenticated ? (
+        
         <div className="flex justify-center items-center min-h-[80vh]">
           <Card className="w-full max-w-md shadow-md bg-card border animate-fade-in">
             <CardHeader className="space-y-1 pb-3">

@@ -32,6 +32,7 @@ const AdminSidebar = () => {
   const pathname = location.pathname;
   const { state, setOpen } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const [isHovering, setIsHovering] = useState(false);
   
   // Set sidebar to collapsed by default when component mounts
   useEffect(() => {
@@ -47,14 +48,22 @@ const AdminSidebar = () => {
   return (
     <Sidebar 
       collapsible="icon"
-      className="group hover:w-[--sidebar-width] hover:data-[state=collapsed]:w-[--sidebar-width] transition-all duration-300"
+      className="sidebar-container group transition-all duration-300"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
     >
       <SidebarHeader className="px-4 pt-4 flex items-center justify-between">
-        <div className="overflow-hidden">
-          <h2 className={`font-bold whitespace-nowrap transition-all duration-300 gradient-text ${isCollapsed ? "text-sm" : "text-xl"}`}>
-            {isCollapsed ? "HS" : "HireScribe Admin"}
+        <div className={cn(
+          "overflow-hidden transition-all duration-300",
+          isHovering && "w-full"
+        )}>
+          <h2 className="font-bold whitespace-nowrap transition-all duration-300 gradient-text">
+            {isCollapsed && !isHovering ? "HS" : "HireScribe Admin"}
           </h2>
-          <p className={`text-xs text-muted-foreground mt-1 transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>
+          <p className={cn(
+            "text-xs text-muted-foreground mt-1 transition-opacity duration-300",
+            isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
+          )}>
             Assessment Management
           </p>
         </div>
@@ -63,7 +72,12 @@ const AdminSidebar = () => {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Main Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className={cn(
+            "transition-opacity duration-300",
+            isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
+          )}>
+            Main Navigation
+          </SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton 
@@ -72,7 +86,12 @@ const AdminSidebar = () => {
                 onClick={() => navigate("/admin")}
               >
                 <LayoutDashboard className="h-4 w-4" />
-                <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Dashboard</span>
+                <span className={cn(
+                  "transition-opacity duration-300",
+                  isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
+                )}>
+                  Dashboard
+                </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -82,7 +101,12 @@ const AdminSidebar = () => {
                 onClick={() => navigate("/admin/candidates")}
               >
                 <Users className="h-4 w-4" />
-                <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Candidates</span>
+                <span className={cn(
+                  "transition-opacity duration-300",
+                  isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
+                )}>
+                  Candidates
+                </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -92,7 +116,12 @@ const AdminSidebar = () => {
                 onClick={() => navigate("/admin/assessments")}
               >
                 <FileText className="h-4 w-4" />
-                <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Assessments</span>
+                <span className={cn(
+                  "transition-opacity duration-300",
+                  isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
+                )}>
+                  Assessments
+                </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -102,14 +131,24 @@ const AdminSidebar = () => {
                 onClick={() => navigate("/admin/analytics")}
               >
                 <BarChart className="h-4 w-4" />
-                <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Analytics</span>
+                <span className={cn(
+                  "transition-opacity duration-300",
+                  isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
+                )}>
+                  Analytics
+                </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Settings</SidebarGroupLabel>
+          <SidebarGroupLabel className={cn(
+            "transition-opacity duration-300",
+            isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
+          )}>
+            Settings
+          </SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton 
@@ -118,7 +157,12 @@ const AdminSidebar = () => {
                 onClick={() => navigate("/admin/settings")}
               >
                 <Settings className="h-4 w-4" />
-                <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Settings</span>
+                <span className={cn(
+                  "transition-opacity duration-300",
+                  isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
+                )}>
+                  Settings
+                </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -128,7 +172,12 @@ const AdminSidebar = () => {
                 onClick={() => navigate("/admin/help")}
               >
                 <HelpCircle className="h-4 w-4" />
-                <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Help & Support</span>
+                <span className={cn(
+                  "transition-opacity duration-300",
+                  isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
+                )}>
+                  Help & Support
+                </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -143,7 +192,12 @@ const AdminSidebar = () => {
           onClick={handleLogout}
         >
           <LogOut className="mr-2 h-4 w-4" />
-          <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Logout</span>
+          <span className={cn(
+            "transition-opacity duration-300",
+            isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
+          )}>
+            Logout
+          </span>
         </Button>
       </SidebarFooter>
     </Sidebar>
