@@ -1,6 +1,5 @@
-
-import React, { useState } from "react";
-import { useNavigate, Routes, Route } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Routes, Route, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,6 +24,13 @@ const Admin = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  
+  // Check if we're at the exact /admin route and redirect to dashboard
+  useEffect(() => {
+    if (isAuthenticated && window.location.pathname === "/admin") {
+      navigate("/admin/");
+    }
+  }, [isAuthenticated, navigate]);
 
   // Simple admin authentication (in a real app, this would be more secure)
   const handleLogin = async (e: React.FormEvent) => {
@@ -124,6 +130,7 @@ const Admin = () => {
                   <Route path="/analytics" element={<AnalyticsPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/help" element={<HelpPage />} />
+                  <Route path="" element={<Navigate to="./" replace />} />
                 </Routes>
               </div>
             </div>

@@ -35,10 +35,10 @@ const AdminSidebar = () => {
     navigate("/");
   };
 
-  // Define navigation items
+  // Define navigation items with exact paths
   const mainNavItems = [
     { 
-      path: "/admin", 
+      path: "/admin/", 
       label: "Dashboard", 
       icon: <LayoutDashboard className="h-5 w-5" /> 
     },
