@@ -16,8 +16,18 @@ export const calculateAnalyticsData = (assessments: AssessmentData[]): Analytics
   }
   
   // Calculate completion rate (based on whether analysis is completed)
-  const completedCount = assessments.filter(a => a.analysisStatus === 'completed').length;
-  const completionRate = Math.round((completedCount / assessments.length) * 100);
+  // Fixed: Treat all assessments with submitted data as completed for statistics purposes
+  // This ensures we count assessments that have been submitted even if analysis is pending
+  const completedCount = assessments.filter(a => 
+    a.analysisStatus === 'completed' || 
+    a.submittedAt || 
+    a.aptitudeScore !== undefined
+  ).length;
+  
+  const completionRate = assessments.length > 0 ? 
+    Math.round((completedCount / assessments.length) * 100) : 0;
+  
+  console.log(`Completion rate: ${completionRate}% (${completedCount}/${assessments.length} assessments)`);
   
   // Calculate total assessments
   const totalAssessments = assessments.length;
@@ -55,4 +65,3 @@ export { calculateCategoryPerformance } from "./analytics/categoryPerformance";
 export { generateRecentActivity } from "./analytics/recentActivity";
 export { calculateAssessmentTrends } from "./analytics/assessmentTrends";
 export { calculateAverageCompletionTime } from "./analytics/baseCalculations";
-

@@ -8,17 +8,20 @@ interface KpiCardsProps {
 }
 
 const KpiCards: React.FC<KpiCardsProps> = ({ analytics }) => {
+  // Ensure completionRate is never negative
+  const displayCompletionRate = Math.max(0, analytics.completionRate);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-md">Assessment Completion Rate</CardTitle>
-          <CardDescription>{analytics.completionRate}% overall completion</CardDescription>
+          <CardDescription>{displayCompletionRate}% overall completion</CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="text-3xl font-bold">{analytics.completionRate}%</div>
+          <div className="text-3xl font-bold">{displayCompletionRate}%</div>
           <div className="h-2 w-full bg-gray-100 rounded-full mt-2 mb-1">
-            <div className="h-2 bg-hirescribe-primary rounded-full" style={{ width: `${analytics.completionRate}%` }}></div>
+            <div className="h-2 bg-hirescribe-primary rounded-full" style={{ width: `${displayCompletionRate}%` }}></div>
           </div>
           <p className="text-xs text-muted-foreground">+12% from previous period</p>
         </CardContent>

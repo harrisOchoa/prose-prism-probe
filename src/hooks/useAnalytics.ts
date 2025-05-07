@@ -24,7 +24,14 @@ export const useAnalytics = (): AnalyticsResult => {
         }
         
         console.log(`Calculating analytics data from ${assessments.length} assessments`);
+        
+        // Log assessment status to help with debugging
+        assessments.forEach((assessment, index) => {
+          console.log(`Assessment ${index + 1}: Status=${assessment.analysisStatus}, Has aptitude score=${!!assessment.aptitudeScore}`);
+        });
+        
         const analyticsData = calculateAnalyticsData(assessments);
+        console.log("Calculated analytics data:", analyticsData);
         setAnalytics(analyticsData);
       } catch (err) {
         console.error("Error fetching analytics data:", err);
