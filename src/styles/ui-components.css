@@ -31,4 +31,21 @@
   .gradient-text {
     @apply font-bold text-transparent bg-clip-text bg-gradient-to-r from-hirescribe-primary to-hirescribe-accent;
   }
+  
+  /* Sidebar custom styling */
+  .sidebar-item-active {
+    @apply bg-purple-50 text-hirescribe-primary font-medium;
+  }
+  
+  .sidebar-item-hover {
+    @apply hover:bg-gray-50 transition-all duration-200;
+  }
+  
+  .sidebar-icon-active {
+    @apply text-hirescribe-primary;
+  }
+  
+  .sidebar-icon-default {
+    @apply text-gray-500;
+  }
 }

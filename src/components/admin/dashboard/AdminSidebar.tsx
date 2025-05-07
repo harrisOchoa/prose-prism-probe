@@ -74,10 +74,10 @@ const AdminSidebar = () => {
 
   return (
     <Sidebar className="border-r border-gray-200 h-screen">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="px-4 py-6">
         <div className="flex items-center">
-          <div className="text-hirescribe-primary text-xl font-bold">HS</div>
-          <div className="ml-1 text-hirescribe-primary">
+          <div className="text-hirescribe-primary text-2xl font-bold">HS</div>
+          <div className="ml-1 text-hirescribe-primary font-medium">
             <span>ireScribe Admin</span>
           </div>
         </div>
@@ -85,7 +85,7 @@ const AdminSidebar = () => {
 
       <SidebarContent className="py-4">
         <SidebarGroup>
-          <SidebarGroupLabel className="px-4 mb-2">
+          <SidebarGroupLabel className="px-4 mb-2 font-semibold text-gray-500">
             Main Navigation
           </SidebarGroupLabel>
           <SidebarMenu>
@@ -93,11 +93,23 @@ const AdminSidebar = () => {
               <SidebarMenuItem key={item.path}>
                 <SidebarMenuButton 
                   onClick={() => navigate(item.path)}
-                  className={cn("flex items-center px-4 py-2 w-full", pathname === item.path ? 'bg-gray-100 text-hirescribe-primary' : '')}
+                  className={cn(
+                    "flex items-center px-4 py-3 w-full rounded-md transition-colors",
+                    pathname === item.path 
+                      ? 'bg-purple-50 text-hirescribe-primary font-medium' 
+                      : 'hover:bg-gray-50'
+                  )}
                   tooltip={item.label}
                 >
-                  {item.icon}
-                  <span className="ml-3">{item.label}</span>
+                  <div className={cn(
+                    "mr-3", 
+                    pathname === item.path ? "text-hirescribe-primary" : "text-gray-500"
+                  )}>
+                    {item.icon}
+                  </div>
+                  <span className={pathname === item.path ? "text-hirescribe-primary" : "text-gray-700"}>
+                    {item.label}
+                  </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
@@ -105,7 +117,7 @@ const AdminSidebar = () => {
         </SidebarGroup>
 
         <SidebarGroup className="mt-6">
-          <SidebarGroupLabel className="px-4 mb-2">
+          <SidebarGroupLabel className="px-4 mb-2 font-semibold text-gray-500">
             Settings
           </SidebarGroupLabel>
           <SidebarMenu>
@@ -113,11 +125,23 @@ const AdminSidebar = () => {
               <SidebarMenuItem key={item.path}>
                 <SidebarMenuButton 
                   onClick={() => navigate(item.path)}
-                  className={cn("flex items-center px-4 py-2 w-full", pathname === item.path ? 'bg-gray-100 text-hirescribe-primary' : '')}
+                  className={cn(
+                    "flex items-center px-4 py-3 w-full rounded-md transition-colors",
+                    pathname === item.path 
+                      ? 'bg-purple-50 text-hirescribe-primary font-medium' 
+                      : 'hover:bg-gray-50'
+                  )}
                   tooltip={item.label}
                 >
-                  {item.icon}
-                  <span className="ml-3">{item.label}</span>
+                  <div className={cn(
+                    "mr-3", 
+                    pathname === item.path ? "text-hirescribe-primary" : "text-gray-500"
+                  )}>
+                    {item.icon}
+                  </div>
+                  <span className={pathname === item.path ? "text-hirescribe-primary" : "text-gray-700"}>
+                    {item.label}
+                  </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
@@ -125,15 +149,15 @@ const AdminSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 mt-auto">
+      <SidebarFooter className="p-4 mt-auto border-t border-gray-200">
         <Button 
           variant="outline" 
           size="sm" 
-          className="flex items-center justify-start w-full" 
+          className="flex items-center justify-start w-full py-2.5 text-gray-700 hover:text-red-600 hover:border-red-200 transition-colors" 
           onClick={handleLogout}
         >
-          <LogOut className="h-4 w-4" />
-          <span className="ml-2">Logout</span>
+          <LogOut className="h-4 w-4 mr-2" />
+          <span>Logout</span>
         </Button>
       </SidebarFooter>
     </Sidebar>
