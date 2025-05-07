@@ -9,7 +9,7 @@ import AdminDashboard from "@/components/AdminDashboard";
 import AdminSidebar from "@/components/admin/dashboard/AdminSidebar";
 import { LockKeyhole, Home, ArrowRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 // Create improved placeholder pages for admin sections
 import CandidatesPage from "@/components/admin/pages/CandidatesPage";
@@ -113,17 +113,21 @@ const Admin = () => {
         </div>
       ) : (
         <div className="flex min-h-[80vh] w-full bg-background overflow-hidden">
-          <AdminSidebar />
-          <div className="flex-1 p-6 overflow-auto">
-            <Routes>
-              <Route path="/" element={<AdminDashboard />} />
-              <Route path="/candidates" element={<CandidatesPage />} />
-              <Route path="/assessments" element={<AssessmentsPage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/help" element={<HelpPage />} />
-            </Routes>
-          </div>
+          <SidebarProvider>
+            <div className="flex w-full">
+              <AdminSidebar />
+              <div className="flex-1 p-6 overflow-auto">
+                <Routes>
+                  <Route path="/" element={<AdminDashboard />} />
+                  <Route path="/candidates" element={<CandidatesPage />} />
+                  <Route path="/assessments" element={<AssessmentsPage />} />
+                  <Route path="/analytics" element={<AnalyticsPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/help" element={<HelpPage />} />
+                </Routes>
+              </div>
+            </div>
+          </SidebarProvider>
         </div>
       )}
     </div>

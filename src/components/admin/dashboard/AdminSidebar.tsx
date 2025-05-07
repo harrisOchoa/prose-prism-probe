@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -73,7 +73,7 @@ const AdminSidebar = () => {
   ];
 
   return (
-    <Sidebar className="bg-sidebar border-r border-gray-200 h-screen">
+    <Sidebar className="border-r border-gray-200 h-screen">
       <SidebarHeader className="p-4">
         <div className="flex items-center">
           <div className="text-hirescribe-primary text-xl font-bold">HS</div>
@@ -94,11 +94,10 @@ const AdminSidebar = () => {
                 <SidebarMenuButton 
                   onClick={() => navigate(item.path)}
                   className={cn("flex items-center px-4 py-2 w-full", pathname === item.path ? 'bg-gray-100 text-hirescribe-primary' : '')}
+                  tooltip={item.label}
                 >
-                  <div className="flex items-center">
-                    {item.icon}
-                    <span className="ml-3">{item.label}</span>
-                  </div>
+                  {item.icon}
+                  <span className="ml-3">{item.label}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
@@ -115,11 +114,10 @@ const AdminSidebar = () => {
                 <SidebarMenuButton 
                   onClick={() => navigate(item.path)}
                   className={cn("flex items-center px-4 py-2 w-full", pathname === item.path ? 'bg-gray-100 text-hirescribe-primary' : '')}
+                  tooltip={item.label}
                 >
-                  <div className="flex items-center">
-                    {item.icon}
-                    <span className="ml-3">{item.label}</span>
-                  </div>
+                  {item.icon}
+                  <span className="ml-3">{item.label}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
