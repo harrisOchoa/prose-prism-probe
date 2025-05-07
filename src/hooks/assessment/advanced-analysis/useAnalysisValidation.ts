@@ -26,7 +26,7 @@ export const useAnalysisValidation = () => {
     // Check type-specific prerequisites
     switch (type) {
       case 'aptitude':
-        if (!data.aptitudeScore) {
+        if (!data.aptitudeScore && data.aptitudeScore !== 0) {
           toast({
             title: "Aptitude Not Completed",
             description: "Candidate needs to complete the aptitude test first.",

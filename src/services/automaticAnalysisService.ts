@@ -56,7 +56,9 @@ export const initiateAutomaticAnalysis = async (
     }
 
     // Step 3: Start advanced analysis (won't block completion)
-    generateAdvancedAnalysis(assessmentId, updatedData, progress).catch(error => {
+    // We pass a copy to avoid reference issues
+    const dataForAdvanced = JSON.parse(JSON.stringify(updatedData));
+    generateAdvancedAnalysis(assessmentId, dataForAdvanced, progress).catch(error => {
       console.error("Advanced analysis failed but continuing:", error);
     });
 
@@ -247,9 +249,32 @@ const generateAdvancedAnalysis = async (
       { fn: generateDetailedWritingAnalysis, key: 'detailedWritingAnalysis', name: 'writing_analysis' },
       { fn: generatePersonalityInsights, key: 'personalityInsights', name: 'personality_insights' },
       { fn: generateInterviewQuestions, key: 'interviewQuestions', name: 'interview_questions' },
-      { fn: compareWithIdealProfile, key: 'profileMatch', name: 'profile_match' },
-      { fn: generateAptitudeAnalysis, key: 'aptitudeAnalysis', name: 'aptitude_analysis' }
+      { fn: compareWithIdealProfile, key: 'profileMatch', name: 'profile_match' }
     ];
+    
+    // Handle aptitude analysis separately if aptitude score exists
+    if (data.aptitudeScore !== undefined) {
+      try {
+        console.log('Generating aptitude_analysis...');
+        const aptitudeResult = await generateAptitudeAnalysis(data);
+        
+        if (aptitudeResult) {
+          // Update aptitude analysis result immediately
+          await updateAssessmentAnalysis(assessmentId, {
+            aptitudeAnalysis: aptitudeResult
+          });
+          
+          progress.completedSteps.push('aptitude_analysis');
+          console.log('aptitude_analysis completed successfully');
+        }
+      } catch (aptitudeError) {
+        console.error('Error generating aptitude_analysis:', aptitudeError);
+        progress.failedSteps.push('aptitude_analysis');
+      }
+      
+      // Wait between analyses to avoid rate limits
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
     
     // Process each analysis type sequentially to avoid rate limits
     for (const { fn, key, name } of analysisGenerators) {

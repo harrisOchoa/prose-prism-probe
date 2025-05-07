@@ -75,7 +75,16 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
     navigate(`${location.pathname}?tab=${value}`, { replace: true });
     // Force re-render when changing tabs
     setRenderKey(Date.now().toString());
-  }, [location.pathname, navigate]);
+    
+    // Auto-refresh data when changing to advanced tab to get latest analyses
+    if (value === 'advanced' && refreshAssessment) {
+      refreshAssessment().then(updatedData => {
+        if (updatedData) {
+          setAssessmentData(updatedData);
+        }
+      });
+    }
+  }, [location.pathname, navigate, refreshAssessment]);
 
   // Handle back with potential refresh
   const handleBack = useCallback(async () => {
@@ -100,6 +109,14 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
         console.log(`AssessmentDetails: Analysis generated successfully for ${type}`);
         // Force re-render on successful analysis generation
         setRenderKey(Date.now().toString());
+        
+        // Refresh data after generation to ensure we have the latest
+        if (refreshAssessment) {
+          const refreshedData = await refreshAssessment();
+          if (refreshedData) {
+            setAssessmentData(refreshedData);
+          }
+        }
       }
       
       return result;

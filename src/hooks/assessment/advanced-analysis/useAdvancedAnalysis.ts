@@ -98,7 +98,7 @@ export const useAdvancedAnalysis = (
         
         toast({
           title: "Analysis Complete",
-          description: `Analysis has been generated successfully.`,
+          description: `${updateKey} analysis has been generated successfully.`,
         });
         
         return result;
@@ -149,7 +149,7 @@ export const useAdvancedAnalysis = (
     let updateKey: string;
     let generatorFunction: (data: AssessmentData) => Promise<any>;
     
-    switch(type) {
+    switch(type.toLowerCase()) {
       case 'writing':
         analysisType = 'writing';
         updateKey = 'detailedWritingAnalysis';
