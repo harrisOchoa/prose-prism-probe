@@ -9,14 +9,14 @@ import AdminDashboard from "@/components/AdminDashboard";
 import AdminSidebar from "@/components/admin/dashboard/AdminSidebar";
 import { LockKeyhole, Home, ArrowRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
-// Placeholder components for new admin sections
-const CandidatesPage = () => <div className="p-6"><h1 className="text-2xl font-bold">Candidates</h1><p className="text-muted-foreground">This page is under development.</p></div>;
-const AssessmentsPage = () => <div className="p-6"><h1 className="text-2xl font-bold">Assessments</h1><p className="text-muted-foreground">This page is under development.</p></div>;
-const AnalyticsPage = () => <div className="p-6"><h1 className="text-2xl font-bold">Analytics</h1><p className="text-muted-foreground">This page is under development.</p></div>;
-const SettingsPage = () => <div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p className="text-muted-foreground">This page is under development.</p></div>;
-const HelpPage = () => <div className="p-6"><h1 className="text-2xl font-bold">Help & Support</h1><p className="text-muted-foreground">This page is under development.</p></div>;
+// Create improved placeholder pages for admin sections
+import CandidatesPage from "@/components/admin/pages/CandidatesPage";
+import AssessmentsPage from "@/components/admin/pages/AssessmentsPage";
+import AnalyticsPage from "@/components/admin/pages/AnalyticsPage";
+import SettingsPage from "@/components/admin/pages/SettingsPage";
+import HelpPage from "@/components/admin/pages/HelpPage";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -115,7 +115,7 @@ const Admin = () => {
         <SidebarProvider defaultOpen={!isMobile}>
           <div className="flex min-h-[80vh] w-full bg-background">
             <AdminSidebar />
-            <div className="flex-1 overflow-auto">
+            <SidebarInset className="p-0">
               <Routes>
                 <Route path="/" element={<AdminDashboard />} />
                 <Route path="/candidates" element={<CandidatesPage />} />
@@ -124,7 +124,7 @@ const Admin = () => {
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/help" element={<HelpPage />} />
               </Routes>
-            </div>
+            </SidebarInset>
           </div>
         </SidebarProvider>
       )}

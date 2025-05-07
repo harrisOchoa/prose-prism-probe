@@ -36,7 +36,7 @@ function App() {
             <Route path="view/:id" element={<View />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
           </Route>
-          {/* Admin routes are handled separately to have their own layout */}
+          {/* Admin routes now handle their own layout and have nested routes */}
           <Route path="admin/*" element={<Admin />} />
         </Routes>
       </Suspense>

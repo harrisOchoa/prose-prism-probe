@@ -11,6 +11,7 @@ import {
   SidebarMenuButton,
   SidebarGroup,
   SidebarGroupLabel,
+  SidebarTrigger
 } from "@/components/ui/sidebar";
 import { 
   LayoutDashboard, 
@@ -19,7 +20,8 @@ import {
   FileText, 
   BarChart, 
   HelpCircle, 
-  LogOut 
+  LogOut,
+  Menu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -36,9 +38,13 @@ const AdminSidebar = () => {
 
   return (
     <Sidebar>
-      <SidebarHeader className="px-4 pt-4">
-        <h2 className="text-xl font-bold gradient-text">HireScribe Admin</h2>
-        <p className="text-xs text-muted-foreground mt-1">Assessment Management</p>
+      <SidebarHeader className="px-4 pt-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold gradient-text">HireScribe Admin</h2>
+          <p className="text-xs text-muted-foreground mt-1">Assessment Management</p>
+        </div>
+        {/* Add sidebar trigger for collapsing */}
+        <SidebarTrigger className="ml-2" />
       </SidebarHeader>
 
       <SidebarContent>
