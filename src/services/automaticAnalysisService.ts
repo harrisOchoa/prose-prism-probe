@@ -1,3 +1,4 @@
+
 import { AssessmentData } from "@/types/assessment";
 import { 
   evaluateAllWritingPrompts, 
@@ -11,15 +12,6 @@ import {
 } from "./gemini";
 import { updateAssessmentAnalysis } from "@/firebase/services/assessment";
 import { AnalysisStatus } from "@/firebase/services/assessment/types";
-
-// Analysis status types
-export type AnalysisStatus = 
-  | 'pending'
-  | 'writing_evaluated'
-  | 'basic_insights_generated'
-  | 'advanced_analysis_started'
-  | 'completed' 
-  | 'failed';
 
 // Progress tracking interface
 export interface AnalysisProgress {

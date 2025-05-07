@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { generateCandidateSummary, generateStrengthsAndWeaknesses } from "@/services/geminiService";
 import { updateAssessmentAnalysis } from "@/firebase/services/assessment";
