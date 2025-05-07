@@ -31,7 +31,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
   totalQuestions,
   isLoading = false
 }) => {
-  const [text, setText] = useState("");
+  const [text, setText] = useState(response || "");
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,11 +47,6 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
     suspiciousActivity
   } = useAntiCheating(text);
 
-  // Set initial text from response prop, but only when the response or question changes
-  useEffect(() => {
-    setText(response || "");
-  }, [response, currentQuestion]);
-  
   // Calculate word count and character count only when text changes
   useEffect(() => {
     const words = text.trim().split(/\s+/).filter(word => word !== "");
@@ -59,6 +54,11 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
     setCharCount(text.length);
   }, [text]);
   
+  // Update response when the prop changes (new question)
+  useEffect(() => {
+    setText(response || "");
+  }, [response, currentQuestion]);
+
   // Update metrics periodically but avoid state updates
   const updateMetricsRef = useCallback(() => {
     // Just log metrics without state updates

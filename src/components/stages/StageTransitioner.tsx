@@ -12,7 +12,7 @@ const StageTransitioner: React.FC<StageTransitionerProps> = ({ children }) => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionMessage, setTransitionMessage] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
-  const [key, setKey] = useState(Date.now()); // Add a key to force re-render
+  const [key, setKey] = useState(() => Date.now()); // Initialize with a function to prevent re-renders
 
   useEffect(() => {
     console.log("StageTransitioner rendering with children:", children ? 'present' : 'absent');
