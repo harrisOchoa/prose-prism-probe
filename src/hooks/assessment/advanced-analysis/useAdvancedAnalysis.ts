@@ -1,9 +1,10 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { AssessmentData } from "@/types/assessment";
 import { updateAssessmentAnalysis } from "@/firebase/services/assessment";
 import type { AnalysisStateMap } from "./types";
+import { useAnalysisValidation } from "./useAnalysisValidation";
 import { 
   generateDetailedWritingAnalysis,
   generatePersonalityInsights,
@@ -28,47 +29,12 @@ export const useAdvancedAnalysis = (
     aptitude: false
   });
 
-  /**
-   * Validates if prerequisites for analysis exist
-   */
-  const validateAnalysisPrerequisites = (data: AssessmentData, analysisType: string) => {
-    // Basic validation for all analysis types
-    if (!data || !data.id) {
-      toast({
-        title: "Missing Data",
-        description: "Assessment data is incomplete. Please refresh the page.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    // All non-aptitude analyses require writing scores
-    if (analysisType !== 'aptitude' && (!data.writingScores || !data.overallWritingScore)) {
-      toast({
-        title: "Writing Not Evaluated",
-        description: "Please evaluate the writing first to generate this analysis.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    // Aptitude analysis requires aptitude scores
-    if (analysisType === 'aptitude' && !data.aptitudeScore) {
-      toast({
-        title: "Aptitude Not Completed",
-        description: "Candidate needs to complete the aptitude test first.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    return true;
-  };
+  const { validateAnalysisPrerequisites } = useAnalysisValidation();
 
   /**
    * Core generate function for all analysis types
    */
-  const generateAnalysis = async (generatorFunction: Function, data: AssessmentData, updateKey: string) => {
+  const generateAnalysis = useCallback(async (generatorFunction: Function, data: AssessmentData, updateKey: string) => {
     try {
       console.log(`Starting analysis generation for ${updateKey}...`);
       
@@ -113,15 +79,13 @@ export const useAdvancedAnalysis = (
       
       console.log(`Generated ${updateKey} analysis:`, result);
       
-      // Create a new object reference to ensure React detects the change
-      const updatedData = {
-        ...data,
-        [updateKey]: result
-      };
+      // Create a deep copy of the assessment data before updating
+      const updatedData = JSON.parse(JSON.stringify(data));
+      updatedData[updateKey] = result;
       
-      // Immediately update UI
+      // Immediately update UI with the new data
       console.log(`Updating UI with new ${updateKey} analysis`);
-      setAssessmentData({...updatedData});
+      setAssessmentData(updatedData);
       
       // Update Firebase in background
       try {
@@ -174,12 +138,12 @@ export const useAdvancedAnalysis = (
       
       return null;
     }
-  };
+  }, [setAssessmentData]);
 
   /**
    * Main function to generate any type of advanced analysis
    */
-  const generateAdvancedAnalysis = async (type: string) => {
+  const generateAdvancedAnalysis = useCallback(async (type: string) => {
     // Map the type to analysis type and update key
     let analysisType: string;
     let updateKey: string;
@@ -232,7 +196,7 @@ export const useAdvancedAnalysis = (
       // Reset generating state for this analysis type regardless of success/failure
       setGeneratingAnalysis(prev => ({ ...prev, [type]: false }));
     }
-  };
+  }, [assessmentData, generateAnalysis, validateAnalysisPrerequisites]);
 
   return {
     generatingAnalysis,

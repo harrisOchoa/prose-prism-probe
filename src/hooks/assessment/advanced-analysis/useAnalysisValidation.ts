@@ -9,7 +9,7 @@ export const useAnalysisValidation = () => {
   /**
    * Validates if prerequisites for different analysis types exist
    */
-  const validateAnalysisPrerequisites = (data: AssessmentData, analysisType: 'writing' | 'personality' | 'interview' | 'questions' | 'profile' | 'aptitude') => {
+  const validateAnalysisPrerequisites = (data: AssessmentData, analysisType: string) => {
     // Basic validation for all analysis types
     if (!data || !data.id) {
       toast({
@@ -20,24 +20,40 @@ export const useAnalysisValidation = () => {
       return false;
     }
     
-    // All non-aptitude analyses require writing scores
-    if (analysisType !== 'aptitude' && (!data.writingScores || !data.overallWritingScore)) {
-      toast({
-        title: "Writing Not Evaluated",
-        description: "Please evaluate the writing first to generate this analysis.",
-        variant: "destructive",
-      });
-      return false;
-    }
+    // Convert to standard type for switch
+    const type = analysisType.toLowerCase();
     
-    // Aptitude analysis requires aptitude scores
-    if (analysisType === 'aptitude' && !data.aptitudeScore) {
-      toast({
-        title: "Aptitude Not Completed",
-        description: "Candidate needs to complete the aptitude test first.",
-        variant: "destructive",
-      });
-      return false;
+    // Check type-specific prerequisites
+    switch (type) {
+      case 'aptitude':
+        if (!data.aptitudeScore) {
+          toast({
+            title: "Aptitude Not Completed",
+            description: "Candidate needs to complete the aptitude test first.",
+            variant: "destructive",
+          });
+          return false;
+        }
+        break;
+        
+      case 'writing':
+      case 'personality':
+      case 'interview':
+      case 'questions':
+      case 'profile':
+        if (!data.writingScores || !data.overallWritingScore) {
+          toast({
+            title: "Writing Not Evaluated",
+            description: "Please evaluate the writing first to generate this analysis.",
+            variant: "destructive",
+          });
+          return false;
+        }
+        break;
+        
+      default:
+        console.warn(`Unknown analysis type: ${analysisType}`);
+        return false;
     }
     
     return true;

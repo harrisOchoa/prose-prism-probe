@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { generateCandidateSummary, generateStrengthsAndWeaknesses } from "@/services/geminiService";
 import { updateAssessmentAnalysis } from "@/firebase/services/assessment";
 import { toast } from "@/hooks/use-toast";
@@ -20,7 +20,7 @@ export const useAssessmentView = (id: string | undefined) => {
     const processData = async () => {
       if (!assessment || !assessment.id) return;
       
-      console.log(`[${new Date().toISOString()}] Processing assessment data in useEffect:`, assessment.id);
+      console.log(`[${new Date().toISOString()}] Processing assessment data:`, assessment.id);
       
       let updatedData = recoverAptitudeScore(assessment);
       updatedData = generateAptitudeCategories(updatedData);
@@ -60,7 +60,7 @@ export const useAssessmentView = (id: string | undefined) => {
           
           // Update state immediately with a new object reference to trigger rerender
           console.log("Local state updated with auto-generated insights");
-          setAssessment({...updatedData});
+          setAssessment(JSON.parse(JSON.stringify(updatedData)));
 
           // Update database in background
           await updateAssessmentAnalysis(updatedData.id, updateData);
@@ -103,23 +103,29 @@ export const useAssessmentView = (id: string | undefined) => {
       // Always update state with processed data
       if (JSON.stringify(updatedData) !== JSON.stringify(assessment)) {
         console.log("Assessment data has changed, updating state with a new object reference");
-        setAssessment({...updatedData});
+        setAssessment(JSON.parse(JSON.stringify(updatedData)));
       }
     };
 
     if (assessment) {
       processData();
     }
-  }, [assessment?.id, assessment, setAssessment, recoverAptitudeScore, generateAptitudeCategories, refreshAssessment, id]);
+  }, [assessment?.id, assessment, setAssessment, recoverAptitudeScore, generateAptitudeCategories]);
 
   // Function to manually refresh assessment data
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     if (id) {
       console.log("Manually refreshing assessment data");
-      return await refreshAssessment(id);
+      const refreshedData = await refreshAssessment(id);
+      if (refreshedData) {
+        console.log("Assessment data refreshed successfully");
+        // Create a deep copy to ensure React detects the change
+        setAssessment(JSON.parse(JSON.stringify(refreshedData)));
+      }
+      return refreshedData;
     }
     return null;
-  };
+  }, [id, refreshAssessment, setAssessment]);
 
   return {
     assessment,

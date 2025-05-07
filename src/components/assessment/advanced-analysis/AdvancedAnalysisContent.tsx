@@ -31,9 +31,9 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
     profile: false,
     aptitude: false
   });
+  const [key, setKey] = useState<string>(Date.now().toString());
   
-  // Use state from assessmentData directly instead of separate state
-  // This ensures we always display what's in the parent state
+  // Extract analysis data from assessmentData
   const detailedAnalysis = assessmentData.detailedWritingAnalysis;
   const personalityInsights = assessmentData.personalityInsights;
   const interviewQuestions = assessmentData.interviewQuestions;
@@ -42,17 +42,17 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
 
   // Debug logs to help track state updates
   useEffect(() => {
-    console.log("AdvancedAnalysisContent received updated assessmentData:", {
+    console.log("AdvancedAnalysisContent received assessmentData:", {
+      id: assessmentData.id,
       hasDetailedAnalysis: !!detailedAnalysis,
       hasPersonalityInsights: !!personalityInsights,
       hasInterviewQuestions: !!interviewQuestions,
       hasProfileMatch: !!profileMatch,
-      hasAptitudeAnalysis: !!aptitudeAnalysis,
-      assessmentId: assessmentData.id
+      hasAptitudeAnalysis: !!aptitudeAnalysis
     });
     
-    // Force re-render if we have new data
-    const forceRerender = Math.random();
+    // Force re-render when analysis data changes
+    setKey(Date.now().toString());
   }, [assessmentData, detailedAnalysis, personalityInsights, interviewQuestions, profileMatch, aptitudeAnalysis]);
 
   // Update loading state based on generatingAnalysis prop
@@ -66,39 +66,15 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
         aptitude: generatingAnalysis.aptitude || false
       });
       
-      console.log("Updated loading states:", {
-        writing: generatingAnalysis.writing || generatingAnalysis.detailed || false,
-        personality: generatingAnalysis.personality || false,
-        questions: generatingAnalysis.interview || generatingAnalysis.questions || false,
-        profile: generatingAnalysis.profile || false,
-        aptitude: generatingAnalysis.aptitude || false
-      });
+      console.log("Updated loading states:", generatingAnalysis);
     }
   }, [generatingAnalysis]);
 
   const handleGenerateAnalysis = async (analysisType: string) => {
-    if (!assessmentData.overallWritingScore && analysisType !== 'aptitude') {
-      toast({
-        title: "Writing Not Evaluated",
-        description: "Please evaluate the writing first to generate advanced analysis.",
-        variant: "destructive"
-      });
-      return;
-    }
+    // Set loading state immediately
+    setLoading(prev => ({...prev, [analysisType]: true}));
     
-    if (analysisType === 'aptitude' && !assessmentData.aptitudeScore) {
-      toast({
-        title: "Aptitude Results Needed",
-        description: "This candidate needs to complete the aptitude test before analysis.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
-      // Set local loading state
-      setLoading(prev => ({...prev, [analysisType]: true}));
-      
       console.log(`Starting generation of ${analysisType} analysis...`);
       
       // Call the parent's generateAdvancedAnalysis function
@@ -108,21 +84,24 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
       
       if (!result) {
         console.error(`No result returned for ${analysisType} analysis`);
-        toast({
-          title: "Analysis Failed",
-          description: `Failed to generate ${analysisType} analysis. Please try again.`,
-          variant: "destructive"
-        });
+      } else {
+        // Force UI refresh
+        setKey(Date.now().toString());
       }
     } catch (error) {
       console.error(`Error in handleGenerateAnalysis for ${analysisType}:`, error);
+      toast({
+        title: "Analysis Failed",
+        description: `Failed to generate ${analysisType} analysis. Please try again.`,
+        variant: "destructive"
+      });
     } finally {
-      // Reset loading state immediately
+      // Reset loading state
       setLoading(prev => ({...prev, [analysisType]: false}));
     }
   };
 
-  // Create a wrapper function that matches the expected signature in AnalysisTabs
+  // Get button label for each analysis type
   const getButtonLabel = (type: string) => {
     const exists = getExistingAnalysisState(type);
     return getAnalysisButtonLabel(type, exists);
@@ -140,17 +119,8 @@ const AdvancedAnalysisContent: React.FC<AdvancedAnalysisContentProps> = ({
     }
   };
 
-  // Force re-render key to ensure component updates when data changes
-  const renderKey = `advanced-analysis-${JSON.stringify({
-    hasDetailedAnalysis: !!detailedAnalysis,
-    hasPersonalityInsights: !!personalityInsights,
-    hasInterviewQuestions: !!interviewQuestions,
-    hasProfileMatch: !!profileMatch,
-    hasAptitudeAnalysis: !!aptitudeAnalysis
-  })}`;
-
   return (
-    <div key={renderKey} className="space-y-6">
+    <div key={key} className="space-y-6">
       <AnalysisTabs 
         assessmentData={assessmentData}
         loading={loading}
