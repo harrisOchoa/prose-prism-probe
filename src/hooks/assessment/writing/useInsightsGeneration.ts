@@ -30,6 +30,11 @@ export const useInsightsGeneration = (
       setGeneratingSummary(true);
       console.log("Starting insights generation for assessment:", data.id);
       
+      // Update status to pending
+      await updateAssessmentAnalysis(data.id, {
+        analysisStatus: 'pending'
+      });
+      
       // Show initial toast
       toast({
         title: "Generating Insights",
@@ -86,7 +91,8 @@ export const useInsightsGeneration = (
       const updatePayload = {
         aiSummary: summary,
         strengths: analysis.strengths,
-        weaknesses: analysis.weaknesses
+        weaknesses: analysis.weaknesses,
+        analysisStatus: 'basic_insights_generated'
       };
       
       // Create a new object for the assessment data to ensure React detects the change
@@ -122,6 +128,17 @@ export const useInsightsGeneration = (
       return updatedData;
     } catch (error: any) {
       console.error("Error generating insights:", error);
+      
+      // Update status to failed
+      try {
+        await updateAssessmentAnalysis(assessmentData.id, {
+          analysisStatus: 'failed',
+          analysisError: error.message || "Unknown error"
+        });
+      } catch (updateError) {
+        console.error("Failed to update analysis status:", updateError);
+      }
+      
       toast({
         title: "Failed to Generate Insights",
         description: error.message && error.message.includes("rate limit") 

@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { saveAssessmentResult } from "@/firebase/services/assessment/assessmentCreate";
 import { toast } from "@/components/ui/use-toast";
 import { WritingPromptItem } from "./AssessmentManager";
-import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2, Brain } from "lucide-react";
 import { AntiCheatingMetrics } from "@/firebase/services/assessment/types";
+import { initiateAutomaticAnalysis, AnalysisProgress } from "@/services/automaticAnalysisService";
 
 interface AssessmentCompleteProps {
   candidateName: string;
@@ -35,6 +35,8 @@ const AssessmentComplete = ({
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [submissionStartTime, setSubmissionStartTime] = useState<number | null>(null);
+  const [analysisInProgress, setAnalysisInProgress] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState<AnalysisProgress | null>(null);
 
   // Check if we've previously submitted this assessment
   useEffect(() => {
@@ -152,6 +154,11 @@ const AssessmentComplete = ({
       // Save the submission ID to localStorage to prevent duplicate submissions
       localStorage.setItem(`assessment-submitted-${candidateName}-${candidatePosition}`, id);
       
+      // After successful submission, start automatic analysis
+      if (id && completedPrompts.length > 0) {
+        startAutomaticAnalysis(id);
+      }
+      
     } catch (error: any) {
       console.error("Error submitting assessment:", error);
       setSubmissionError(error?.message || "Unknown error occurred");
@@ -164,6 +171,56 @@ const AssessmentComplete = ({
     } finally {
       setIsSubmitting(false);
       setSubmissionStartTime(null);
+    }
+  };
+  
+  const startAutomaticAnalysis = async (id: string) => {
+    if (!id) return;
+    
+    try {
+      setAnalysisInProgress(true);
+      toast({
+        title: "Analysis Started",
+        description: "We're analyzing your assessment in the background. This might take a few moments.",
+      });
+      
+      // Create assessment data object for analysis
+      const assessmentData = {
+        id,
+        candidateName,
+        candidatePosition,
+        completedPrompts,
+        aptitudeScore,
+        aptitudeTotal,
+        wordCount
+      };
+      
+      // Start automatic analysis
+      const progress = await initiateAutomaticAnalysis(id, assessmentData);
+      setAnalysisProgress(progress);
+      
+      if (progress.status === 'failed') {
+        console.error("Automatic analysis failed:", progress.error);
+        toast({
+          title: "Analysis Incomplete",
+          description: "Some parts of the analysis couldn't be completed automatically. An admin will review your assessment.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Analysis Complete",
+          description: "Your assessment has been analyzed successfully.",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error during automatic analysis:", error);
+      toast({
+        title: "Analysis Error",
+        description: "There was an error analyzing your assessment. An admin will review it manually.",
+        variant: "default",
+      });
+    } finally {
+      setAnalysisInProgress(false);
     }
   };
   
@@ -219,9 +276,36 @@ const AssessmentComplete = ({
               </Button>
             </div>
           ) : isSubmitted ? (
-            <p className="text-center text-gray-600">
-              Your assessment has been successfully recorded. We appreciate your participation!
-            </p>
+            <div className="text-center">
+              <p className="text-gray-600">
+                Your assessment has been successfully recorded. We appreciate your participation!
+              </p>
+              
+              {analysisInProgress && (
+                <div className="mt-4 flex flex-col items-center">
+                  <div className="flex items-center">
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin text-indigo-500" />
+                    <p className="text-indigo-600">
+                      Analyzing your responses...
+                    </p>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    This may take a moment to complete in the background
+                  </p>
+                </div>
+              )}
+              
+              {analysisProgress && analysisProgress.status === 'completed' && (
+                <div className="mt-4 flex flex-col items-center">
+                  <div className="flex items-center">
+                    <Brain className="h-5 w-5 mr-2 text-green-500" />
+                    <p className="text-green-600">
+                      Analysis completed
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : isSubmitting ? (
             <div className="text-center">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />

@@ -1,6 +1,15 @@
 
 import { DocumentData } from "firebase/firestore";
 
+// Analysis status types
+export type AnalysisStatus = 
+  | 'pending'
+  | 'writing_evaluated'
+  | 'basic_insights_generated' 
+  | 'advanced_analysis_started'
+  | 'completed' 
+  | 'failed';
+
 export interface AntiCheatingMetrics {
   keystrokes: number;
   pauses: number;
@@ -40,4 +49,6 @@ export interface AssessmentSubmission {
   profileMatch?: any;
   aptitudeAnalysis?: any;
   antiCheatingMetrics?: AntiCheatingMetrics | null;
+  analysisStatus?: AnalysisStatus;
+  analysisError?: string;
 }

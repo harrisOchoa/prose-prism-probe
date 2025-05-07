@@ -24,11 +24,16 @@ export const useAssessmentView = (id: string | undefined) => {
       let updatedData = recoverAptitudeScore(assessment);
       updatedData = generateAptitudeCategories(updatedData);
 
-      // If writing scores exist but we're missing summary data, generate it
+      // Check analysis status
+      const analysisStatus = updatedData.analysisStatus;
+      console.log(`Assessment analysis status: ${analysisStatus}`);
+      
+      // If writing scores exist but we're missing summary data and there's no ongoing analysis, generate it
       if (updatedData.writingScores && 
           updatedData.writingScores.length > 0 && 
           updatedData.writingScores.some(score => score.score > 0) &&
-          (!updatedData.aiSummary || !updatedData.strengths || !updatedData.weaknesses)) {
+          (!updatedData.aiSummary || !updatedData.strengths || !updatedData.weaknesses) &&
+          (!analysisStatus || analysisStatus === 'writing_evaluated' || analysisStatus === 'failed')) {
         
         console.log("Missing insights detected, attempting to generate");
         setGeneratingSummary(true);
@@ -42,7 +47,8 @@ export const useAssessmentView = (id: string | undefined) => {
           const updateData = {
             aiSummary: summary,
             strengths: analysis.strengths,
-            weaknesses: analysis.weaknesses
+            weaknesses: analysis.weaknesses,
+            analysisStatus: 'basic_insights_generated'
           };
           
           // Create a new object reference to ensure React detects the change
@@ -66,7 +72,8 @@ export const useAssessmentView = (id: string | undefined) => {
       } else if (
         updatedData.writingScores && 
         updatedData.writingScores.length > 0 && 
-        updatedData.writingScores.some(score => score.score === 0)
+        updatedData.writingScores.some(score => score.score === 0) &&
+        !analysisStatus
       ) {
         console.log("Found error scores, notifying user");
         toast({
@@ -74,6 +81,22 @@ export const useAssessmentView = (id: string | undefined) => {
           description: `Some writing prompts could not be evaluated. Try using the 'Evaluate Writing' button to retry.`,
           variant: "default",
         });
+        
+        // Update status to failed
+        try {
+          await updateAssessmentAnalysis(updatedData.id, {
+            analysisStatus: 'failed',
+            analysisError: 'Some writing prompts could not be evaluated'
+          });
+          
+          updatedData = {
+            ...updatedData,
+            analysisStatus: 'failed',
+            analysisError: 'Some writing prompts could not be evaluated'
+          };
+        } catch (updateError) {
+          console.error("Failed to update analysis status:", updateError);
+        }
       }
 
       // Always update state with processed data

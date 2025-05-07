@@ -2,7 +2,7 @@
 import { QueryDocumentSnapshot } from "firebase/firestore";
 import { WritingScore } from "@/services/gemini/types";
 import { WritingPromptItem } from "@/components/AssessmentManager";
-import { AntiCheatingMetrics } from "@/firebase/assessmentService";
+import { AntiCheatingMetrics, AnalysisStatus } from "@/firebase/services/assessment/types";
 
 export interface AssessmentData {
   id: string;
@@ -33,6 +33,8 @@ export interface AssessmentData {
     total: number;
     source: string;
   }>;
+  analysisStatus?: AnalysisStatus;
+  analysisError?: string;
   [key: string]: any;
 }
 

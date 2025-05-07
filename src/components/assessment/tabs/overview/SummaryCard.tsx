@@ -1,7 +1,8 @@
 
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Sparkles, ThumbsUp, ThumbsDown, AlertCircle, Loader2 } from "lucide-react";
+import { Sparkles, ThumbsUp, ThumbsDown, AlertCircle, Loader2, Brain } from "lucide-react";
+import { AnalysisStatus } from "@/firebase/services/assessment/types";
 
 interface SummaryCardProps {
   assessmentData: any;
@@ -22,6 +23,14 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
   // State to force re-renders
   const [renderKey, setRenderKey] = useState(Date.now());
   
+  // Get analysis status
+  const analysisStatus: AnalysisStatus = assessmentData.analysisStatus || 
+    (hasValidWritingScores ? 'writing_evaluated' : 'pending');
+  
+  const isAnalysisInProgress = analysisStatus === 'pending' || 
+    analysisStatus === 'writing_evaluated' || 
+    analysisStatus === 'advanced_analysis_started';
+  
   // Debug log to help identify issues with data display
   useEffect(() => {
     console.log("SummaryCard - Current state:", {
@@ -32,15 +41,50 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
       hasWeaknesses: !!(assessmentData.weaknesses && assessmentData.weaknesses.length > 0),
       hasValidScores: hasValidWritingScores,
       hasErrorScores: hasErrorScores,
-      assessmentId: assessmentData.id
+      assessmentId: assessmentData.id,
+      analysisStatus
     });
     
     // Force component to re-render when assessmentData changes
     setRenderKey(Date.now());
-  }, [assessmentData, generatingSummary, hasValidWritingScores, hasErrorScores]);
+  }, [assessmentData, generatingSummary, hasValidWritingScores, hasErrorScores, analysisStatus]);
+  
+  // Render analysis status badge
+  const renderAnalysisStatusBadge = () => {
+    if (generatingSummary || isAnalysisInProgress) {
+      return (
+        <div className="absolute top-4 right-4 inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+          Analyzing...
+        </div>
+      );
+    } else if (analysisStatus === 'failed') {
+      return (
+        <div className="absolute top-4 right-4 inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Analysis Failed
+        </div>
+      );
+    } else if (analysisStatus === 'completed') {
+      return (
+        <div className="absolute top-4 right-4 inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+          <Brain className="h-3 w-3 mr-1" />
+          Analysis Complete
+        </div>
+      );
+    } else if (assessmentData.aiSummary) {
+      return (
+        <div className="absolute top-4 right-4 inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+          <Sparkles className="h-3 w-3 mr-1" />
+          Insights Generated
+        </div>
+      );
+    }
+    return null;
+  };
   
   return (
-    <Card key={renderKey}>
+    <Card key={renderKey} className="relative">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center">
           <Sparkles className="mr-2 h-5 w-5 text-indigo-500" />
@@ -50,6 +94,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
         <CardDescription>
           Based on aptitude test performance and writing assessment
         </CardDescription>
+        {renderAnalysisStatusBadge()}
       </CardHeader>
       <CardContent>
         {generatingSummary ? (
@@ -101,13 +146,18 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
               Writing has been evaluated. Click the "Regenerate Insights" button above to create an assessment summary.
             </p>
           </div>
-        ) : hasErrorScores ? (
+        ) : hasErrorScores || analysisStatus === 'failed' ? (
           <div className="bg-amber-50 border border-amber-100 rounded-md p-4 text-center">
             <AlertCircle className="h-6 w-6 text-amber-500 mx-auto mb-2" />
             <p className="text-amber-800 font-medium">Writing evaluation encountered errors</p>
             <p className="text-amber-700 text-sm mt-1">
               There were issues evaluating some writing responses. Please try the "Evaluate Writing" button again.
             </p>
+          </div>
+        ) : isAnalysisInProgress ? (
+          <div className="flex flex-col items-center justify-center py-6">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-3" />
+            <p className="text-sm text-gray-500">Automatic analysis in progress...</p>
           </div>
         ) : (
           <div className="bg-amber-50 border border-amber-100 rounded-md p-4 text-center">
