@@ -83,6 +83,18 @@ export const useAssessmentSubmit = (
     setSubmissionError(null);
     setSubmissionStartTime(Date.now());
     
+    // Add a check to prevent creating a duplicate if we've already processed this assessment
+    const localStorageKey = `assessment-submitted-${candidateName}-${candidatePosition}`;
+    const previouslySubmittedId = localStorage.getItem(localStorageKey);
+    
+    if (previouslySubmittedId) {
+      console.log("Using previously submitted assessment ID:", previouslySubmittedId);
+      setIsSubmitted(true);
+      setAssessmentId(previouslySubmittedId);
+      setIsSubmitting(false);
+      return previouslySubmittedId;
+    }
+    
     try {
       console.log("Submitting assessment with aptitude score:", aptitudeScore, "out of", aptitudeTotal);
       console.log("Candidate:", candidateName, "Position:", candidatePosition);
@@ -115,7 +127,7 @@ export const useAssessmentSubmit = (
       });
       
       // Save the submission ID to localStorage to prevent duplicate submissions
-      localStorage.setItem(`assessment-submitted-${candidateName}-${candidatePosition}`, id);
+      localStorage.setItem(localStorageKey, id);
       
       return id;
     } catch (error: any) {

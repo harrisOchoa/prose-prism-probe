@@ -70,72 +70,41 @@ export const saveAssessmentResult = async (
     console.log("Completed prompts:", completedPrompts.length);
     console.log("Original metrics provided:", antiCheatingMetrics);
     
-    // Check for recent submissions to avoid duplicates
-    const recentSubmissionsQuery = query(
+    // ENHANCED: More aggressive duplicate detection
+    // Check for any submissions from this candidate for this position
+    const candidateSubmissionsQuery = query(
       collection(db, 'assessments'),
       where('candidateName', '==', candidateName),
       where('candidatePosition', '==', candidatePosition)
     );
     
-    console.log("Checking for existing submissions...");
-    const querySnapshot = await getDocs(recentSubmissionsQuery);
+    console.log(`Checking for existing submissions for ${candidateName} as ${candidatePosition}...`);
+    const querySnapshot = await getDocs(candidateSubmissionsQuery);
     
     // Extract all existing submissions for this candidate
-    const recentSubmissions = querySnapshot.docs.map(doc => ({
+    const existingSubmissions = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data() as AssessmentSubmission
     }));
     
-    console.log(`Found ${recentSubmissions.length} existing submissions for ${candidateName}`);
+    console.log(`Found ${existingSubmissions.length} existing submissions for ${candidateName}`);
     
-    const now = new Date();
-    const potentialDuplicates = recentSubmissions.filter(submission => {
-      if (submission.submittedAt && submission.submittedAt.toDate) {
-        const submissionTime = submission.submittedAt.toDate();
-        // More stringent duplicate detection:
-        // 1. Submitted within the last hour (extended from 30 min)
-        // 2. Same aptitude score and total
-        // 3. Similar word count (within 10% variance)
-        const timeDiffMinutes = (now.getTime() - submissionTime.getTime()) / (60 * 1000);
-        const wordCount = completedPrompts.reduce((total, prompt) => total + prompt.wordCount, 0);
-        
-        const similarAptitudeScore = submission.aptitudeScore === aptitudeScore;
-        const similarAptitudeTotal = submission.aptitudeTotal === aptitudeTotal;
-        
-        // If word counts within 10% of each other - indicates same submission
-        let similarWordCount = false;
-        if (submission.wordCount && wordCount) {
-          const wordCountDiffPercent = Math.abs(submission.wordCount - wordCount) / Math.max(submission.wordCount, wordCount);
-          similarWordCount = wordCountDiffPercent < 0.1; // Within 10% difference
-        }
-        
-        const isDuplicate = timeDiffMinutes < 60 && 
-               similarAptitudeScore && 
-               similarAptitudeTotal &&
-               similarWordCount;
-               
-        if (isDuplicate) {
-          console.log("Detected duplicate submission with details:", {
-            timeDiffMinutes,
-            originalId: submission.id,
-            originalAptitude: submission.aptitudeScore,
-            newAptitude: aptitudeScore, 
-            originalWordCount: submission.wordCount,
-            newWordCount: wordCount
-          });
-        }
-        
-        return isDuplicate;
-      }
-      return false;
-    });
-    
-    if (potentialDuplicates.length > 0) {
-      console.log("Detected duplicate submission for:", candidateName);
-      console.log("Using existing record ID:", potentialDuplicates[0].id);
-      console.log("Time since original submission:", potentialDuplicates[0].submittedAt.toDate ? 
-        Math.round((now.getTime() - potentialDuplicates[0].submittedAt.toDate().getTime()) / (60 * 1000)) + " minutes" : "unknown");
-      return potentialDuplicates[0].id;
+    // If there's any existing submission for this exact candidate and position,
+    // return the ID of the most recent one (to prevent duplicates)
+    if (existingSubmissions.length > 0) {
+      console.log("Existing submission found, preventing duplicate creation");
+      
+      // Sort by submission date, most recent first
+      const sortedSubmissions = existingSubmissions.sort((a, b) => {
+        const dateA = a.submittedAt?.toDate?.() ?? new Date(0);
+        const dateB = b.submittedAt?.toDate?.() ?? new Date(0);
+        return dateB.getTime() - dateA.getTime();
+      });
+      
+      // Return the most recent submission ID
+      console.log("Using existing assessment with ID:", sortedSubmissions[0].id);
+      console.log("This prevents creating a duplicate entry");
+      return sortedSubmissions[0].id;
     }
     
     const wordCount = completedPrompts.reduce((total, prompt) => total + prompt.wordCount, 0);

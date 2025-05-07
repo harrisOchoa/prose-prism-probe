@@ -1,4 +1,3 @@
-
 import { DocumentData } from "firebase/firestore";
 import { AssessmentData } from "@/types/assessment";
 
@@ -65,9 +64,10 @@ export const removeDuplicateSubmissions = (assessments: AssessmentData[]): Asses
     return true;
   });
   
-  const groupedByName = validAssessments.reduce((groups: {[key: string]: AssessmentData[]}, assessment) => {
+  // Step 1: Group by candidate name AND position to find potential duplicates
+  const groupedByNameAndPosition = validAssessments.reduce((groups: {[key: string]: AssessmentData[]}, assessment) => {
     // Use unique key combining name and position
-    const key = `${assessment.candidateName}:${assessment.candidatePosition}`;
+    const key = `${assessment.candidateName}:${assessment.candidatePosition}`.toLowerCase();
     if (!groups[key]) {
       groups[key] = [];
     }
@@ -75,75 +75,53 @@ export const removeDuplicateSubmissions = (assessments: AssessmentData[]): Asses
     return groups;
   }, {});
   
-  console.log("Found", Object.keys(groupedByName).length, "unique candidates");
+  console.log("Found", Object.keys(groupedByNameAndPosition).length, "unique candidates");
   
   const uniqueAssessments: AssessmentData[] = [];
   let totalDuplicatesRemoved = 0;
   
-  Object.entries(groupedByName).forEach(([key, group]: [string, AssessmentData[]]) => {
+  // Step 2: For each candidate, keep only one assessment (prioritizing completed ones)
+  Object.entries(groupedByNameAndPosition).forEach(([key, group]: [string, AssessmentData[]]) => {
     const candidateKey = key;
     console.log(`Analyzing ${group.length} submissions for candidate ${candidateKey}`);
     
-    // Sort by submission date, most recent first
-    const sortedGroup = [...group].sort((a, b) => {
-      const dateA = a.submittedAt?.toDate?.() ?? new Date(0);
-      const dateB = b.submittedAt?.toDate?.() ?? new Date(0);
-      return dateB.getTime() - dateA.getTime();
-    });
+    if (group.length === 1) {
+      // If only one assessment, keep it
+      uniqueAssessments.push(group[0]);
+      return;
+    }
     
-    // Enhanced deduplication logic
-    const filtered: AssessmentData[] = [];
-    const duplicates: AssessmentData[] = [];
+    // If multiple assessments, prioritize completed analyses over pending ones
+    const completedAssessments = group.filter(a => a.analysisStatus === 'completed');
     
-    sortedGroup.forEach(assessment => {
-      const isDuplicate = filtered.some(kept => {
-        // Skip comparison if different positions (shouldn't happen due to grouping)
-        if (kept.candidatePosition !== assessment.candidatePosition) return false;
-        
-        // If aptitude scores are different, not a duplicate
-        if (kept.aptitudeScore !== assessment.aptitudeScore) {
-          console.log(`Different aptitude scores: ${kept.aptitudeScore} vs ${assessment.aptitudeScore}`);
-          return false;
-        }
-        
-        // If word counts are significantly different, not a duplicate
-        const keptWordCount = kept.wordCount || 0;
-        const assessWordCount = assessment.wordCount || 0;
-        const wordCountDiff = Math.abs(keptWordCount - assessWordCount);
-        const wordCountThreshold = Math.max(keptWordCount, assessWordCount) * 0.1; // 10% threshold
-        
-        if (wordCountDiff > wordCountThreshold) {
-          console.log(`Different word counts: ${keptWordCount} vs ${assessWordCount}`);
-          return false;
-        }
-        
-        // Check submission timestamps - if within 2 hours, likely a duplicate
-        // This catches duplicates that happen during the assessment review/analysis phase
-        const keptDate = kept.submittedAt?.toDate?.() ?? new Date(0);
-        const currDate = assessment.submittedAt?.toDate?.() ?? new Date(0);
-        const timeDiffMinutes = Math.abs(keptDate.getTime() - currDate.getTime()) / (60 * 1000);
-        
-        const isDup = timeDiffMinutes < 120; // Consider duplicate if within 2 hours
-        
-        if (isDup) {
-          console.log(`Detected duplicate: ${assessment.id} (${timeDiffMinutes.toFixed(1)} minutes apart)`);
-        }
-        
-        return isDup;
+    // If we have completed assessments, sort by submission date and keep the most recent
+    if (completedAssessments.length > 0) {
+      console.log(`Found ${completedAssessments.length} completed assessments for ${candidateKey}`);
+      
+      const mostRecent = completedAssessments.sort((a, b) => {
+        const dateA = a.submittedAt?.toDate?.() ?? new Date(0);
+        const dateB = b.submittedAt?.toDate?.() ?? new Date(0);
+        return dateB.getTime() - dateA.getTime();
+      })[0];
+      
+      console.log(`Keeping assessment ${mostRecent.id} for ${candidateKey} (completed & most recent)`);
+      uniqueAssessments.push(mostRecent);
+      totalDuplicatesRemoved += group.length - 1;
+    } else {
+      // If no completed assessments, sort by submission date and keep the most recent
+      const sortedGroup = [...group].sort((a, b) => {
+        const dateA = a.submittedAt?.toDate?.() ?? new Date(0);
+        const dateB = b.submittedAt?.toDate?.() ?? new Date(0);
+        return dateB.getTime() - dateA.getTime();
       });
       
-      if (!isDuplicate) {
-        filtered.push(assessment);
-      } else {
-        duplicates.push(assessment);
-      }
-    });
-    
-    console.log(`Kept ${filtered.length} unique submissions and removed ${duplicates.length} duplicates for ${candidateKey}`);
-    totalDuplicatesRemoved += duplicates.length;
-    uniqueAssessments.push(...filtered);
+      console.log(`Keeping assessment ${sortedGroup[0].id} for ${candidateKey} (most recent)`);
+      uniqueAssessments.push(sortedGroup[0]);
+      totalDuplicatesRemoved += group.length - 1;
+    }
   });
   
   console.log(`Removed ${totalDuplicatesRemoved} duplicate assessments in total`);
+  console.log(`Returning ${uniqueAssessments.length} unique assessments`);
   return uniqueAssessments;
 };
