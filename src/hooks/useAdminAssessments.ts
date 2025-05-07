@@ -43,7 +43,7 @@ export const useAdminAssessments = () => {
           return {
             ...assessment,
             status
-          };
+          } as AssessmentWithStatus;
         });
         
         setAssessments(processedAssessments);
