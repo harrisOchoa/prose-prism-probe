@@ -69,40 +69,45 @@ const AdminSidebar = () => {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="py-4">
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-4 mb-2 font-semibold text-gray-500">
+      <SidebarContent className="py-3">
+        <SidebarGroup className="admin-sidebar-group">
+          <SidebarGroupLabel className="sidebar-group-label">
             Main Navigation
           </SidebarGroupLabel>
           <SidebarMenu>
             {mainNavItems.map(item => 
-              <SidebarMenuItem key={item.path}>
+              <SidebarMenuItem key={item.path} className="py-0.5">
                 <SidebarMenuButton 
                   onClick={() => navigate(item.path)} 
                   isActive={isActive(item.path)}
                   className={cn(
-                    "flex items-center px-4 py-3 w-full rounded-md transition-all", 
+                    "admin-sidebar-menu-button", 
                     isActive(item.path) 
-                      ? 'bg-purple-50 text-hirescribe-primary font-medium' 
+                      ? 'bg-purple-50 text-hirescribe-primary' 
                       : 'hover:bg-gray-50'
                   )} 
                   tooltip={item.description}
                 >
-                  <div className={cn(
-                    "mr-3", 
-                    isActive(item.path) 
-                      ? "text-hirescribe-primary" 
-                      : "text-gray-500"
-                  )}>
-                    {item.icon}
-                  </div>
-                  <div className="flex flex-col items-start">
-                    <span className={isActive(item.path) ? "text-hirescribe-primary" : "text-gray-700"}>
-                      {item.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground hidden lg:inline-block">
-                      {item.description}
-                    </span>
+                  <div className="flex items-center w-full">
+                    <div className={cn(
+                      "admin-sidebar-icon-wrapper", 
+                      isActive(item.path) 
+                        ? "text-hirescribe-primary" 
+                        : "text-gray-500"
+                    )}>
+                      {item.icon}
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className={cn(
+                        "admin-sidebar-menu-button-label",
+                        isActive(item.path) ? "text-hirescribe-primary" : "text-gray-700"
+                      )}>
+                        {item.label}
+                      </span>
+                      <span className="admin-sidebar-menu-button-description">
+                        {item.description}
+                      </span>
+                    </div>
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -110,39 +115,44 @@ const AdminSidebar = () => {
           </SidebarMenu>
         </SidebarGroup>
 
-        <SidebarGroup className="mt-6">
-          <SidebarGroupLabel className="px-4 mb-2 font-semibold text-gray-500">
+        <SidebarGroup className="admin-sidebar-group mt-2">
+          <SidebarGroupLabel className="sidebar-group-label">
             Settings
           </SidebarGroupLabel>
           <SidebarMenu>
             {settingsNavItems.map(item => 
-              <SidebarMenuItem key={item.path}>
+              <SidebarMenuItem key={item.path} className="py-0.5">
                 <SidebarMenuButton 
                   onClick={() => navigate(item.path)} 
                   isActive={isActive(item.path)}
                   className={cn(
-                    "flex items-center px-4 py-3 w-full rounded-md transition-all", 
+                    "admin-sidebar-menu-button", 
                     isActive(item.path) 
-                      ? 'bg-purple-50 text-hirescribe-primary font-medium' 
+                      ? 'bg-purple-50 text-hirescribe-primary' 
                       : 'hover:bg-gray-50'
                   )} 
                   tooltip={item.description}
                 >
-                  <div className={cn(
-                    "mr-3", 
-                    isActive(item.path) 
-                      ? "text-hirescribe-primary" 
-                      : "text-gray-500"
-                  )}>
-                    {item.icon}
-                  </div>
-                  <div className="flex flex-col items-start">
-                    <span className={isActive(item.path) ? "text-hirescribe-primary" : "text-gray-700"}>
-                      {item.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground hidden lg:inline-block">
-                      {item.description}
-                    </span>
+                  <div className="flex items-center w-full">
+                    <div className={cn(
+                      "admin-sidebar-icon-wrapper", 
+                      isActive(item.path) 
+                        ? "text-hirescribe-primary" 
+                        : "text-gray-500"
+                    )}>
+                      {item.icon}
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className={cn(
+                        "admin-sidebar-menu-button-label",
+                        isActive(item.path) ? "text-hirescribe-primary" : "text-gray-700"
+                      )}>
+                        {item.label}
+                      </span>
+                      <span className="admin-sidebar-menu-button-description">
+                        {item.description}
+                      </span>
+                    </div>
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>

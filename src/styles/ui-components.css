@@ -55,10 +55,32 @@
   }
   
   .sidebar-group-label {
-    @apply text-xs font-medium uppercase tracking-wider text-gray-500 mb-2;
+    @apply text-xs uppercase tracking-wider text-gray-500 mb-2 font-semibold px-2;
   }
   
   .sidebar-menu-item {
     @apply mb-1 rounded-md transition-all duration-200;
   }
+
+  /* Enhanced sidebar navigation styles */
+  .admin-sidebar-menu-button {
+    @apply flex flex-col items-start gap-1 w-full px-4 py-3 rounded-md transition-all;
+  }
+
+  .admin-sidebar-menu-button-label {
+    @apply font-medium text-sm;
+  }
+
+  .admin-sidebar-menu-button-description {
+    @apply text-xs text-gray-500 truncate w-full;
+  }
+
+  .admin-sidebar-group {
+    @apply px-4 pt-4 pb-2;
+  }
+
+  .admin-sidebar-icon-wrapper {
+    @apply mr-3 flex items-center justify-center;
+  }
 }
+
