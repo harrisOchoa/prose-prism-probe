@@ -7,6 +7,7 @@ import AssessmentTrends from "./AssessmentTrends";
 import TopPerformingCategories from "./TopPerformingCategories";
 import RecentActivity from "./RecentActivity";
 import EmptyTabContent from "./EmptyTabContent";
+import PerformanceContent from "./PerformanceContent";
 
 interface AnalyticsTabsProps {
   analytics: AnalyticsData;
@@ -40,11 +41,7 @@ const AnalyticsTabs: React.FC<AnalyticsTabsProps> = ({ analytics }) => {
       </TabsContent>
       
       <TabsContent value="performance" className="mt-4">
-        <EmptyTabContent 
-          title="Performance Analysis" 
-          message="Detailed performance analytics will be available in a future update."
-          icon={<LineChart className="h-12 w-12 text-muted-foreground opacity-70" />}
-        />
+        <PerformanceContent analytics={analytics} />
       </TabsContent>
       
       <TabsContent value="demographics" className="mt-4">

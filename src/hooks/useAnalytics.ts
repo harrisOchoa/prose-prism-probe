@@ -16,11 +16,14 @@ export const useAnalytics = (): AnalyticsResult => {
         setLoading(true);
         const assessments = await getAllAssessments() as unknown as AssessmentData[];
         
-        if (!assessments.length) {
+        if (!assessments || !assessments.length) {
+          console.log("No assessments found for analytics");
+          setAnalytics(getEmptyAnalyticsData());
           setLoading(false);
           return;
         }
         
+        console.log(`Calculating analytics data from ${assessments.length} assessments`);
         const analyticsData = calculateAnalyticsData(assessments);
         setAnalytics(analyticsData);
       } catch (err) {
