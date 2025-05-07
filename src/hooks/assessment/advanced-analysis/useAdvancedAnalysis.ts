@@ -1,8 +1,8 @@
 
 import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 import { AssessmentData } from "@/types/assessment";
-import { useGenerateAnalysis } from "./useGenerateAnalysis";
-import { useAnalysisValidation } from "./useAnalysisValidation";
+import { updateAssessmentAnalysis } from "@/firebase/services/assessment";
 import type { AnalysisStateMap } from "./types";
 import { 
   generateDetailedWritingAnalysis,
@@ -28,8 +28,157 @@ export const useAdvancedAnalysis = (
     aptitude: false
   });
 
-  const { validateAnalysisPrerequisites } = useAnalysisValidation();
+  /**
+   * Validates if prerequisites for analysis exist
+   */
+  const validateAnalysisPrerequisites = (data: AssessmentData, analysisType: string) => {
+    // Basic validation for all analysis types
+    if (!data || !data.id) {
+      toast({
+        title: "Missing Data",
+        description: "Assessment data is incomplete. Please refresh the page.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    // All non-aptitude analyses require writing scores
+    if (analysisType !== 'aptitude' && (!data.writingScores || !data.overallWritingScore)) {
+      toast({
+        title: "Writing Not Evaluated",
+        description: "Please evaluate the writing first to generate this analysis.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    // Aptitude analysis requires aptitude scores
+    if (analysisType === 'aptitude' && !data.aptitudeScore) {
+      toast({
+        title: "Aptitude Not Completed",
+        description: "Candidate needs to complete the aptitude test first.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    return true;
+  };
 
+  /**
+   * Core generate function for all analysis types
+   */
+  const generateAnalysis = async (generatorFunction: Function, data: AssessmentData, updateKey: string) => {
+    try {
+      console.log(`Starting analysis generation for ${updateKey}...`);
+      
+      toast({
+        title: "Generating Analysis",
+        description: `Generating analysis. This may take up to 30 seconds.`,
+      });
+      
+      let result;
+      let attempt = 0;
+      const maxAttempts = 2;
+      
+      while (attempt < maxAttempts) {
+        try {
+          attempt++;
+          console.log(`Analysis attempt ${attempt} for ${updateKey}...`);
+          
+          result = await generatorFunction(data);
+          
+          if (result) break;
+        } catch (attemptError: any) {
+          console.error(`Error in attempt ${attempt}:`, attemptError);
+          
+          if (attempt >= maxAttempts || !attemptError.message?.toLowerCase().includes('rate limit')) {
+            throw attemptError;
+          }
+          
+          const waitTime = attempt * 2000;
+          console.log(`Rate limit detected. Waiting ${waitTime}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          
+          toast({
+            title: "Retrying Analysis",
+            description: `API rate limit reached. Retrying in ${waitTime/1000} seconds...`,
+          });
+        }
+      }
+      
+      if (!result) {
+        throw new Error(`Failed to generate analysis after ${maxAttempts} attempts.`);
+      }
+      
+      console.log(`Generated ${updateKey} analysis:`, result);
+      
+      // Create a new object reference to ensure React detects the change
+      const updatedData = {
+        ...data,
+        [updateKey]: result
+      };
+      
+      // Immediately update UI
+      console.log(`Updating UI with new ${updateKey} analysis`);
+      setAssessmentData({...updatedData});
+      
+      // Update Firebase in background
+      try {
+        console.log(`Starting Firebase update for ${updateKey}`);
+        await updateAssessmentAnalysis(data.id, {
+          [updateKey]: result
+        });
+        
+        console.log(`Successfully updated ${updateKey} in Firebase`);
+        
+        toast({
+          title: "Analysis Complete",
+          description: `Analysis has been generated successfully.`,
+        });
+        
+        return result;
+      } catch (updateError: any) {
+        console.error(`Error updating ${updateKey} in Firebase:`, updateError);
+        
+        toast({
+          title: "Update Failed",
+          description: "Analysis was generated but could not be saved to the database.",
+          variant: "destructive",
+        });
+        
+        return result;
+      }
+    } catch (error: any) {
+      console.error(`Error generating ${updateKey}:`, error);
+      
+      let errorMessage = "Unknown error occurred";
+      
+      if (error.message) {
+        if (error.message.includes("rate limit")) {
+          errorMessage = "API rate limit reached. Please wait a few minutes and try again.";
+        } else if (error.message.includes("API key")) {
+          errorMessage = "Invalid or missing API key. Check your Gemini API configuration.";
+        } else if (error.message.includes("network")) {
+          errorMessage = "Network error. Please check your internet connection and try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast({
+        title: "Analysis Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
+      return null;
+    }
+  };
+
+  /**
+   * Main function to generate any type of advanced analysis
+   */
   const generateAdvancedAnalysis = async (type: string) => {
     // Map the type to analysis type and update key
     let analysisType: string;
@@ -68,7 +217,7 @@ export const useAdvancedAnalysis = (
     }
     
     // Validate prerequisites
-    if (!validateAnalysisPrerequisites(assessmentData, analysisType as any)) {
+    if (!validateAnalysisPrerequisites(assessmentData, analysisType)) {
       return null;
     }
     
@@ -76,16 +225,8 @@ export const useAdvancedAnalysis = (
     setGeneratingAnalysis(prev => ({ ...prev, [type]: true }));
     
     try {
-      // Use the useGenerateAnalysis hook inline (can't use hooks conditionally)
-      const generator = useGenerateAnalysis({
-        assessmentData,
-        setAssessmentData,
-        generatorFunction,
-        analysisType: analysisType as any,
-        updateKey
-      });
-      
-      const result = await generator.generate();
+      // Generate the analysis
+      const result = await generateAnalysis(generatorFunction, assessmentData, updateKey);
       return result;
     } finally {
       // Reset generating state for this analysis type regardless of success/failure

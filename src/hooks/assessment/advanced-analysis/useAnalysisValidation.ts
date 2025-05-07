@@ -1,51 +1,49 @@
 
-import { AssessmentData } from "@/types/assessment";
 import { toast } from "@/hooks/use-toast";
-
-type AnalysisType = 'writing' | 'personality' | 'interview' | 'questions' | 'profile' | 'aptitude';
+import { AssessmentData } from "@/types/assessment";
 
 /**
- * Hook for validating prerequisites before generating analysis
+ * Hook for validating analysis prerequisites
  */
 export const useAnalysisValidation = () => {
-  
-  const validateAnalysisPrerequisites = (
-    assessmentData: AssessmentData,
-    analysisType: AnalysisType
-  ): boolean => {
-    if (!assessmentData?.id) {
-      console.error("Missing assessment ID");
+  /**
+   * Validates if prerequisites for different analysis types exist
+   */
+  const validateAnalysisPrerequisites = (data: AssessmentData, analysisType: 'writing' | 'personality' | 'interview' | 'questions' | 'profile' | 'aptitude') => {
+    // Basic validation for all analysis types
+    if (!data || !data.id) {
       toast({
-        title: "Error",
-        description: "Assessment data is not properly loaded. Please refresh the page.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    if (!assessmentData.overallWritingScore && analysisType !== 'aptitude') {
-      console.error("Writing not evaluated yet");
-      toast({
-        title: "Writing Not Evaluated",
-        description: "Please evaluate the writing first to generate advanced analysis.",
+        title: "Missing Data",
+        description: "Assessment data is incomplete. Please refresh the page.",
         variant: "destructive",
       });
       return false;
     }
     
-    // For aptitude analysis, we need aptitude scores
-    if (analysisType === 'aptitude' && !assessmentData.aptitudeScore) {
-      console.error("Missing aptitude score");
+    // All non-aptitude analyses require writing scores
+    if (analysisType !== 'aptitude' && (!data.writingScores || !data.overallWritingScore)) {
       toast({
-        title: "Aptitude Results Needed",
-        description: "This candidate needs to complete the aptitude test before analysis.",
+        title: "Writing Not Evaluated",
+        description: "Please evaluate the writing first to generate this analysis.",
         variant: "destructive",
       });
       return false;
     }
-
+    
+    // Aptitude analysis requires aptitude scores
+    if (analysisType === 'aptitude' && !data.aptitudeScore) {
+      toast({
+        title: "Aptitude Not Completed",
+        description: "Candidate needs to complete the aptitude test first.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
     return true;
   };
 
-  return { validateAnalysisPrerequisites };
+  return {
+    validateAnalysisPrerequisites
+  };
 };
