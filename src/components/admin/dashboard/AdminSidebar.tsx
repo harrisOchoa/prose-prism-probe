@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -11,7 +11,8 @@ import {
   SidebarMenuButton,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarTrigger
+  SidebarTrigger,
+  SidebarProvider
 } from "@/components/ui/sidebar";
 import { 
   LayoutDashboard, 
@@ -23,11 +24,19 @@ import {
   LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const AdminSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
+  const { state, setOpen } = useSidebar();
+  const isCollapsed = state === "collapsed";
+  
+  // Set sidebar to collapsed by default when component mounts
+  useEffect(() => {
+    setOpen(false);
+  }, [setOpen]);
   
   // Handle logout function
   const handleLogout = () => {
@@ -36,11 +45,18 @@ const AdminSidebar = () => {
   };
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar 
+      collapsible="icon"
+      className="group hover:w-[--sidebar-width] data-[state=collapsed]:hover:w-[--sidebar-width] transition-all duration-300"
+    >
       <SidebarHeader className="px-4 pt-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold gradient-text">HireScribe Admin</h2>
-          <p className="text-xs text-muted-foreground mt-1">Assessment Management</p>
+        <div className="overflow-hidden">
+          <h2 className={`text-xl font-bold gradient-text whitespace-nowrap transition-all duration-300 ${isCollapsed ? "text-sm" : "text-xl"}`}>
+            {isCollapsed ? "HS" : "HireScribe Admin"}
+          </h2>
+          <p className={`text-xs text-muted-foreground mt-1 transition-opacity duration-300 ${isCollapsed ? "opacity-0" : "opacity-100"}`}>
+            Assessment Management
+          </p>
         </div>
         {/* Add sidebar trigger for collapsing */}
         <SidebarTrigger className="ml-2" />
@@ -48,7 +64,7 @@ const AdminSidebar = () => {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0" : "opacity-100"}`}>Main Navigation</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton 
@@ -57,7 +73,7 @@ const AdminSidebar = () => {
                 onClick={() => navigate("/admin")}
               >
                 <LayoutDashboard className="h-4 w-4" />
-                <span>Dashboard</span>
+                <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Dashboard</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -67,7 +83,7 @@ const AdminSidebar = () => {
                 onClick={() => navigate("/admin/candidates")}
               >
                 <Users className="h-4 w-4" />
-                <span>Candidates</span>
+                <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Candidates</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -77,7 +93,7 @@ const AdminSidebar = () => {
                 onClick={() => navigate("/admin/assessments")}
               >
                 <FileText className="h-4 w-4" />
-                <span>Assessments</span>
+                <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Assessments</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -87,14 +103,14 @@ const AdminSidebar = () => {
                 onClick={() => navigate("/admin/analytics")}
               >
                 <BarChart className="h-4 w-4" />
-                <span>Analytics</span>
+                <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Analytics</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Settings</SidebarGroupLabel>
+          <SidebarGroupLabel className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0" : "opacity-100"}`}>Settings</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton 
@@ -103,7 +119,7 @@ const AdminSidebar = () => {
                 onClick={() => navigate("/admin/settings")}
               >
                 <Settings className="h-4 w-4" />
-                <span>Settings</span>
+                <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Settings</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -113,7 +129,7 @@ const AdminSidebar = () => {
                 onClick={() => navigate("/admin/help")}
               >
                 <HelpCircle className="h-4 w-4" />
-                <span>Help & Support</span>
+                <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Help & Support</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -128,7 +144,7 @@ const AdminSidebar = () => {
           onClick={handleLogout}
         >
           <LogOut className="mr-2 h-4 w-4" />
-          <span>Logout</span>
+          <span className={`transition-opacity duration-300 ${isCollapsed ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>Logout</span>
         </Button>
       </SidebarFooter>
     </Sidebar>

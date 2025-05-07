@@ -112,7 +112,7 @@ const Admin = () => {
           </Card>
         </div>
       ) : (
-        <SidebarProvider defaultOpen={!isMobile}>
+        <SidebarProvider defaultOpen={false}>
           <div className="flex min-h-[80vh] w-full bg-background">
             <AdminSidebar />
             <SidebarInset className="p-0">
