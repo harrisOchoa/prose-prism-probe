@@ -17,39 +17,33 @@ const AdminSidebar = () => {
     navigate("/");
   };
 
-  // Define navigation items with exact paths
+  // Define navigation items with exact paths - removed descriptions
   const mainNavItems = [{
     path: "/admin/",
     label: "Dashboard",
-    icon: <LayoutDashboard className="h-5 w-5" />,
-    description: "Overview and statistics"
+    icon: <LayoutDashboard className="h-5 w-5" />
   }, {
     path: "/admin/candidates",
     label: "Candidates",
-    icon: <Users className="h-5 w-5" />,
-    description: "Candidate profiles and history"
+    icon: <Users className="h-5 w-5" />
   }, {
     path: "/admin/assessments",
     label: "Assessments",
-    icon: <FileText className="h-5 w-5" />,
-    description: "Manage all assessments"
+    icon: <FileText className="h-5 w-5" />
   }, {
     path: "/admin/analytics",
     label: "Analytics",
-    icon: <BarChart className="h-5 w-5" />,
-    description: "Advanced reporting"
+    icon: <BarChart className="h-5 w-5" />
   }];
   
   const settingsNavItems = [{
     path: "/admin/settings",
     label: "Settings",
-    icon: <Settings className="h-5 w-5" />,
-    description: "System configuration"
+    icon: <Settings className="h-5 w-5" />
   }, {
     path: "/admin/help",
     label: "Help & Support",
-    icon: <HelpCircle className="h-5 w-5" />,
-    description: "Documentation and support"
+    icon: <HelpCircle className="h-5 w-5" />
   }];
   
   // Check if a path is active
@@ -81,12 +75,11 @@ const AdminSidebar = () => {
                   onClick={() => navigate(item.path)} 
                   isActive={isActive(item.path)}
                   className={cn(
-                    "admin-sidebar-menu-button", 
+                    "admin-sidebar-menu-button-simplified", 
                     isActive(item.path) 
                       ? 'bg-purple-50 text-hirescribe-primary' 
                       : 'hover:bg-gray-50'
-                  )} 
-                  tooltip={item.description}
+                  )}
                 >
                   <div className="flex items-center w-full">
                     <div className={cn(
@@ -97,17 +90,12 @@ const AdminSidebar = () => {
                     )}>
                       {item.icon}
                     </div>
-                    <div className="flex flex-col items-start">
-                      <span className={cn(
-                        "admin-sidebar-menu-button-label",
-                        isActive(item.path) ? "text-hirescribe-primary" : "text-gray-700"
-                      )}>
-                        {item.label}
-                      </span>
-                      <span className="admin-sidebar-menu-button-description">
-                        {item.description}
-                      </span>
-                    </div>
+                    <span className={cn(
+                      "admin-sidebar-menu-button-label",
+                      isActive(item.path) ? "text-hirescribe-primary" : "text-gray-700"
+                    )}>
+                      {item.label}
+                    </span>
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -126,12 +114,11 @@ const AdminSidebar = () => {
                   onClick={() => navigate(item.path)} 
                   isActive={isActive(item.path)}
                   className={cn(
-                    "admin-sidebar-menu-button", 
+                    "admin-sidebar-menu-button-simplified", 
                     isActive(item.path) 
                       ? 'bg-purple-50 text-hirescribe-primary' 
                       : 'hover:bg-gray-50'
-                  )} 
-                  tooltip={item.description}
+                  )}
                 >
                   <div className="flex items-center w-full">
                     <div className={cn(
@@ -142,17 +129,12 @@ const AdminSidebar = () => {
                     )}>
                       {item.icon}
                     </div>
-                    <div className="flex flex-col items-start">
-                      <span className={cn(
-                        "admin-sidebar-menu-button-label",
-                        isActive(item.path) ? "text-hirescribe-primary" : "text-gray-700"
-                      )}>
-                        {item.label}
-                      </span>
-                      <span className="admin-sidebar-menu-button-description">
-                        {item.description}
-                      </span>
-                    </div>
+                    <span className={cn(
+                      "admin-sidebar-menu-button-label",
+                      isActive(item.path) ? "text-hirescribe-primary" : "text-gray-700"
+                    )}>
+                      {item.label}
+                    </span>
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
