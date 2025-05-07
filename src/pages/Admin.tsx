@@ -1,13 +1,22 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Routes, Route } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import AdminDashboard from "@/components/AdminDashboard";
+import AdminSidebar from "@/components/admin/dashboard/AdminSidebar";
 import { LockKeyhole, Home, ArrowRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SidebarProvider } from "@/components/ui/sidebar";
+
+// Placeholder components for new admin sections
+const CandidatesPage = () => <div className="p-6"><h1 className="text-2xl font-bold">Candidates</h1><p className="text-muted-foreground">This page is under development.</p></div>;
+const AssessmentsPage = () => <div className="p-6"><h1 className="text-2xl font-bold">Assessments</h1><p className="text-muted-foreground">This page is under development.</p></div>;
+const AnalyticsPage = () => <div className="p-6"><h1 className="text-2xl font-bold">Analytics</h1><p className="text-muted-foreground">This page is under development.</p></div>;
+const SettingsPage = () => <div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p className="text-muted-foreground">This page is under development.</p></div>;
+const HelpPage = () => <div className="p-6"><h1 className="text-2xl font-bold">Help & Support</h1><p className="text-muted-foreground">This page is under development.</p></div>;
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -45,7 +54,7 @@ const Admin = () => {
   };
 
   return (
-    <div className={`container mx-auto ${isMobile ? 'py-6 px-3' : 'py-10 px-4'} max-w-7xl`}>
+    <div className={`container mx-auto ${isMobile ? 'py-6 px-3' : 'py-10 px-4'} max-w-full`}>
       {!isAuthenticated ? (
         <div className="flex justify-center items-center min-h-[80vh]">
           <Card className="w-full max-w-md shadow-md bg-card border animate-fade-in">
@@ -103,7 +112,21 @@ const Admin = () => {
           </Card>
         </div>
       ) : (
-        <AdminDashboard />
+        <SidebarProvider defaultOpen={!isMobile}>
+          <div className="flex min-h-[80vh] w-full bg-background">
+            <AdminSidebar />
+            <div className="flex-1 overflow-auto">
+              <Routes>
+                <Route path="/" element={<AdminDashboard />} />
+                <Route path="/candidates" element={<CandidatesPage />} />
+                <Route path="/assessments" element={<AssessmentsPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/help" element={<HelpPage />} />
+              </Routes>
+            </div>
+          </div>
+        </SidebarProvider>
       )}
     </div>
   );

@@ -9,6 +9,13 @@ interface DashboardStatsProps {
   averageAptitudeScore: string | number;
   averageWordCount: number;
   averageWritingScore: string | number;
+  // Added mock trend data for visual enhancement
+  trends?: {
+    totalAssessments?: { type: "up" | "down" | "neutral", value: string };
+    averageAptitude?: { type: "up" | "down" | "neutral", value: string };
+    averageWords?: { type: "up" | "down" | "neutral", value: string };
+    averageWriting?: { type: "up" | "down" | "neutral", value: string };
+  }
 }
 
 const DashboardStats: React.FC<DashboardStatsProps> = ({
@@ -16,6 +23,12 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
   averageAptitudeScore,
   averageWordCount,
   averageWritingScore,
+  trends = {
+    totalAssessments: { type: "up", value: "+12% ↑" },
+    averageAptitude: { type: "neutral", value: "0% ↔" },
+    averageWords: { type: "down", value: "-5% ↓" },
+    averageWriting: { type: "up", value: "+8% ↑" }
+  }
 }) => {
   const isMobile = useIsMobile();
   
@@ -26,28 +39,40 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
         value={totalAssessments}
         description="All-time submissions"
         icon={FileText}
-        iconColor="text-blue-500/20"
+        iconColor="bg-blue-500/20 text-blue-500"
+        trend={trends?.totalAssessments?.type}
+        trendValue={trends?.totalAssessments?.value}
+        className="hover:border-blue-300/50 transition-all duration-200"
       />
       <StatCard
         title="Average Aptitude"
         value={`${averageAptitudeScore}%`}
         description="Overall performance"
         icon={Brain}
-        iconColor="text-purple-500/20"
+        iconColor="bg-purple-500/20 text-purple-500"
+        trend={trends?.averageAptitude?.type}
+        trendValue={trends?.averageAptitude?.value}
+        className="hover:border-purple-300/50 transition-all duration-200"
       />
       <StatCard
         title="Average Words"
         value={averageWordCount}
         description="Per submission"
         icon={BarChart}
-        iconColor="text-amber-500/20"
+        iconColor="bg-amber-500/20 text-amber-500"
+        trend={trends?.averageWords?.type}
+        trendValue={trends?.averageWords?.value}
+        className="hover:border-amber-300/50 transition-all duration-200"
       />
       <StatCard
         title="Writing Quality"
         value={`${averageWritingScore}/5`}
         description="Average score"
         icon={Users}
-        iconColor="text-green-500/20"
+        iconColor="bg-green-500/20 text-green-500"
+        trend={trends?.averageWriting?.type}
+        trendValue={trends?.averageWriting?.value}
+        className="hover:border-green-300/50 transition-all duration-200"
       />
     </div>
   );

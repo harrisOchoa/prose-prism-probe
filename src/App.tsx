@@ -29,14 +29,15 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Index />} />
-            <Route path="admin" element={<Admin />} />
-            <Route path="view/:id" element={<View />} />
             <Route path="about" element={<About />} />
             <Route path="privacy" element={<PrivacyPolicy />} />
             <Route path="terms" element={<Terms />} />
             <Route path="404" element={<NotFound />} />
+            <Route path="view/:id" element={<View />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
           </Route>
+          {/* Admin routes are handled separately to have their own layout */}
+          <Route path="admin/*" element={<Admin />} />
         </Routes>
       </Suspense>
     </Router>
