@@ -52,11 +52,18 @@ const AdminSidebar = () => {
     description: "Documentation and support"
   }];
   
+  // Check if a path is active
+  const isActive = (path: string) => {
+    if (path === '/admin/' && pathname === '/admin/') {
+      return true;
+    }
+    return pathname.startsWith(path) && path !== '/admin/';
+  };
+  
   return <Sidebar className="border-r border-gray-200 h-screen">
       <SidebarHeader className="px-4 py-6">
         <div className="flex items-center">
-          
-          <div className="ml-1 text-hirescribe-primary font-medium">
+          <div className="ml-1 font-medium text-xl gradient-text">
             <span>HireScribe Admin</span>
           </div>
         </div>
@@ -68,12 +75,14 @@ const AdminSidebar = () => {
             Main Navigation
           </SidebarGroupLabel>
           <SidebarMenu>
-            {mainNavItems.map(item => <SidebarMenuItem key={item.path}>
+            {mainNavItems.map(item => 
+              <SidebarMenuItem key={item.path}>
                 <SidebarMenuButton 
                   onClick={() => navigate(item.path)} 
+                  isActive={isActive(item.path)}
                   className={cn(
-                    "flex items-center px-4 py-3 w-full rounded-md transition-colors", 
-                    pathname === item.path 
+                    "flex items-center px-4 py-3 w-full rounded-md transition-all", 
+                    isActive(item.path) 
                       ? 'bg-purple-50 text-hirescribe-primary font-medium' 
                       : 'hover:bg-gray-50'
                   )} 
@@ -81,14 +90,14 @@ const AdminSidebar = () => {
                 >
                   <div className={cn(
                     "mr-3", 
-                    pathname === item.path 
+                    isActive(item.path) 
                       ? "text-hirescribe-primary" 
                       : "text-gray-500"
                   )}>
                     {item.icon}
                   </div>
                   <div className="flex flex-col items-start">
-                    <span className={pathname === item.path ? "text-hirescribe-primary" : "text-gray-700"}>
+                    <span className={isActive(item.path) ? "text-hirescribe-primary" : "text-gray-700"}>
                       {item.label}
                     </span>
                     <span className="text-xs text-muted-foreground hidden lg:inline-block">
@@ -96,7 +105,8 @@ const AdminSidebar = () => {
                     </span>
                   </div>
                 </SidebarMenuButton>
-              </SidebarMenuItem>)}
+              </SidebarMenuItem>
+            )}
           </SidebarMenu>
         </SidebarGroup>
 
@@ -105,12 +115,14 @@ const AdminSidebar = () => {
             Settings
           </SidebarGroupLabel>
           <SidebarMenu>
-            {settingsNavItems.map(item => <SidebarMenuItem key={item.path}>
+            {settingsNavItems.map(item => 
+              <SidebarMenuItem key={item.path}>
                 <SidebarMenuButton 
                   onClick={() => navigate(item.path)} 
+                  isActive={isActive(item.path)}
                   className={cn(
-                    "flex items-center px-4 py-3 w-full rounded-md transition-colors", 
-                    pathname === item.path 
+                    "flex items-center px-4 py-3 w-full rounded-md transition-all", 
+                    isActive(item.path) 
                       ? 'bg-purple-50 text-hirescribe-primary font-medium' 
                       : 'hover:bg-gray-50'
                   )} 
@@ -118,14 +130,14 @@ const AdminSidebar = () => {
                 >
                   <div className={cn(
                     "mr-3", 
-                    pathname === item.path 
+                    isActive(item.path) 
                       ? "text-hirescribe-primary" 
                       : "text-gray-500"
                   )}>
                     {item.icon}
                   </div>
                   <div className="flex flex-col items-start">
-                    <span className={pathname === item.path ? "text-hirescribe-primary" : "text-gray-700"}>
+                    <span className={isActive(item.path) ? "text-hirescribe-primary" : "text-gray-700"}>
                       {item.label}
                     </span>
                     <span className="text-xs text-muted-foreground hidden lg:inline-block">
@@ -133,13 +145,19 @@ const AdminSidebar = () => {
                     </span>
                   </div>
                 </SidebarMenuButton>
-              </SidebarMenuItem>)}
+              </SidebarMenuItem>
+            )}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="p-4 mt-auto border-t border-gray-200">
-        <Button variant="outline" size="sm" className="flex items-center justify-start w-full py-2.5 text-gray-700 hover:text-red-600 hover:border-red-200 transition-colors" onClick={handleLogout}>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center justify-start w-full py-2.5 text-gray-700 hover:text-red-600 hover:border-red-200 transition-all" 
+          onClick={handleLogout}
+        >
           <LogOut className="h-4 w-4 mr-2" />
           <span>Logout</span>
         </Button>

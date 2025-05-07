@@ -48,4 +48,17 @@
   .sidebar-icon-default {
     @apply text-gray-500;
   }
+  
+  /* Added these new sidebar styles */
+  .sidebar-header {
+    @apply border-b border-gray-200 py-4;
+  }
+  
+  .sidebar-group-label {
+    @apply text-xs font-medium uppercase tracking-wider text-gray-500 mb-2;
+  }
+  
+  .sidebar-menu-item {
+    @apply mb-1 rounded-md transition-all duration-200;
+  }
 }
