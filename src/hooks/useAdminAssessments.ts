@@ -24,8 +24,11 @@ export const useAdminAssessments = () => {
         setLoading(true);
         const assessmentData = await getAllAssessments();
         
+        // Convert DocumentData[] to AssessmentData[] before processing
+        const typedAssessments = assessmentData as unknown as AssessmentData[];
+        
         // Process assessments and add status
-        const processedAssessments = addStatusToAssessments(assessmentData);
+        const processedAssessments = addStatusToAssessments(typedAssessments);
         
         setAssessments(processedAssessments);
       } catch (err) {
