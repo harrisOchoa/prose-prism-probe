@@ -10,4 +10,5 @@ export interface AnalysisStateMap {
   questions: boolean;
   profile: boolean;
   aptitude: boolean;
+  [key: string]: boolean; // Add index signature to allow arbitrary string keys
 }
