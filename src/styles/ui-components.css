@@ -34,10 +34,28 @@
   
   /* Sidebar specific styles */
   .sidebar-container {
-    @apply w-[--sidebar-width-icon] hover:w-[--sidebar-width] transition-all duration-300;
+    @apply w-[3rem] hover:w-64 transition-all duration-300 ease-in-out;
   }
   
-  .sidebar-container:hover {
-    @apply w-[--sidebar-width];
+  .sidebar-logo {
+    @apply overflow-hidden whitespace-nowrap;
+  }
+  
+  .sidebar-item-text {
+    @apply overflow-hidden whitespace-nowrap transition-all duration-300;
+    width: 0;
+  }
+  
+  .sidebar-container:hover .sidebar-item-text {
+    width: auto;
+  }
+  
+  .sidebar-header-text {
+    max-width: 0;
+    @apply overflow-hidden transition-all duration-300;
+  }
+  
+  .sidebar-container:hover .sidebar-header-text {
+    max-width: 200px;
   }
 }

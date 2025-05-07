@@ -12,7 +12,6 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarTrigger,
-  useSidebar
 } from "@/components/ui/sidebar";
 import { 
   LayoutDashboard, 
@@ -30,14 +29,6 @@ const AdminSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
-  const { state, setOpen } = useSidebar();
-  const isCollapsed = state === "collapsed";
-  const [isHovering, setIsHovering] = useState(false);
-  
-  // Set sidebar to collapsed by default when component mounts
-  useEffect(() => {
-    setOpen(false);
-  }, [setOpen]);
   
   // Handle logout function
   const handleLogout = () => {
@@ -45,159 +36,107 @@ const AdminSidebar = () => {
     navigate("/");
   };
 
+  // Define navigation items
+  const mainNavItems = [
+    { 
+      path: "/admin", 
+      label: "Dashboard", 
+      icon: <LayoutDashboard className="h-5 w-5" /> 
+    },
+    { 
+      path: "/admin/candidates", 
+      label: "Candidates", 
+      icon: <Users className="h-5 w-5" /> 
+    },
+    { 
+      path: "/admin/assessments", 
+      label: "Assessments", 
+      icon: <FileText className="h-5 w-5" /> 
+    },
+    { 
+      path: "/admin/analytics", 
+      label: "Analytics", 
+      icon: <BarChart className="h-5 w-5" /> 
+    },
+  ];
+
+  const settingsNavItems = [
+    { 
+      path: "/admin/settings", 
+      label: "Settings", 
+      icon: <Settings className="h-5 w-5" /> 
+    },
+    { 
+      path: "/admin/help", 
+      label: "Help & Support", 
+      icon: <HelpCircle className="h-5 w-5" /> 
+    },
+  ];
+
   return (
-    <Sidebar 
-      collapsible="icon"
-      className="sidebar-container group transition-all duration-300"
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-    >
-      <SidebarHeader className="px-4 pt-4 flex items-center justify-between">
-        <div className={cn(
-          "overflow-hidden transition-all duration-300",
-          isHovering && "w-full"
-        )}>
-          <h2 className="font-bold whitespace-nowrap transition-all duration-300 gradient-text">
-            {isCollapsed && !isHovering ? "HS" : "HireScribe Admin"}
-          </h2>
-          <p className={cn(
-            "text-xs text-muted-foreground mt-1 transition-opacity duration-300",
-            isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
-          )}>
-            Assessment Management
-          </p>
+    <Sidebar className="sidebar-container border-r border-gray-200 h-screen">
+      <SidebarHeader className="p-4">
+        <div className="flex items-center">
+          <div className="text-hirescribe-primary text-xl font-bold">HS</div>
+          <div className="sidebar-header-text ml-1 text-hirescribe-primary">
+            <span>ireScribe Admin</span>
+          </div>
         </div>
-        <SidebarTrigger className="ml-2" />
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="py-4">
         <SidebarGroup>
-          <SidebarGroupLabel className={cn(
-            "transition-opacity duration-300",
-            isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
-          )}>
+          <SidebarGroupLabel className="px-4 mb-2 hidden sidebar-container:hover:block">
             Main Navigation
           </SidebarGroupLabel>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                isActive={pathname === "/admin"}
-                tooltip="Dashboard" 
-                onClick={() => navigate("/admin")}
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                <span className={cn(
-                  "transition-opacity duration-300",
-                  isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
-                )}>
-                  Dashboard
-                </span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                isActive={pathname === "/admin/candidates"}
-                tooltip="Candidates" 
-                onClick={() => navigate("/admin/candidates")}
-              >
-                <Users className="h-4 w-4" />
-                <span className={cn(
-                  "transition-opacity duration-300",
-                  isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
-                )}>
-                  Candidates
-                </span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                isActive={pathname === "/admin/assessments"}
-                tooltip="Assessments" 
-                onClick={() => navigate("/admin/assessments")}
-              >
-                <FileText className="h-4 w-4" />
-                <span className={cn(
-                  "transition-opacity duration-300",
-                  isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
-                )}>
-                  Assessments
-                </span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                isActive={pathname === "/admin/analytics"}
-                tooltip="Analytics" 
-                onClick={() => navigate("/admin/analytics")}
-              >
-                <BarChart className="h-4 w-4" />
-                <span className={cn(
-                  "transition-opacity duration-300",
-                  isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
-                )}>
-                  Analytics
-                </span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {mainNavItems.map((item) => (
+              <SidebarMenuItem key={item.path}>
+                <SidebarMenuButton 
+                  onClick={() => navigate(item.path)}
+                  className={`flex items-center px-4 py-2 w-full ${pathname === item.path ? 'bg-gray-100 text-hirescribe-primary' : ''}`}
+                >
+                  <div className="flex items-center">
+                    {item.icon}
+                    <span className="sidebar-item-text ml-3">{item.label}</span>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
           </SidebarMenu>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel className={cn(
-            "transition-opacity duration-300",
-            isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
-          )}>
+        <SidebarGroup className="mt-6">
+          <SidebarGroupLabel className="px-4 mb-2 hidden sidebar-container:hover:block">
             Settings
           </SidebarGroupLabel>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                isActive={pathname === "/admin/settings"}
-                tooltip="Settings" 
-                onClick={() => navigate("/admin/settings")}
-              >
-                <Settings className="h-4 w-4" />
-                <span className={cn(
-                  "transition-opacity duration-300",
-                  isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
-                )}>
-                  Settings
-                </span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                isActive={pathname === "/admin/help"}
-                tooltip="Help & Support" 
-                onClick={() => navigate("/admin/help")}
-              >
-                <HelpCircle className="h-4 w-4" />
-                <span className={cn(
-                  "transition-opacity duration-300",
-                  isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
-                )}>
-                  Help & Support
-                </span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {settingsNavItems.map((item) => (
+              <SidebarMenuItem key={item.path}>
+                <SidebarMenuButton 
+                  onClick={() => navigate(item.path)}
+                  className={`flex items-center px-4 py-2 w-full ${pathname === item.path ? 'bg-gray-100 text-hirescribe-primary' : ''}`}
+                >
+                  <div className="flex items-center">
+                    {item.icon}
+                    <span className="sidebar-item-text ml-3">{item.label}</span>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 mt-auto">
         <Button 
           variant="outline" 
           size="sm" 
-          className="w-full justify-start" 
+          className="flex items-center justify-start w-full" 
           onClick={handleLogout}
         >
-          <LogOut className="mr-2 h-4 w-4" />
-          <span className={cn(
-            "transition-opacity duration-300",
-            isCollapsed && !isHovering ? "opacity-0" : "opacity-100"
-          )}>
-            Logout
-          </span>
+          <LogOut className="h-4 w-4" />
+          <span className="sidebar-item-text ml-2">Logout</span>
         </Button>
       </SidebarFooter>
     </Sidebar>
