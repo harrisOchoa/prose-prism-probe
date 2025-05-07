@@ -2,10 +2,10 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
+import Admin from "./pages/Admin"; // Import Admin directly instead of lazy loading
 
-// Use lazy loading for components to improve performance
+// Use lazy loading for other components to improve performance
 const Index = lazy(() => import("./pages/Index"));
-const Admin = lazy(() => import("./pages/Admin"));
 const View = lazy(() => import("./pages/View"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));

@@ -11,7 +11,7 @@ import { LockKeyhole, Home, ArrowRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
-// Create improved placeholder pages for admin sections
+// Import the pages directly (not using lazy loading which might be causing the issue)
 import CandidatesPage from "@/components/admin/pages/CandidatesPage";
 import AssessmentsPage from "@/components/admin/pages/AssessmentsPage";
 import AnalyticsPage from "@/components/admin/pages/AnalyticsPage";
