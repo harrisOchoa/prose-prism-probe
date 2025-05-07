@@ -80,12 +80,12 @@ const StageTransitioner: React.FC<StageTransitionerProps> = ({ children }) => {
   }
 
   return (
-    <React.Fragment key={key}>
+    <div key={key}>
       <StepTransition loading={isTransitioning} message={transitionMessage} />
       {React.cloneElement(children as React.ReactElement<any>, { 
         handleStageTransition 
       })}
-    </React.Fragment>
+    </div>
   );
 };
 

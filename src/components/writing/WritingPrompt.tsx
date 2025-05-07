@@ -47,16 +47,30 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
     suspiciousActivity
   } = useAntiCheating(text);
 
-  // Update metrics every 5 seconds to keep tracking them while typing
+  // Set initial text from response prop, but only when the response or question changes
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      // Just get the metrics but don't cause state updates here
-      const metrics = getAssessmentMetrics();
-      console.log("Current anti-cheating metrics:", metrics);
-    }, 5000);
-    
-    return () => clearInterval(intervalId);
+    setText(response || "");
+  }, [response, currentQuestion]);
+  
+  // Calculate word count and character count only when text changes
+  useEffect(() => {
+    const words = text.trim().split(/\s+/).filter(word => word !== "");
+    setWordCount(words.length);
+    setCharCount(text.length);
+  }, [text]);
+  
+  // Update metrics periodically but avoid state updates
+  const updateMetricsRef = useCallback(() => {
+    // Just log metrics without state updates
+    const metrics = getAssessmentMetrics();
+    console.log("Current anti-cheating metrics:", metrics);
   }, [getAssessmentMetrics]);
+  
+  // Set up metrics tracking interval with stable callback
+  useEffect(() => {
+    const intervalId = setInterval(updateMetricsRef, 5000);
+    return () => clearInterval(intervalId);
+  }, [updateMetricsRef]);
 
   // Only show warning when windowBlurs changes
   useEffect(() => {
@@ -88,18 +102,6 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
     handleKeyPress({ key: 'Input', code: 'Input' } as React.KeyboardEvent);
   }, [handleKeyPress]);
 
-  // Calculate word count and character count only when text changes
-  useEffect(() => {
-    const words = text.trim().split(/\s+/).filter(word => word !== "");
-    setWordCount(words.length);
-    setCharCount(text.length);
-  }, [text]);
-
-  // Set initial text from response prop, but only when the response or question changes
-  useEffect(() => {
-    setText(response || "");
-  }, [response, currentQuestion]);
-
   const handleSubmit = useCallback(async () => {
     if (wordCount < 50) {
       toast({
@@ -116,8 +118,10 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
       const metrics = getAssessmentMetrics();
       console.log("Anti-cheating metrics captured:", metrics);
       
-      // Force calculate words per minute based on text length and time
+      // Create a copy to avoid modifying the original metrics
       const metricsToSubmit = {...metrics};
+      
+      // Force calculate words per minute based on text length and time
       if (metricsToSubmit && (!metricsToSubmit.wordsPerMinute || metricsToSubmit.wordsPerMinute === 0)) {
         const estimatedWPM = Math.max(1, Math.min(120, wordCount / (metricsToSubmit.timeSpentMs / 60000)));
         metricsToSubmit.wordsPerMinute = Math.round(estimatedWPM);
