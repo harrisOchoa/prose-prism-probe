@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { toast } from "@/components/ui/use-toast";
 import { WritingPromptItem } from "./AssessmentManager";
 import { CheckCircle, AlertCircle, Loader2, Brain } from "lucide-react";
 import { AntiCheatingMetrics, AnalysisStatus } from "@/firebase/services/assessment/types";
-import { initiateAutomaticAnalysis, AnalysisProgress } from "@/services/automaticAnalysisService";
+import { initiateAutomaticAnalysis, AnalysisProgress } from "@/services/automaticAnalysis";
 import { AssessmentData } from "@/types/assessment";
 
 interface AssessmentCompleteProps {
