@@ -1,37 +1,27 @@
 
 import React, { memo } from "react";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
-import AssessmentDetails from "./AssessmentDetails";
 import DashboardHeader from "./admin/dashboard/DashboardHeader";
 import DashboardStats from "./admin/dashboard/DashboardStats";
-import AssessmentTable from "./admin/dashboard/AssessmentTable";
-import LoadingState from "./admin/dashboard/LoadingState";
 import AdminWelcome from "./admin/dashboard/AdminWelcome";
+import RecentAssessmentsCard from "./admin/dashboard/RecentAssessmentsCard";
+import AssessmentTrendsChart from "./admin/dashboard/AssessmentTrendsChart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PerformanceMetricsCard from "./admin/dashboard/PerformanceMetricsCard";
+import TopCandidatesCard from "./admin/dashboard/TopCandidatesCard";
+import { Grid } from "lucide-react";
 
 const AdminDashboard = memo(() => {
   const {
     loading,
     searchTerm,
     setSearchTerm,
-    currentPage,
-    totalPages,
-    currentItems,
-    handlePageChange,
-    viewAssessmentDetails,
-    selectedAssessment,
-    showDetails,
-    setShowDetails,
     totalAssessments,
     averageAptitudeScore,
     averageWordCount,
     averageWritingScore,
-    getScoreColor,
-    hasNextPage
+    recentAssessments
   } = useAdminDashboard();
-
-  if (showDetails && selectedAssessment) {
-    return <AssessmentDetails assessment={selectedAssessment} onBack={() => setShowDetails(false)} />;
-  }
 
   return (
     <div className="space-y-6 animate-fade-in px-2 md:px-0 max-w-7xl mx-auto">
@@ -45,21 +35,32 @@ const AdminDashboard = memo(() => {
         averageWordCount={averageWordCount}
         averageWritingScore={averageWritingScore}
       />
-
-      {loading && currentItems.length === 0 ? (
-        <LoadingState />
-      ) : (
-        <AssessmentTable
-          assessments={currentItems}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          handlePageChange={handlePageChange}
-          viewAssessmentDetails={viewAssessmentDetails}
-          getScoreColor={getScoreColor}
-          loading={loading}
-          hasNextPage={hasNextPage}
-        />
-      )}
+      
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="candidates">Top Candidates</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <RecentAssessmentsCard 
+              assessments={recentAssessments} 
+              loading={loading} 
+            />
+            <AssessmentTrendsChart />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="performance" className="space-y-4">
+          <PerformanceMetricsCard />
+        </TabsContent>
+        
+        <TabsContent value="candidates" className="space-y-4">
+          <TopCandidatesCard />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 });

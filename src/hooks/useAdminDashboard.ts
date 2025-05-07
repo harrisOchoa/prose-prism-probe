@@ -5,6 +5,7 @@ import { calculateBenchmarks } from "@/utils/benchmarkCalculations";
 import { fetchAssessmentBatch } from "@/services/assessmentService";
 import { calculateAssessmentStatistics, getScoreColor } from "@/utils/assessmentStatistics";
 import { AssessmentData } from "@/types/assessment";
+import { addStatusToAssessments } from "@/utils/assessmentStatus";
 
 export const useAdminDashboard = () => {
   const [assessments, setAssessments] = useState<AssessmentData[]>([]);
@@ -35,8 +36,11 @@ export const useAdminDashboard = () => {
       const { assessments: newAssessments, lastDoc, hasMore: moreAvailable } = 
         await fetchAssessmentBatch(startDoc, itemsPerPage);
       
+      // Add status to assessments
+      const processedAssessments = addStatusToAssessments(newAssessments);
+      
       // Store the new assessments
-      setAssessments(newAssessments);
+      setAssessments(processedAssessments);
       
       // Store the last visible document for the next page
       if (lastDoc) {
@@ -90,9 +94,16 @@ export const useAdminDashboard = () => {
 
   // Filter assessments based on search term
   const filteredAssessments = assessments.filter((assessment) => 
-    assessment.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    assessment.candidatePosition.toLowerCase().includes(searchTerm.toLowerCase())
+    assessment.candidateName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    assessment.candidatePosition?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Get recent assessments for dashboard
+  const recentAssessments = [...filteredAssessments].sort((a, b) => {
+    const dateA = a.submittedAt?.toDate?.() || new Date();
+    const dateB = b.submittedAt?.toDate?.() || new Date();
+    return dateB.getTime() - dateA.getTime();
+  }).slice(0, 5);
 
   // Use the filtered assessments (for the current page only)
   const currentItems = filteredAssessments;
@@ -128,6 +139,7 @@ export const useAdminDashboard = () => {
     averageWritingScore,
     getScoreColor,
     assessments,
-    hasNextPage
+    hasNextPage,
+    recentAssessments
   };
 };

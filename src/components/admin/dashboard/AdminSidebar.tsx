@@ -1,9 +1,11 @@
+
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar";
 import { LayoutDashboard, Users, Settings, FileText, BarChart, HelpCircle, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
 const AdminSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,29 +21,37 @@ const AdminSidebar = () => {
   const mainNavItems = [{
     path: "/admin/",
     label: "Dashboard",
-    icon: <LayoutDashboard className="h-5 w-5" />
+    icon: <LayoutDashboard className="h-5 w-5" />,
+    description: "Overview and statistics"
   }, {
     path: "/admin/candidates",
     label: "Candidates",
-    icon: <Users className="h-5 w-5" />
+    icon: <Users className="h-5 w-5" />,
+    description: "Candidate profiles and history"
   }, {
     path: "/admin/assessments",
     label: "Assessments",
-    icon: <FileText className="h-5 w-5" />
+    icon: <FileText className="h-5 w-5" />,
+    description: "Manage all assessments"
   }, {
     path: "/admin/analytics",
     label: "Analytics",
-    icon: <BarChart className="h-5 w-5" />
+    icon: <BarChart className="h-5 w-5" />,
+    description: "Advanced reporting"
   }];
+  
   const settingsNavItems = [{
     path: "/admin/settings",
     label: "Settings",
-    icon: <Settings className="h-5 w-5" />
+    icon: <Settings className="h-5 w-5" />,
+    description: "System configuration"
   }, {
     path: "/admin/help",
     label: "Help & Support",
-    icon: <HelpCircle className="h-5 w-5" />
+    icon: <HelpCircle className="h-5 w-5" />,
+    description: "Documentation and support"
   }];
+  
   return <Sidebar className="border-r border-gray-200 h-screen">
       <SidebarHeader className="px-4 py-6">
         <div className="flex items-center">
@@ -59,13 +69,32 @@ const AdminSidebar = () => {
           </SidebarGroupLabel>
           <SidebarMenu>
             {mainNavItems.map(item => <SidebarMenuItem key={item.path}>
-                <SidebarMenuButton onClick={() => navigate(item.path)} className={cn("flex items-center px-4 py-3 w-full rounded-md transition-colors", pathname === item.path ? 'bg-purple-50 text-hirescribe-primary font-medium' : 'hover:bg-gray-50')} tooltip={item.label}>
-                  <div className={cn("mr-3", pathname === item.path ? "text-hirescribe-primary" : "text-gray-500")}>
+                <SidebarMenuButton 
+                  onClick={() => navigate(item.path)} 
+                  className={cn(
+                    "flex items-center px-4 py-3 w-full rounded-md transition-colors", 
+                    pathname === item.path 
+                      ? 'bg-purple-50 text-hirescribe-primary font-medium' 
+                      : 'hover:bg-gray-50'
+                  )} 
+                  tooltip={item.description}
+                >
+                  <div className={cn(
+                    "mr-3", 
+                    pathname === item.path 
+                      ? "text-hirescribe-primary" 
+                      : "text-gray-500"
+                  )}>
                     {item.icon}
                   </div>
-                  <span className={pathname === item.path ? "text-hirescribe-primary" : "text-gray-700"}>
-                    {item.label}
-                  </span>
+                  <div className="flex flex-col items-start">
+                    <span className={pathname === item.path ? "text-hirescribe-primary" : "text-gray-700"}>
+                      {item.label}
+                    </span>
+                    <span className="text-xs text-muted-foreground hidden lg:inline-block">
+                      {item.description}
+                    </span>
+                  </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>)}
           </SidebarMenu>
@@ -77,13 +106,32 @@ const AdminSidebar = () => {
           </SidebarGroupLabel>
           <SidebarMenu>
             {settingsNavItems.map(item => <SidebarMenuItem key={item.path}>
-                <SidebarMenuButton onClick={() => navigate(item.path)} className={cn("flex items-center px-4 py-3 w-full rounded-md transition-colors", pathname === item.path ? 'bg-purple-50 text-hirescribe-primary font-medium' : 'hover:bg-gray-50')} tooltip={item.label}>
-                  <div className={cn("mr-3", pathname === item.path ? "text-hirescribe-primary" : "text-gray-500")}>
+                <SidebarMenuButton 
+                  onClick={() => navigate(item.path)} 
+                  className={cn(
+                    "flex items-center px-4 py-3 w-full rounded-md transition-colors", 
+                    pathname === item.path 
+                      ? 'bg-purple-50 text-hirescribe-primary font-medium' 
+                      : 'hover:bg-gray-50'
+                  )} 
+                  tooltip={item.description}
+                >
+                  <div className={cn(
+                    "mr-3", 
+                    pathname === item.path 
+                      ? "text-hirescribe-primary" 
+                      : "text-gray-500"
+                  )}>
                     {item.icon}
                   </div>
-                  <span className={pathname === item.path ? "text-hirescribe-primary" : "text-gray-700"}>
-                    {item.label}
-                  </span>
+                  <div className="flex flex-col items-start">
+                    <span className={pathname === item.path ? "text-hirescribe-primary" : "text-gray-700"}>
+                      {item.label}
+                    </span>
+                    <span className="text-xs text-muted-foreground hidden lg:inline-block">
+                      {item.description}
+                    </span>
+                  </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>)}
           </SidebarMenu>
@@ -98,4 +146,5 @@ const AdminSidebar = () => {
       </SidebarFooter>
     </Sidebar>;
 };
+
 export default AdminSidebar;
