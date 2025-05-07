@@ -38,6 +38,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
   const [showFocusWarning, setShowFocusWarning] = useState(false);
   const isMobile = useIsMobile();
   
+  // Extract anti-cheating functionality
   const {
     handleKeyPress,
     preventCopyPaste,
@@ -59,7 +60,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
     setText(response || "");
   }, [response, currentQuestion]);
 
-  // Update metrics periodically but avoid state updates
+  // Update metrics periodically but avoid state updates - using stable reference
   const updateMetricsRef = useCallback(() => {
     // Just log metrics without state updates
     const metrics = getAssessmentMetrics();
@@ -96,11 +97,11 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
   // Memoize whether the user has reached minimum word count
   const hasMinimumWords = useMemo(() => wordCount >= 50, [wordCount]);
 
-  // Simulate keystrokes in the textarea for better metrics tracking
+  // The key fix: Don't call handleKeyPress directly in onChange, which was causing the infinite loop
   const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
-    handleKeyPress({ key: 'Input', code: 'Input' } as React.KeyboardEvent);
-  }, [handleKeyPress]);
+    // We don't call handleKeyPress here anymore, as it's handled in onKeyDown
+  }, []);
 
   const handleSubmit = useCallback(async () => {
     if (wordCount < 50) {

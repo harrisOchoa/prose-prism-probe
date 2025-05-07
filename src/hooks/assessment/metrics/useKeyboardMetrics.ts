@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 
 interface TypingMetrics {
   keystrokes: number;
@@ -22,20 +22,18 @@ export const useKeyboardMetrics = (response: string) => {
 
   const keystrokeTimesRef = useRef<number[]>([]);
   const startTimeRef = useRef<number>(Date.now());
+  const initRef = useRef<boolean>(false);
   
-  // Initialize keystrokes based on response length if available
-  useRef<boolean>(false).current || (() => {
-    if (response && response.length > 0) {
-      setTypingMetrics(prev => ({
-        ...prev, 
-        keystrokes: Math.max(prev.keystrokes, response.length)
-      }));
-      return true;
-    }
-    return false;
-  })();
+  // Initialize keystrokes based on response length if available - only once
+  if (!initRef.current && response && response.length > 0) {
+    setTypingMetrics(prev => ({
+      ...prev, 
+      keystrokes: Math.max(prev.keystrokes, response.length)
+    }));
+    initRef.current = true;
+  }
 
-  const calculateWordsPerMinute = (keystrokes: number, totalTimeMs: number): number => {
+  const calculateWordsPerMinute = useCallback((keystrokes: number, totalTimeMs: number): number => {
     // Fix: Return 0 if there's no typing activity or time is zero/negative
     if (totalTimeMs <= 0 || keystrokes <= 0) return 0;
     
@@ -44,9 +42,9 @@ export const useKeyboardMetrics = (response: string) => {
     if (minutes < 0.1) return 0; // Avoid division by very small numbers
     
     return Math.min(200, (keystrokes / 5) / minutes);
-  };
+  }, []);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     const currentTime = Date.now();
     keystrokeTimesRef.current.push(currentTime);
     
@@ -77,9 +75,9 @@ export const useKeyboardMetrics = (response: string) => {
         typingPattern: newPattern,
       };
     });
-  };
+  }, [calculateWordsPerMinute]);
 
-  const getTypingMetrics = () => {
+  const getTypingMetrics = useCallback(() => {
     // Recalculate WPM before returning to ensure it's current
     const currentTime = Date.now();
     const sessionDuration = currentTime - startTimeRef.current;
@@ -93,7 +91,7 @@ export const useKeyboardMetrics = (response: string) => {
     }
     
     return updatedMetrics;
-  };
+  }, [typingMetrics, calculateWordsPerMinute]);
 
   return {
     handleKeyPress,

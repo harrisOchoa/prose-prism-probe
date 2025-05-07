@@ -1,5 +1,5 @@
 
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { useKeyboardMetrics } from "./assessment/metrics/useKeyboardMetrics";
 import { useWindowEvents } from "./assessment/metrics/useWindowEvents";
 import { usePreventActions } from "./assessment/metrics/usePreventActions";
@@ -47,31 +47,23 @@ export const useAntiCheating = (response: string) => {
     initialContentRef,
   });
 
-  // Flag suspicious activity if focus loss is detected, but don't notify the user
-  if (suspiciousFocusLoss && !suspiciousActivity) {
-    const { focusLossEvents, longestFocusLossDuration, averageFocusLossDuration } = getWindowMetrics();
-    flagSuspiciousActivity(
-      `Suspicious window focus patterns detected: ${focusLossEvents.length} focus loss events, ` +
-      `longest: ${(longestFocusLossDuration/1000).toFixed(1)}s, ` +
-      `average: ${(averageFocusLossDuration/1000).toFixed(1)}s. ` +
-      `This may indicate the use of external resources or multiple screens.`
-    );
-  }
+  // Memoize the metrics function to prevent unnecessary re-renders
+  const getAssessmentMetrics = useMemo(() => {
+    return () => {
+      const typingMetrics = getTypingMetrics();
+      const windowMetrics = getWindowMetrics();
+      const preventionMetrics = getPreventionMetrics();
 
-  const getAssessmentMetrics = () => {
-    const typingMetrics = getTypingMetrics();
-    const windowMetrics = getWindowMetrics();
-    const preventionMetrics = getPreventionMetrics();
-
-    return {
-      ...typingMetrics,
-      ...windowMetrics,
-      ...preventionMetrics,
-      suspiciousActivity: suspiciousActivity || suspiciousFocusLoss,
-      suspiciousActivityDetail,
-      userAgent,
+      return {
+        ...typingMetrics,
+        ...windowMetrics,
+        ...preventionMetrics,
+        suspiciousActivity: suspiciousActivity || suspiciousFocusLoss,
+        suspiciousActivityDetail,
+        userAgent,
+      };
     };
-  };
+  }, [getTypingMetrics, getWindowMetrics, getPreventionMetrics, suspiciousActivity, suspiciousFocusLoss, suspiciousActivityDetail, userAgent]);
 
   return {
     handleKeyPress,

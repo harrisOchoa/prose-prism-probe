@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, memo } from "react";
 import { AlertTriangle } from "lucide-react";
 import WordCounter from "./WordCounter";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -15,7 +15,7 @@ interface WritingResponseInputProps {
   suspiciousActivity: boolean;
 }
 
-const WritingResponseInput: React.FC<WritingResponseInputProps> = ({
+const WritingResponseInput: React.FC<WritingResponseInputProps> = memo(({
   text,
   onChange,
   onKeyDown,
@@ -81,6 +81,8 @@ const WritingResponseInput: React.FC<WritingResponseInputProps> = ({
       )}
     </div>
   );
-};
+});
+
+WritingResponseInput.displayName = "WritingResponseInput";
 
 export default WritingResponseInput;
