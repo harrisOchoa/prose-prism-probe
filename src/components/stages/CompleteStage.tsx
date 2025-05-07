@@ -2,7 +2,7 @@
 import React from "react";
 import AssessmentComplete from "@/components/AssessmentComplete";
 import { WritingPromptItem, Stage } from "@/components/AssessmentManager";
-import { AntiCheatingMetrics } from "@/firebase/assessmentService";
+import { AntiCheatingMetrics } from "@/firebase/services/assessment/types";
 
 interface CompleteStageProps {
   candidateName: string;
