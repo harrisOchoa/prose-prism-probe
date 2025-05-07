@@ -5,8 +5,9 @@ import { saveAssessmentResult } from "@/firebase/services/assessment/assessmentC
 import { toast } from "@/components/ui/use-toast";
 import { WritingPromptItem } from "./AssessmentManager";
 import { CheckCircle, AlertCircle, Loader2, Brain } from "lucide-react";
-import { AntiCheatingMetrics } from "@/firebase/services/assessment/types";
+import { AntiCheatingMetrics, AnalysisStatus } from "@/firebase/services/assessment/types";
 import { initiateAutomaticAnalysis, AnalysisProgress } from "@/services/automaticAnalysisService";
+import { AssessmentData } from "@/types/assessment";
 
 interface AssessmentCompleteProps {
   candidateName: string;
@@ -185,14 +186,15 @@ const AssessmentComplete = ({
       });
       
       // Create assessment data object for analysis
-      const assessmentData = {
+      const assessmentData: AssessmentData = {
         id,
         candidateName,
         candidatePosition,
         completedPrompts,
         aptitudeScore,
         aptitudeTotal,
-        wordCount
+        wordCount,
+        submittedAt: new Date() // Adding the required submittedAt property
       };
       
       // Start automatic analysis

@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { AssessmentData } from "@/types/assessment";
 import { useWritingScores, useInsightsGeneration } from "./writing";
 import { toast } from "@/hooks/use-toast";
+import { AnalysisStatus } from "@/firebase/services/assessment/types";
 
 /**
  * Hook for handling writing evaluation functionality
@@ -56,7 +56,7 @@ export const useWritingEvaluation = (
       
       // Step 2: Generate insights based on scores
       console.log("Step 2: Generating insights based on scores");
-      const finalData = await generateInsights(updatedData);
+      const finalData = await generateInsights(updatedData as AssessmentData);
       
       if (finalData) {
         // Force immediate UI update with the generated insights using a new object reference

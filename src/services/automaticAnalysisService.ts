@@ -1,4 +1,3 @@
-
 import { AssessmentData } from "@/types/assessment";
 import { 
   evaluateAllWritingPrompts, 
@@ -11,6 +10,7 @@ import {
   generateAptitudeAnalysis
 } from "./gemini";
 import { updateAssessmentAnalysis } from "@/firebase/services/assessment";
+import { AnalysisStatus } from "@/firebase/services/assessment/types";
 
 // Analysis status types
 export type AnalysisStatus = 
@@ -48,7 +48,7 @@ export const initiateAutomaticAnalysis = async (
   try {
     // Update status to pending
     await updateAssessmentAnalysis(assessmentId, {
-      analysisStatus: 'pending'
+      analysisStatus: 'pending' as AnalysisStatus
     });
 
     // Step 1: Evaluate writing responses
@@ -84,7 +84,7 @@ export const initiateAutomaticAnalysis = async (
     
     try {
       await updateAssessmentAnalysis(assessmentId, {
-        analysisStatus: 'failed',
+        analysisStatus: 'failed' as AnalysisStatus,
         analysisError: progress.error
       });
     } catch (updateError) {
@@ -134,7 +134,7 @@ const evaluateWriting = async (
     const updateData = {
       writingScores: scores,
       overallWritingScore: overallScore,
-      analysisStatus: 'writing_evaluated'
+      analysisStatus: 'writing_evaluated' as AnalysisStatus
     };
     
     await updateAssessmentAnalysis(assessmentId, updateData);
@@ -245,7 +245,7 @@ const generateAdvancedAnalysis = async (
     
     // Update status to indicate advanced analysis has started
     await updateAssessmentAnalysis(assessmentId, {
-      analysisStatus: 'advanced_analysis_started'
+      analysisStatus: 'advanced_analysis_started' as AnalysisStatus
     });
     
     progress.status = 'advanced_analysis_started';
@@ -286,7 +286,7 @@ const generateAdvancedAnalysis = async (
     
     // Update final status
     await updateAssessmentAnalysis(assessmentId, {
-      analysisStatus: 'completed'
+      analysisStatus: 'completed' as AnalysisStatus
     });
     
     progress.status = 'completed';

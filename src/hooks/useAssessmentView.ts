@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { generateCandidateSummary, generateStrengthsAndWeaknesses } from "@/services/geminiService";
 import { updateAssessmentAnalysis } from "@/firebase/services/assessment";
@@ -7,6 +6,7 @@ import { useFetchAssessment } from "./assessment/useFetchAssessment";
 import { useAptitudeRecovery } from "./assessment/useAptitudeRecovery";
 import { useAptitudeCategories } from "./assessment/useAptitudeCategories";
 import { AssessmentData } from "@/types/assessment";
+import { AnalysisStatus } from "@/firebase/services/assessment/types";
 
 export const useAssessmentView = (id: string | undefined) => {
   const { assessment, setAssessment, loading, error, refreshAssessment } = useFetchAssessment(id);
@@ -48,7 +48,7 @@ export const useAssessmentView = (id: string | undefined) => {
             aiSummary: summary,
             strengths: analysis.strengths,
             weaknesses: analysis.weaknesses,
-            analysisStatus: 'basic_insights_generated'
+            analysisStatus: 'basic_insights_generated' as AnalysisStatus
           };
           
           // Create a new object reference to ensure React detects the change
@@ -85,13 +85,13 @@ export const useAssessmentView = (id: string | undefined) => {
         // Update status to failed
         try {
           await updateAssessmentAnalysis(updatedData.id, {
-            analysisStatus: 'failed',
+            analysisStatus: 'failed' as AnalysisStatus,
             analysisError: 'Some writing prompts could not be evaluated'
           });
           
           updatedData = {
             ...updatedData,
-            analysisStatus: 'failed',
+            analysisStatus: 'failed' as AnalysisStatus,
             analysisError: 'Some writing prompts could not be evaluated'
           };
         } catch (updateError) {

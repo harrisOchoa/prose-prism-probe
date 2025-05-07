@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { generateCandidateSummary, generateStrengthsAndWeaknesses } from "@/services/geminiService";
@@ -6,6 +5,7 @@ import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { AssessmentData } from "@/types/assessment";
+import { AnalysisStatus } from "@/firebase/services/assessment/types";
 
 /**
  * Hook for handling writing insights generation functionality
@@ -32,7 +32,7 @@ export const useInsightsGeneration = (
       
       // Update status to pending
       await updateAssessmentAnalysis(data.id, {
-        analysisStatus: 'pending'
+        analysisStatus: 'pending' as AnalysisStatus
       });
       
       // Show initial toast
@@ -92,7 +92,7 @@ export const useInsightsGeneration = (
         aiSummary: summary,
         strengths: analysis.strengths,
         weaknesses: analysis.weaknesses,
-        analysisStatus: 'basic_insights_generated'
+        analysisStatus: 'basic_insights_generated' as AnalysisStatus
       };
       
       // Create a new object for the assessment data to ensure React detects the change
@@ -132,7 +132,7 @@ export const useInsightsGeneration = (
       // Update status to failed
       try {
         await updateAssessmentAnalysis(assessmentData.id, {
-          analysisStatus: 'failed',
+          analysisStatus: 'failed' as AnalysisStatus,
           analysisError: error.message || "Unknown error"
         });
       } catch (updateError) {
