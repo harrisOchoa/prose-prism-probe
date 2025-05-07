@@ -9,7 +9,6 @@ import AssessmentTrendsChart from "./admin/dashboard/AssessmentTrendsChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PerformanceMetricsCard from "./admin/dashboard/PerformanceMetricsCard";
 import TopCandidatesCard from "./admin/dashboard/TopCandidatesCard";
-import { Grid } from "lucide-react";
 
 const AdminDashboard = memo(() => {
   const {
@@ -20,7 +19,8 @@ const AdminDashboard = memo(() => {
     averageAptitudeScore,
     averageWordCount,
     averageWritingScore,
-    recentAssessments
+    recentAssessments,
+    assessments
   } = useAdminDashboard();
 
   return (
@@ -49,7 +49,7 @@ const AdminDashboard = memo(() => {
               assessments={recentAssessments} 
               loading={loading} 
             />
-            <AssessmentTrendsChart />
+            <AssessmentTrendsChart assessments={assessments} />
           </div>
         </TabsContent>
         
@@ -58,7 +58,7 @@ const AdminDashboard = memo(() => {
         </TabsContent>
         
         <TabsContent value="candidates" className="space-y-4">
-          <TopCandidatesCard />
+          <TopCandidatesCard assessments={assessments} />
         </TabsContent>
       </Tabs>
     </div>
