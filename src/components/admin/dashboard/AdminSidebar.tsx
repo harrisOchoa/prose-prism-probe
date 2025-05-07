@@ -20,8 +20,7 @@ import {
   FileText, 
   BarChart, 
   HelpCircle, 
-  LogOut,
-  Menu
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -37,7 +36,7 @@ const AdminSidebar = () => {
   };
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader className="px-4 pt-4 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold gradient-text">HireScribe Admin</h2>
