@@ -22,7 +22,7 @@ const SubmissionContent: React.FC<SubmissionContentProps> = ({
   analysisInProgress,
   analysisProgress,
   onManualSubmit,
-  showAnalysisStatus = false // Default to hiding the analysis status
+  showAnalysisStatus = false
 }) => {
   // Log state changes for debugging
   useEffect(() => {
@@ -34,14 +34,19 @@ const SubmissionContent: React.FC<SubmissionContentProps> = ({
     });
   }, [isSubmitting, isSubmitted, submissionError, analysisInProgress]);
 
-  if (submissionError) {
-    return <SubmissionError 
-      error={submissionError} 
-      onRetry={onManualSubmit} 
-      isRetrying={isSubmitting} 
-    />;
+  // Handle submission in progress state
+  if (isSubmitting) {
+    return (
+      <div className="text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+        <p className="text-gray-600">
+          Submitting your assessment... Please wait.
+        </p>
+      </div>
+    );
   }
   
+  // Handle successful submission state
   if (isSubmitted) {
     return (
       <div className="text-center">
@@ -66,28 +71,27 @@ const SubmissionContent: React.FC<SubmissionContentProps> = ({
     );
   }
   
-  if (isSubmitting) {
-    return (
-      <div className="text-center">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-        <p className="text-gray-600">
-          Submitting your assessment... Please wait.
-        </p>
-      </div>
-    );
+  // Handle error state - only show after submission attempts have been made
+  if (submissionError) {
+    return <SubmissionError 
+      error={submissionError} 
+      onRetry={onManualSubmit} 
+      isRetrying={isSubmitting} 
+    />;
   }
   
+  // Default state - need to submit (should rarely be seen due to auto-submit)
   return (
     <div className="text-center">
       <p className="text-yellow-600 mb-4">
-        Your assessment hasn't been submitted yet. Please try submitting manually.
+        We're processing your assessment. If it doesn't complete automatically, please click below.
       </p>
       <Button 
         onClick={onManualSubmit}
         variant="default"
         className="min-w-[200px] mb-2"
       >
-        Submit Assessment
+        Complete Assessment
       </Button>
     </div>
   );

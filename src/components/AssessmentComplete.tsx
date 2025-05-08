@@ -9,6 +9,7 @@ import { useAssessmentSubmit } from "@/hooks/assessment-submission";
 import { useAssessmentAnalysis } from "@/hooks/useAssessmentAnalysis";
 import SubmissionContent from "@/components/assessment/SubmissionContent";
 import { AssessmentData } from "@/types/assessment";
+import StepTransition from "@/components/assessment/StepTransition";
 
 interface AssessmentCompleteProps {
   candidateName: string;
@@ -108,10 +109,20 @@ const AssessmentComplete = ({
         console.log("AssessmentComplete: Triggering manual submission on mount");
         handleSubmit();
       }
-    }, 1000); // Shorter delay for more responsive experience
+    }, 1000); // Short delay for more responsive experience
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Show full-page loader when submitting to prevent any "failed" message flashes
+  if (isSubmitting && !isSubmitted) {
+    return (
+      <StepTransition 
+        loading={true} 
+        message="Submitting your assessment..." 
+      />
+    );
+  }
 
   return (
     <div className="assessment-card max-w-4xl mx-auto">
@@ -148,7 +159,7 @@ const AssessmentComplete = ({
             analysisInProgress={analysisInProgress}
             analysisProgress={analysisProgress}
             onManualSubmit={handleSubmit}
-            showAnalysisStatus={false} // Set to false to hide analysis status
+            showAnalysisStatus={false} // Hide analysis status
           />
         </CardContent>
       </Card>
