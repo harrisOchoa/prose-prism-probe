@@ -143,6 +143,7 @@ const AssessmentComplete = ({
             analysisInProgress={analysisInProgress}
             analysisProgress={analysisProgress}
             onManualSubmit={handleSubmit}
+            showAnalysisStatus={false} // Set to false to hide analysis status
           />
         </CardContent>
       </Card>

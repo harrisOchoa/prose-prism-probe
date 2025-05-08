@@ -6,10 +6,16 @@ import { AnalysisProgress } from "@/services/automaticAnalysis";
 interface AnalysisStatusProps {
   inProgress: boolean;
   progress: AnalysisProgress | null;
+  visible?: boolean; // Add visibility control
 }
 
-const AnalysisStatus: React.FC<AnalysisStatusProps> = ({ inProgress, progress }) => {
-  if (!inProgress && (!progress || progress.status !== 'completed')) {
+const AnalysisStatus: React.FC<AnalysisStatusProps> = ({ 
+  inProgress, 
+  progress,
+  visible = false // Default to hidden
+}) => {
+  // If not visible or no analysis in progress, don't render anything
+  if (!visible || (!inProgress && (!progress || progress.status !== 'completed'))) {
     return null;
   }
 

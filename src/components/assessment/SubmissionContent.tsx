@@ -2,7 +2,6 @@
 import React, { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import AnalysisStatus from "@/components/assessment/AnalysisStatus";
 import SubmissionError from "@/components/assessment/SubmissionError";
 import { AnalysisProgress } from "@/services/automaticAnalysis";
 
@@ -13,6 +12,7 @@ interface SubmissionContentProps {
   analysisInProgress: boolean;
   analysisProgress: AnalysisProgress | null;
   onManualSubmit: () => void;
+  showAnalysisStatus?: boolean;
 }
 
 const SubmissionContent: React.FC<SubmissionContentProps> = ({
@@ -21,7 +21,8 @@ const SubmissionContent: React.FC<SubmissionContentProps> = ({
   submissionError,
   analysisInProgress,
   analysisProgress,
-  onManualSubmit
+  onManualSubmit,
+  showAnalysisStatus = false // Default to hiding the analysis status
 }) => {
   // Log state changes for debugging
   useEffect(() => {
@@ -48,10 +49,16 @@ const SubmissionContent: React.FC<SubmissionContentProps> = ({
           Your assessment has been successfully recorded. We appreciate your participation!
         </p>
         
-        <AnalysisStatus 
-          inProgress={analysisInProgress} 
-          progress={analysisProgress} 
-        />
+        {/* Only show analysis status if explicitly enabled */}
+        {showAnalysisStatus && analysisInProgress && (
+          <div className="mt-4 text-indigo-600">
+            <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+            Analyzing your responses...
+            <p className="text-sm text-gray-500 mt-1">
+              This may take a moment to complete in the background
+            </p>
+          </div>
+        )}
       </div>
     );
   }
