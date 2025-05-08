@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AnalysisStatus from "@/components/assessment/AnalysisStatus";
@@ -23,6 +23,16 @@ const SubmissionContent: React.FC<SubmissionContentProps> = ({
   analysisProgress,
   onManualSubmit
 }) => {
+  // Log state changes for debugging
+  useEffect(() => {
+    console.log("SubmissionContent state:", {
+      isSubmitting,
+      isSubmitted,
+      hasError: !!submissionError,
+      analysisInProgress
+    });
+  }, [isSubmitting, isSubmitted, submissionError, analysisInProgress]);
+
   if (submissionError) {
     return <SubmissionError 
       error={submissionError} 

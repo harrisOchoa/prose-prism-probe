@@ -53,9 +53,38 @@ const AssessmentComplete = ({
     startAutomaticAnalysis
   } = useAssessmentAnalysis();
 
+  // Log component rendering for debugging
+  useEffect(() => {
+    console.log("AssessmentComplete rendered:", {
+      candidateName,
+      candidatePosition,
+      promptsCount: completedPrompts.length,
+      aptitudeScore,
+      aptitudeTotal,
+      hasMetrics: !!antiCheatingMetrics,
+      isSubmitting,
+      isSubmitted,
+      assessmentId,
+      submissionError
+    });
+  }, [
+    candidateName, 
+    candidatePosition, 
+    completedPrompts.length, 
+    aptitudeScore, 
+    aptitudeTotal, 
+    antiCheatingMetrics, 
+    isSubmitting, 
+    isSubmitted, 
+    assessmentId, 
+    submissionError
+  ]);
+
   // Start analysis after successful submission
   useEffect(() => {
     if (isSubmitted && assessmentId && completedPrompts.length > 0) {
+      console.log("Starting automatic analysis for assessment:", assessmentId);
+      
       // Create assessment data object for analysis
       const assessmentData: AssessmentData = {
         id: assessmentId,
@@ -70,7 +99,19 @@ const AssessmentComplete = ({
       
       startAutomaticAnalysis(assessmentId, assessmentData);
     }
-  }, [isSubmitted, assessmentId]);
+  }, [isSubmitted, assessmentId, completedPrompts, candidateName, candidatePosition, aptitudeScore, aptitudeTotal, wordCount, startAutomaticAnalysis]);
+
+  // Manually trigger submission once on mount if not already submitted
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isSubmitting && !isSubmitted && !submissionError) {
+        console.log("AssessmentComplete: Triggering manual submission on mount");
+        handleSubmit();
+      }
+    }, 2000); // Give time for the component to fully initialize
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="assessment-card max-w-4xl mx-auto">

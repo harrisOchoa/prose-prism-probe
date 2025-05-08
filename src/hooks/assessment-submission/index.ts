@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { saveAssessmentResult } from "@/firebase/services/assessment/assessmentCreate";
 import { WritingPromptItem } from "@/components/AssessmentManager";
@@ -38,8 +38,20 @@ export const useAssessmentSubmit = (
     hasSubmissionLock
   } = useSubmissionStorage(candidateName, candidatePosition, setIsSubmitted, setAssessmentId);
 
+  // Check for existing submission immediately on mount
+  useEffect(() => {
+    if (candidateName && candidatePosition) {
+      const existingId = checkExistingSubmission();
+      if (existingId) {
+        console.log("Found existing submission on mount:", existingId);
+        setIsSubmitted(true);
+        setAssessmentId(existingId);
+      }
+    }
+  }, [candidateName, candidatePosition, checkExistingSubmission]);
+
   const handleSubmit = async () => {
-    // ENHANCED: Multiple guards against duplicate submission
+    // Prevent duplicate submissions
     if (isSubmitting) {
       console.log("Submission prevented - already in progress");
       return assessmentId || null;
@@ -50,6 +62,15 @@ export const useAssessmentSubmit = (
       console.log("Submission prevented - already completed with ID", assessmentId);
       return assessmentId;
     }
+    
+    // Log submission attempt for debugging
+    console.log("Starting submission attempt", {
+      candidateName,
+      candidatePosition,
+      aptitudeScore,
+      promptsCount: completedPrompts.length,
+      hasMetrics: !!antiCheatingMetrics
+    });
     
     // Set lock immediately to prevent parallel submissions
     setSubmissionLock(true);
@@ -94,6 +115,15 @@ export const useAssessmentSubmit = (
       console.log("Anti-cheating metrics present:", !!antiCheatingMetrics);
       console.log("Completed prompts count:", completedPrompts.length);
       console.log("Attempt number:", retryCount);
+      
+      // Validate inputs before submission
+      if (!candidateName || !candidatePosition) {
+        throw new Error("Missing candidate information for submission");
+      }
+      
+      if (completedPrompts.length === 0) {
+        throw new Error("No completed prompts available for submission");
+      }
       
       // Sanitize the anti-cheating metrics to ensure they're Firestore-compatible
       const sanitizedMetrics = sanitizeAntiCheatingMetrics(antiCheatingMetrics);
@@ -148,11 +178,11 @@ export const useAssessmentSubmit = (
     } finally {
       setIsSubmitting(false);
       setSubmissionStartTime(null);
-      // Don't reset the submission lock to allow for manual retries
+      // Don't reset the submission lock here to prevent repeated auto-submissions
     }
   };
 
-  // Auto-submit setup
+  // Auto-submit setup with improved debugging
   useAutoSubmit({
     submitAttempted,
     isSubmitted,
