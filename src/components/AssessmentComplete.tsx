@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, AlertCircle } from "lucide-react";
 import { WritingPromptItem } from "./AssessmentManager";
 import { AntiCheatingMetrics } from "@/firebase/services/assessment/types";
-import { useAssessmentSubmit } from "@/hooks/useAssessmentSubmit";
+import { useAssessmentSubmit } from "@/hooks/assessment-submission";
 import { useAssessmentAnalysis } from "@/hooks/useAssessmentAnalysis";
 import SubmissionContent from "@/components/assessment/SubmissionContent";
 import { AssessmentData } from "@/types/assessment";
