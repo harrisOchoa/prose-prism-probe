@@ -26,9 +26,17 @@ export const useAutoSubmit = ({
       if (!submitAttempted && !isSubmitted && !submissionLock && !submissionError) {
         console.log("Auto-submission triggered - starting assessment submission");
         setSubmitAttempted(true);
-        handleSubmit().catch(error => {
-          console.error("Auto-submit failed:", error);
-        });
+        handleSubmit()
+          .then(id => {
+            if (id) {
+              console.log("Auto-submission successful with ID:", id);
+            } else {
+              console.warn("Auto-submission completed but no ID returned");
+            }
+          })
+          .catch(error => {
+            console.error("Auto-submit failed:", error);
+          });
       } else {
         console.log("Auto-submission skipped due to conditions:", {
           submitAttempted,
@@ -37,7 +45,7 @@ export const useAutoSubmit = ({
           hasError: !!submissionError
         });
       }
-    }, 1000); // Added a 1 second delay to ensure proper initialization
+    }, 500); // Reduced delay for faster reaction
     
     return () => clearTimeout(timer);
   }, [isSubmitted, submissionLock, submissionError, submitAttempted, setSubmitAttempted, handleSubmit]);

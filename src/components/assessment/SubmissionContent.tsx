@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SubmissionError from "@/components/assessment/SubmissionError";
 import { AnalysisProgress } from "@/services/automaticAnalysis";
@@ -45,6 +45,9 @@ const SubmissionContent: React.FC<SubmissionContentProps> = ({
   if (isSubmitted) {
     return (
       <div className="text-center">
+        <div className="flex justify-center mb-3">
+          <CheckCircle className="text-green-500 h-6 w-6" />
+        </div>
         <p className="text-gray-600">
           Your assessment has been successfully recorded. We appreciate your participation!
         </p>
