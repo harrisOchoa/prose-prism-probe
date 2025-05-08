@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { saveAssessmentResult } from "@/firebase/services/assessment/assessmentCreate";
 import { toast } from "@/components/ui/use-toast";
@@ -19,6 +20,7 @@ export const useAssessmentSubmit = (
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [submissionStartTime, setSubmissionStartTime] = useState<number | null>(null);
   const [submissionLock, setSubmissionLock] = useState(false);
+  const [retryCount, setRetryCount] = useState(0); // Add retry count tracking
 
   // Generate a consistent submission ID key
   const getSubmissionKey = () => {
@@ -40,12 +42,13 @@ export const useAssessmentSubmit = (
 
   // Auto-submit when component mounts if not already submitted
   useEffect(() => {
-    if (!submitAttempted && !isSubmitted && !submissionLock) {
+    // Only auto-submit if no error, no prior submission, and not already attempting a submission
+    if (!submitAttempted && !isSubmitted && !submissionLock && !submissionError) {
       console.log("Attempting to auto-submit assessment...");
       setSubmitAttempted(true);
       handleSubmit();
     }
-  }, [isSubmitted, submissionLock]);
+  }, [isSubmitted, submissionLock, submissionError]);
 
   const sanitizeAntiCheatingMetrics = (metrics?: AntiCheatingMetrics): AntiCheatingMetrics | undefined => {
     if (!metrics) {
@@ -84,9 +87,15 @@ export const useAssessmentSubmit = (
 
   const handleSubmit = async () => {
     // ENHANCED: Multiple guards against duplicate submission
-    if (isSubmitting || isSubmitted || submissionLock) {
-      console.log("Submission prevented - already in progress or completed");
+    if (isSubmitting) {
+      console.log("Submission prevented - already in progress");
       return assessmentId || null;
+    }
+    
+    // Only respect isSubmitted if we already have an assessmentId
+    if (isSubmitted && assessmentId) {
+      console.log("Submission prevented - already completed with ID", assessmentId);
+      return assessmentId;
     }
     
     // Set lock immediately to prevent parallel submissions
@@ -94,6 +103,7 @@ export const useAssessmentSubmit = (
     setIsSubmitting(true);
     setSubmissionError(null);
     setSubmissionStartTime(Date.now());
+    setRetryCount(prev => prev + 1);
     
     // Add a check to prevent creating a duplicate if we've already processed this assessment
     const localStorageKey = getSubmissionKey();
@@ -132,6 +142,7 @@ export const useAssessmentSubmit = (
       console.log("Word count:", wordCount);
       console.log("Anti-cheating metrics present:", !!antiCheatingMetrics);
       console.log("Completed prompts count:", completedPrompts.length);
+      console.log("Attempt number:", retryCount);
       
       // Sanitize the anti-cheating metrics to ensure they're Firestore-compatible
       const sanitizedMetrics = sanitizeAntiCheatingMetrics(antiCheatingMetrics);
@@ -162,21 +173,31 @@ export const useAssessmentSubmit = (
       return id;
     } catch (error: any) {
       console.error("Error submitting assessment:", error);
-      setSubmissionError(error?.message || "Unknown error occurred");
+      const errorMessage = error?.message || "Unknown error occurred";
+      
+      setSubmissionError(errorMessage);
+      
+      // Provide more helpful error messages for common Firestore errors
+      let userFriendlyMessage = errorMessage;
+      if (errorMessage.includes("index")) {
+        userFriendlyMessage = "The database needs an index to process your submission. Please notify the administrator or try again later.";
+      } else if (errorMessage.includes("permission")) {
+        userFriendlyMessage = "You don't have permission to submit assessments. Please check with the administrator.";
+      }
       
       toast({
         title: "Submission Error",
-        description: "There was an error submitting your assessment. Please try again.",
+        description: userFriendlyMessage,
         variant: "destructive",
       });
 
-      // Clear session lock on error
+      // Clear session lock on error to allow retries
       sessionStorage.removeItem(sessionLockKey);
       return null;
     } finally {
       setIsSubmitting(false);
       setSubmissionStartTime(null);
-      // Keep the lock in submissionLock state to prevent future auto-submissions
+      // Don't reset the submission lock to allow for manual retries
     }
   };
 

@@ -70,49 +70,39 @@ export const saveAssessmentResult = async (
     console.log("Completed prompts:", completedPrompts.length);
     console.log("Original metrics provided:", antiCheatingMetrics);
     
-    // ENHANCED: Even more aggressive duplicate detection with proper name/position normalization
     // Generate normalized versions of candidate name and position to avoid case/whitespace duplicates
     const normalizedName = candidateName.toLowerCase().trim();
     const normalizedPosition = candidatePosition.toLowerCase().trim();
     
-    // Check for any submissions from this candidate for this position within the last 24 hours
-    const candidateSubmissionsQuery = query(
+    // CHANGED: Instead of a compound query, use a simpler approach that doesn't require indexes
+    // First check by candidateName only (more common, less likely to need index)
+    const nameCandidateQuery = query(
       collection(db, 'assessments'),
-      where('candidateNameNormalized', '==', normalizedName),
-      where('candidatePositionNormalized', '==', normalizedPosition),
-      orderBy('submittedAt', 'desc'),
-      limit(5) // Get most recent 5 to examine
+      where('candidateName', '==', candidateName),
+      limit(10)
     );
     
-    console.log(`Checking for existing submissions for ${candidateName} as ${candidatePosition}...`);
-    const querySnapshot = await getDocs(candidateSubmissionsQuery);
+    console.log(`Checking for existing submissions for ${candidateName}...`);
+    const nameQuerySnapshot = await getDocs(nameCandidateQuery);
     
-    // Fallback query if normalized fields aren't found in older entries
-    if (querySnapshot.empty) {
-      console.log("No results with normalized fields, trying with original fields...");
-      const fallbackQuery = query(
-        collection(db, 'assessments'),
-        where('candidateName', '==', candidateName),
-        where('candidatePosition', '==', candidatePosition),
-        orderBy('submittedAt', 'desc'),
-        limit(5)
-      );
+    // If we find results for the name, filter in memory for the position match
+    if (!nameQuerySnapshot.empty) {
+      console.log(`Found ${nameQuerySnapshot.docs.length} submissions with name ${candidateName}`);
+      // Filter in memory by position
+      const matchingDocs = nameQuerySnapshot.docs.filter(doc => {
+        const data = doc.data();
+        return data.candidatePosition === candidatePosition;
+      });
       
-      const fallbackSnapshot = await getDocs(fallbackQuery);
-      
-      if (!fallbackSnapshot.empty) {
-        console.log(`Found ${fallbackSnapshot.docs.length} existing submissions for ${candidateName}`);
-        const mostRecentDoc = fallbackSnapshot.docs[0];
+      if (matchingDocs.length > 0) {
+        console.log(`Found ${matchingDocs.length} existing submissions for ${candidateName} as ${candidatePosition}`);
+        const mostRecentDoc = matchingDocs[0]; // Just use first match since we can't sort in memory easily
         console.log("Using existing assessment with ID:", mostRecentDoc.id);
         return mostRecentDoc.id;
       }
-    } else {
-      console.log(`Found ${querySnapshot.docs.length} existing submissions for ${candidateName}`);
-      const mostRecentDoc = querySnapshot.docs[0];
-      console.log("Using existing assessment with ID:", mostRecentDoc.id);
-      return mostRecentDoc.id;
     }
     
+    // No match found, create new assessment
     const wordCount = completedPrompts.reduce((total, prompt) => total + prompt.wordCount, 0);
     
     let overallWritingScore;
