@@ -62,6 +62,7 @@
     }
   }
   
+  /* PDF Export Styles */
   @media print {
     .pdf-hide, .hidden-for-pdf {
       display: none !important;
@@ -81,6 +82,9 @@
     .pdf-content .card {
       page-break-inside: avoid !important;
       break-inside: avoid !important;
+      margin-bottom: 15px !important;
+      border: 1px solid #e5e7eb !important;
+      box-shadow: none !important;
     }
     
     body {
@@ -93,6 +97,31 @@
       padding: 0;
       margin: 0;
     }
+    
+    /* Enhanced PDF styling */
+    h1, h2, h3, h4 {
+      color: #4F46E5 !important; /* hirescribe-primary */
+    }
+    
+    table {
+      border-collapse: collapse !important;
+      width: 100% !important;
+    }
+    
+    table th {
+      background-color: #F5F7FF !important;
+      color: #4F46E5 !important;
+      font-weight: 600 !important;
+    }
+    
+    table th, table td {
+      border: 1px solid #e5e7eb !important;
+      padding: 4px 6px !important;
+    }
+    
+    .recharts-wrapper {
+      page-break-inside: avoid !important;
+    }
   }
   
   /* PDF Layout specific utilities */
@@ -104,18 +133,61 @@
   .pdf-layout-portrait .assessment-card {
     box-shadow: none;
     border: 1px solid #e5e7eb;
+    margin-bottom: 15px;
+  }
+
+  .pdf-layout-portrait h1 {
+    font-size: 20px !important;
+    color: #4F46E5 !important;
+    margin-bottom: 10px !important;
+  }
+
+  .pdf-layout-portrait h2 {
+    font-size: 16px !important;
+    color: #4F46E5 !important;
+    margin-bottom: 8px !important;
+  }
+
+  .pdf-layout-portrait h3 {
+    font-size: 14px !important;
+    color: #4F46E5 !important;
+    margin-bottom: 6px !important;
   }
 
   .pdf-layout-portrait .progress {
     overflow: hidden;
+    height: 8px !important;
   }
 
   .pdf-layout-portrait table {
     margin-bottom: 0;
     font-size: 11px;
+    border-collapse: collapse;
   }
 
   .pdf-layout-portrait .table-body td {
     padding: 4px 6px;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .pdf-layout-portrait p {
+    font-size: 11px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+  }
+  
+  .pdf-branding-header {
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+  }
+  
+  .pdf-branding-footer {
+    border-top: 1px solid #e5e7eb;
+    margin-top: 15px;
+    padding-top: 10px;
+    text-align: center;
+    font-size: 9px;
+    color: #6b7280;
   }
 }

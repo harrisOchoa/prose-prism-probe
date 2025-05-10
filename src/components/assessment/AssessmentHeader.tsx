@@ -6,7 +6,7 @@ import {
   Calculator, 
   Loader2, 
   RefreshCw, 
-  FileUp
+  FileDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -94,11 +94,11 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
             )}
             className={cn(
               "flex-1 sm:flex-none shadow-subtle hover:shadow-elevation-1 transition-all",
-              "hover:bg-hirescribe-muted"
+              "hover:bg-hirescribe-muted border-hirescribe-primary/20"
             )}
           >
-            <FileUp className="mr-2 h-4 w-4" />
-            Export PDF
+            <FileDown className="mr-2 h-4 w-4 text-hirescribe-primary" />
+            Export Report (PDF)
           </Button>
         )}
         

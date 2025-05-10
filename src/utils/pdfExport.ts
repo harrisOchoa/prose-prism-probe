@@ -2,8 +2,10 @@
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+// Enhanced PDF export with professional formatting
 export const exportToPdf = async (elementId: string, filename: string) => {
   try {
+    // Get the content element
     const element = document.getElementById(elementId);
     if (!element) {
       throw new Error('Element not found');
@@ -20,25 +22,26 @@ export const exportToPdf = async (elementId: string, filename: string) => {
 
     // Use a higher scale for better quality
     const scale = 2;
-
-    // Create a wrapper div with portrait optimized width
+    
+    // Create a deep clone to avoid modifying the original DOM
+    const clone = element.cloneNode(true) as HTMLElement;
+    
+    // Create wrapper with specific dimensions for PDF
     const wrapper = document.createElement('div');
     wrapper.style.width = '800px'; // Optimized for portrait A4
-    wrapper.style.margin = '0 auto';
-    wrapper.classList.add('pdf-wrapper');
-
-    // Clone the element for PDF generation
-    const clone = element.cloneNode(true) as HTMLElement;
-    wrapper.appendChild(clone);
-    
+    wrapper.style.padding = '20px';
     wrapper.style.position = 'absolute';
     wrapper.style.left = '-9999px';
+    wrapper.classList.add('pdf-wrapper');
+    
+    // Add the clone to the wrapper
+    wrapper.appendChild(clone);
     document.body.appendChild(wrapper);
-
-    // Portrait-specific styles
+    
+    // Apply PDF-specific styles
     clone.classList.add('pdf-layout-portrait');
-    clone.style.padding = '10px';
 
+    // Create canvas from the wrapper with high resolution
     const canvas = await html2canvas(wrapper, {
       scale: scale,
       useCORS: true,
@@ -50,38 +53,39 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       }
     });
     
+    // Clean up - remove the wrapper from DOM
     document.body.removeChild(wrapper);
 
-    // Restore DOM
+    // Restore DOM classes
     document.querySelectorAll('.hidden-for-pdf').forEach((el) => {
       el.classList.remove('hidden-for-pdf');
     });
-
     document.querySelectorAll('.visible-for-pdf').forEach((el) => {
       el.classList.remove('visible-for-pdf');
     });
 
+    // Get image data from canvas
     const imgData = canvas.toDataURL('image/png');
     
-    // Calculate aspect ratio
+    // Calculate dimensions based on aspect ratio
     const aspectRatio = canvas.width / canvas.height;
     
-    // PDF size (A4 portrait)
-    const pageWidth = 210;  // A4 portrait width in mm
-    const pageHeight = 297; // A4 portrait height in mm
-
-    // Margins and spacing
-    const margin = 10;
-    const headerHeight = 20;
-    const footerHeight = 15;
+    // A4 dimensions in mm
+    const pageWidth = 210;  // A4 width
+    const pageHeight = 297; // A4 height
     
-    // Content area
+    // Set margins and spacing
+    const margin = 10;
+    const headerHeight = 30;
+    const footerHeight = 20;
+    
+    // Calculate content area dimensions
     const contentTop = headerHeight + margin;
     const contentBottom = pageHeight - footerHeight - margin;
     const availableHeight = contentBottom - contentTop;
     const availableWidth = pageWidth - (margin * 2);
     
-    // Calculate image dimensions maintaining aspect ratio
+    // Scale image to fit content area while maintaining aspect ratio
     let imgWidth = availableWidth;
     let imgHeight = imgWidth / aspectRatio;
     
@@ -93,29 +97,53 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     // Center the image horizontally
     const xOffset = margin + (availableWidth - imgWidth) / 2;
 
+    // Create PDF document
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4'
     });
 
-    // Header
-    pdf.setFillColor(248, 250, 252);
+    // Set PDF metadata
+    pdf.setProperties({
+      title: `HireScribe Assessment: ${filename}`,
+      author: 'HireScribe Assessment Platform',
+      subject: 'Candidate Assessment Report',
+      keywords: 'assessment, candidate, hirescribe, report',
+      creator: 'HireScribe'
+    });
+
+    // Add header with branding
+    pdf.setFillColor(248, 250, 252); // Light background
     pdf.rect(0, 0, pageWidth, headerHeight, 'F');
+    
+    // Add subtle header border
+    pdf.setDrawColor(230, 236, 241);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, headerHeight, pageWidth - margin, headerHeight);
+    
+    // Add logo/branding text
     pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(79, 70, 229); // hirescribe-primary
+    pdf.setFontSize(16);
+    pdf.text('HireScribe', margin, 12);
+    
+    // Add report title
+    pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(45, 55, 72);
     pdf.setFontSize(12);
-    pdf.text('Assessment Report', margin, 14);
-
+    pdf.text('Assessment Report', margin, 20);
+    
+    // Add date on the right side
     const date = new Date().toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     });
-    pdf.setFontSize(8);
-    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
     pdf.setTextColor(100, 116, 139);
-    pdf.text(`Generated: ${date}`, pageWidth - 60, 14);
+    pdf.text(`Generated: ${date}`, pageWidth - 60, 12);
+    pdf.text('CONFIDENTIAL', pageWidth - 60, 20);
 
     // Add the image content
     pdf.addImage(
@@ -126,15 +154,29 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       imgWidth,
       imgHeight
     );
-
-    // Footer
-    pdf.setFillColor(255, 255, 255);
+    
+    // Add footer with branding
+    pdf.setFillColor(248, 250, 252);
     pdf.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
+    
+    // Add subtle footer border
+    pdf.setDrawColor(230, 236, 241);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, pageHeight - footerHeight, pageWidth - margin, pageHeight - footerHeight);
+    
+    // Add footer text
     pdf.setFontSize(8);
-    pdf.setTextColor(156, 163, 175);
-    pdf.text('HireScribe Assessment Platform', margin, pageHeight - 6);
-    pdf.text('Page 1 of 1', pageWidth - 30, pageHeight - 6);
+    pdf.setTextColor(100, 116, 139);
+    pdf.text('© HireScribe Assessment Platform', margin, pageHeight - 12);
+    
+    // Add page number
+    pdf.text('Page 1 of 1', pageWidth - 30, pageHeight - 12);
+    
+    // Add disclaimer
+    pdf.setFontSize(6);
+    pdf.text('This report is confidential and intended only for authorized recipients.', margin, pageHeight - 6);
 
+    // Save the PDF
     pdf.save(`${filename}.pdf`);
     return true;
   } catch (error) {

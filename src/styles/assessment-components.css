@@ -1,3 +1,4 @@
+
 @layer components {
   .assessment-container {
     @apply max-w-5xl mx-auto px-4 md:px-8 py-8;
@@ -27,43 +28,72 @@
     @apply bg-white rounded-lg shadow-md p-6 border border-gray-100 animate-fade-in;
   }
   
-  /* PDF export specific styles */
+  /* PDF export enhancements */
   .pdf-content .card, 
   .pdf-content .assessment-card {
     break-inside: avoid;
     page-break-inside: avoid;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #e5e7eb;
+    box-shadow: none;
+    padding: 15px;
   }
 
   .pdf-content .progress {
     height: 8px !important;
   }
+  
+  .pdf-content h1 {
+    font-size: 20px !important;
+    color: #4F46E5 !important;
+    margin-bottom: 12px !important;
+  }
+  
+  .pdf-content h2 {
+    font-size: 16px !important;
+    color: #4F46E5 !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .pdf-content h3, 
+  .pdf-content .card-title {
+    font-size: 14px !important;
+    color: #4F46E5 !important;
+    margin-bottom: 8px !important;
+  }
+  
+  .pdf-content p {
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+    margin-bottom: 6px !important;
+  }
 
-  /* Portrait-specific styles */
+  /* PDF portrait layout */
   .pdf-layout-portrait .card,
   .pdf-layout-portrait .assessment-card {
-    margin-bottom: 12px;
-    padding: 12px;
+    margin-bottom: 15px;
+    padding: 15px;
   }
 
   .pdf-layout-portrait .progress-bars .progress {
-    height: 6px;
-    margin-bottom: 10px;
+    height: 8px;
+    margin-bottom: 12px;
   }
 
   .pdf-layout-portrait h3,
   .pdf-layout-portrait .card-title {
     font-size: 14px;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
 
   .pdf-layout-portrait p {
-    font-size: 12px;
+    font-size: 11px;
     margin-bottom: 4px;
+    line-height: 1.4;
   }
 
   .pdf-layout-portrait .card-content {
-    padding: 8px !important;
+    padding: 10px !important;
   }
 
   .pdf-layout-portrait .performance-cards {
@@ -76,50 +106,101 @@
     width: 100%;
   }
   
-  /* PDF export specific styles */
-  .pdf-content .card, 
-  .pdf-content .assessment-card {
-    break-inside: avoid;
-    page-break-inside: avoid;
-    margin-bottom: 12px;
-  }
-  
-  .pdf-content .progress {
-    height: 8px !important;
-  }
-  
-  .pdf-layout-landscape .card,
-  .pdf-layout-landscape .assessment-card {
-    margin-bottom: 10px;
-    padding: 12px;
-  }
-  
-  .pdf-layout-landscape .progress-bars .progress {
-    height: 8px;
-    margin-bottom: 14px;
-  }
-  
-  .pdf-layout-landscape h3,
-  .pdf-layout-landscape .card-title {
-    font-size: 16px;
-    margin-bottom: 8px;
-  }
-  
-  .pdf-layout-landscape p {
-    margin-bottom: 6px;
-  }
-  
-  .pdf-layout-landscape .card-content {
-    padding-top: 8px;
-  }
-  
-  /* Specific card sizing for PDF landscape layout */
-  .pdf-layout-landscape .performance-cards {
+  /* New branded professional styles */
+  .pdf-brand-header {
     display: flex;
-    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #EEF2FF;
   }
   
-  .pdf-layout-landscape .performance-cards > div {
-    flex: 1;
+  .pdf-brand-logo {
+    color: #4F46E5;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  
+  .pdf-brand-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #4F46E5;
+    margin-bottom: 4px;
+  }
+  
+  .pdf-brand-subtitle {
+    font-size: 12px;
+    color: #6b7280;
+  }
+  
+  .pdf-brand-footer {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 9px;
+    color: #6b7280;
+  }
+  
+  /* Enhanced table styles for PDF */
+  .pdf-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+    font-size: 11px;
+  }
+  
+  .pdf-table th {
+    background-color: #F5F7FF;
+    color: #4F46E5;
+    font-weight: 600;
+    text-align: left;
+    padding: 6px 8px;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .pdf-table td {
+    padding: 5px 8px;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .pdf-table tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+  
+  /* Enhanced card styles for PDF */
+  .pdf-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  .pdf-card-header {
+    border-bottom: 1px solid #EEF2FF;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+  }
+  
+  .pdf-card-title {
+    color: #4F46E5;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  /* Watermark for draft documents */
+  .pdf-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    font-size: 60px;
+    color: rgba(79, 70, 229, 0.1);
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 1000;
   }
 }
