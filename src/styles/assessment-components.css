@@ -106,41 +106,99 @@
     width: 100%;
   }
   
-  /* New branded professional styles */
-  .pdf-brand-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #EEF2FF;
+  /* New PDF export enhancements */
+  .pdf-coverpage {
+    text-align: center;
+    padding: 40px 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    page-break-after: always;
   }
   
-  .pdf-brand-logo {
-    color: #4F46E5;
-    font-size: 16px;
+  .pdf-coverpage-title {
+    font-size: 24px;
     font-weight: bold;
+    color: #4F46E5;
+    margin: 20px 0;
   }
   
-  .pdf-brand-title {
+  .pdf-coverpage-subtitle {
+    font-size: 18px;
+    color: #6b7280;
+    margin-bottom: 40px;
+  }
+  
+  .pdf-coverpage-data {
+    display: inline-block;
+    border: 1px solid #EEF2FF;
+    background-color: #F5F7FF;
+    padding: 15px 30px;
+    border-radius: 6px;
+  }
+  
+  .pdf-coverpage-name {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+  
+  .pdf-coverpage-position {
+    font-size: 16px;
+    color: #4b5563;
+  }
+  
+  /* Table of contents styles */
+  .pdf-toc {
+    margin: 20px 0 30px 0;
+    page-break-after: always;
+  }
+  
+  .pdf-toc-title {
     font-size: 18px;
     font-weight: bold;
     color: #4F46E5;
-    margin-bottom: 4px;
-  }
-  
-  .pdf-brand-subtitle {
-    font-size: 12px;
-    color: #6b7280;
-  }
-  
-  .pdf-brand-footer {
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 1px solid #e5e7eb;
+    margin-bottom: 15px;
     text-align: center;
-    font-size: 9px;
-    color: #6b7280;
+  }
+  
+  .pdf-toc-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  
+  .pdf-toc-number {
+    color: #4F46E5;
+    margin-right: 8px;
+    font-weight: bold;
+  }
+  
+  .pdf-toc-dots {
+    flex: 1;
+    height: 1px;
+    border-bottom: 1px dotted #d1d5db;
+    margin: 0 8px;
+  }
+  
+  .pdf-toc-page {
+    color: #4F46E5;
+  }
+  
+  /* Section dividers */
+  .pdf-section-divider {
+    page-break-before: always;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #EEF2FF;
+  }
+  
+  .pdf-section-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #4F46E5;
   }
   
   /* Enhanced table styles for PDF */

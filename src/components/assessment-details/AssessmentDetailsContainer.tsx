@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import AssessmentHeader from "@/components/assessment/AssessmentHeader";
 import CandidateSummaryCard from "@/components/assessment/CandidateSummaryCard";
 import AssessmentTabs from "./AssessmentTabs";
+import { toast } from "@/hooks/use-toast";
 
 interface AssessmentDetailsContainerProps {
   assessment: any;
@@ -48,7 +49,7 @@ const AssessmentDetailsContainer: React.FC<AssessmentDetailsContainerProps> = ({
     setGeneratingSummary
   } = useAssessmentEvaluation(assessmentData, setAssessmentData);
 
-  const { handleExportPdf } = usePdfExport();
+  const { handleExportPdf, exporting } = usePdfExport();
 
   // Update local state when assessment prop changes
   useEffect(() => {
@@ -141,6 +142,42 @@ const AssessmentDetailsContainer: React.FC<AssessmentDetailsContainerProps> = ({
         return "Overview";
     }
   };
+  
+  // Enhanced PDF export with section support
+  const handleExportPdfWithSections = async (
+    assessmentData: {
+      candidateName: string;
+      candidatePosition: string;
+    },
+    contentType: "Overview" | "Aptitude" | "Writing" | "WritingAnalysis" | "Personality" | "ProfileMatch" | "InterviewQuestions" | string[],
+    templateName?: string
+  ) => {
+    // For single section exports, make sure we're on the right tab
+    if (!Array.isArray(contentType)) {
+      // Switch to the appropriate tab
+      const tabValue = contentType.toLowerCase();
+      if (activeTab !== tabValue) {
+        handleTabChange(tabValue);
+        
+        // Give the UI time to update before exporting
+        setTimeout(() => {
+          handleExportPdf(assessmentData, contentType);
+        }, 300);
+        return;
+      }
+    }
+    
+    try {
+      await handleExportPdf(assessmentData, contentType, templateName);
+    } catch (error) {
+      console.error("PDF export error:", error);
+      toast({
+        title: "Export Failed",
+        description: "There was an error creating the PDF. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
@@ -151,9 +188,7 @@ const AssessmentDetailsContainer: React.FC<AssessmentDetailsContainerProps> = ({
         generatingSummary={generatingSummary}
         handleManualEvaluation={handleManualEvaluation}
         regenerateInsights={regenerateInsights}
-        handleExportPdf={(data, contentType) => 
-          handleExportPdf(data, contentType || getCurrentTabContentType())
-        }
+        handleExportPdf={handleExportPdfWithSections}
       />
 
       <CandidateSummaryCard 

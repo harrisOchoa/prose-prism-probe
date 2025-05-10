@@ -1,14 +1,23 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowLeft, 
   Calculator, 
   Loader2, 
   RefreshCw, 
-  FileDown
+  FileDown,
+  ChevronDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import ReportBuilder from "./ReportBuilder";
 
 interface AssessmentHeaderProps {
   assessmentData: any;
@@ -22,7 +31,8 @@ interface AssessmentHeaderProps {
       candidateName: string;
       candidatePosition: string;
     },
-    contentType: "Overview" | "Aptitude" | "Writing" | "WritingAnalysis" | "Personality" | "ProfileMatch" | "InterviewQuestions"
+    contentType: "Overview" | "Aptitude" | "Writing" | "WritingAnalysis" | "Personality" | "ProfileMatch" | "InterviewQuestions" | string[],
+    templateName?: string
   ) => Promise<void>;
 }
 
@@ -35,6 +45,8 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
   regenerateInsights,
   handleExportPdf
 }) => {
+  const [reportBuilderOpen, setReportBuilderOpen] = useState(false);
+  
   // Check if writing scores exist and if they are valid
   const hasValidWritingScores = assessmentData?.writingScores && 
     assessmentData.writingScores.length > 0 && 
@@ -60,6 +72,19 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
     regenerateInsights();
   };
   
+  const handleExportSections = async (sections: string[], templateName: string) => {
+    if (handleExportPdf) {
+      await handleExportPdf(
+        {
+          candidateName: assessmentData?.candidateName || "Candidate",
+          candidatePosition: assessmentData?.candidatePosition || "Unknown Position"
+        },
+        sections,
+        templateName
+      );
+    }
+  };
+  
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-lg border shadow-subtle animate-fade-in hover:shadow-elevation-1 transition-all">
       <div className="flex items-center gap-3">
@@ -83,23 +108,69 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
       
       <div className="flex flex-wrap gap-3 w-full sm:w-auto">
         {handleExportPdf && (
-          <Button 
-            variant="outline"
-            onClick={() => handleExportPdf(
-              {
-                candidateName: assessmentData?.candidateName || "Candidate",
-                candidatePosition: assessmentData?.candidatePosition || "Unknown Position"
-              },
-              "Overview" // Default to Overview, can be made dynamic if needed
-            )}
-            className={cn(
-              "flex-1 sm:flex-none shadow-subtle hover:shadow-elevation-1 transition-all",
-              "hover:bg-hirescribe-muted border-hirescribe-primary/20"
-            )}
-          >
-            <FileDown className="mr-2 h-4 w-4 text-hirescribe-primary" />
-            Export Report (PDF)
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline"
+                className={cn(
+                  "flex-1 sm:flex-none shadow-subtle hover:shadow-elevation-1 transition-all",
+                  "hover:bg-hirescribe-muted border-hirescribe-primary/20"
+                )}
+              >
+                <FileDown className="mr-2 h-4 w-4 text-hirescribe-primary" />
+                Export Report
+                <ChevronDown className="ml-2 h-4 w-4 text-hirescribe-primary/70" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem
+                onClick={() => setReportBuilderOpen(true)}
+                className="cursor-pointer"
+              >
+                <FileDown className="mr-2 h-4 w-4" />
+                <span>Build Complete Report</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => handleExportPdf(
+                  {
+                    candidateName: assessmentData?.candidateName || "Candidate",
+                    candidatePosition: assessmentData?.candidatePosition || "Unknown Position"
+                  },
+                  "Overview"
+                )}
+                className="cursor-pointer"
+              >
+                Export Overview
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleExportPdf(
+                  {
+                    candidateName: assessmentData?.candidateName || "Candidate",
+                    candidatePosition: assessmentData?.candidatePosition || "Unknown Position"
+                  },
+                  "Aptitude"
+                )}
+                className="cursor-pointer"
+              >
+                Export Aptitude Assessment
+              </DropdownMenuItem>
+              {hasValidWritingScores && (
+                <DropdownMenuItem
+                  onClick={() => handleExportPdf(
+                    {
+                      candidateName: assessmentData?.candidateName || "Candidate",
+                      candidatePosition: assessmentData?.candidatePosition || "Unknown Position"
+                    },
+                    "Writing"
+                  )}
+                  className="cursor-pointer"
+                >
+                  Export Writing Assessment
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
         
         {hasValidWritingScores ? (
@@ -145,6 +216,15 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
           </Button>
         )}
       </div>
+      
+      {handleExportPdf && (
+        <ReportBuilder
+          isOpen={reportBuilderOpen}
+          onClose={() => setReportBuilderOpen(false)}
+          assessmentData={assessmentData}
+          onExport={handleExportSections}
+        />
+      )}
     </div>
   );
 };

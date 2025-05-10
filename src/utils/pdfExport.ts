@@ -49,7 +49,9 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       backgroundColor: '#ffffff',
       ignoreElements: (element) => {
         return element.classList.contains('pdf-hide') ||
-               element.classList.contains('hidden-for-pdf');
+               element.classList.contains('hidden-for-pdf') ||
+               (element.hasAttribute('role') && element.getAttribute('role') === 'tabpanel' && 
+                element.getAttribute('data-state') !== 'active');
       }
     });
     
@@ -89,14 +91,9 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     let imgWidth = availableWidth;
     let imgHeight = imgWidth / aspectRatio;
     
-    if (imgHeight > availableHeight) {
-      imgHeight = availableHeight;
-      imgWidth = imgHeight * aspectRatio;
-    }
+    // If the content is very long, we need to determine how many pages to create
+    const totalPages = Math.ceil(imgHeight / availableHeight);
     
-    // Center the image horizontally
-    const xOffset = margin + (availableWidth - imgWidth) / 2;
-
     // Create PDF document
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -112,70 +109,56 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       keywords: 'assessment, candidate, hirescribe, report',
       creator: 'HireScribe'
     });
-
-    // Add header with branding
-    pdf.setFillColor(248, 250, 252); // Light background
-    pdf.rect(0, 0, pageWidth, headerHeight, 'F');
     
-    // Add subtle header border
-    pdf.setDrawColor(230, 236, 241);
-    pdf.setLineWidth(0.5);
-    pdf.line(margin, headerHeight, pageWidth - margin, headerHeight);
+    // Handle single-page vs multi-page content
+    if (imgHeight <= availableHeight) {
+      // Content fits on a single page
+      addPageContent(pdf, imgData, margin, contentTop, availableWidth, imgHeight, 1, totalPages, headerHeight, footerHeight, pageHeight, pageWidth);
+    } else {
+      // Content spans multiple pages
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) {
+          pdf.addPage();
+        }
+        
+        // Calculate the portion of the image to use for this page
+        const sourceY = (i * availableHeight / imgHeight) * canvas.height;
+        const sourceHeight = (availableHeight / imgHeight) * canvas.height;
+        
+        // Create a temporary canvas for this page section
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sourceHeight;
+        
+        const pageContext = pageCanvas.getContext('2d');
+        if (pageContext) {
+          pageContext.drawImage(
+            canvas, 
+            0, sourceY, canvas.width, sourceHeight, 
+            0, 0, pageCanvas.width, pageCanvas.height
+          );
+          
+          const pageImgData = pageCanvas.toDataURL('image/png');
+          
+          // Add this page section to the PDF
+          addPageContent(
+            pdf, 
+            pageImgData, 
+            margin, 
+            contentTop, 
+            availableWidth, 
+            availableHeight,
+            i + 1,
+            totalPages,
+            headerHeight, 
+            footerHeight, 
+            pageHeight, 
+            pageWidth
+          );
+        }
+      }
+    }
     
-    // Add logo/branding text
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(79, 70, 229); // hirescribe-primary
-    pdf.setFontSize(16);
-    pdf.text('HireScribe', margin, 12);
-    
-    // Add report title
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(45, 55, 72);
-    pdf.setFontSize(12);
-    pdf.text('Assessment Report', margin, 20);
-    
-    // Add date on the right side
-    const date = new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-    pdf.setFontSize(9);
-    pdf.setTextColor(100, 116, 139);
-    pdf.text(`Generated: ${date}`, pageWidth - 60, 12);
-    pdf.text('CONFIDENTIAL', pageWidth - 60, 20);
-
-    // Add the image content
-    pdf.addImage(
-      imgData,
-      'PNG',
-      xOffset,
-      contentTop,
-      imgWidth,
-      imgHeight
-    );
-    
-    // Add footer with branding
-    pdf.setFillColor(248, 250, 252);
-    pdf.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
-    
-    // Add subtle footer border
-    pdf.setDrawColor(230, 236, 241);
-    pdf.setLineWidth(0.5);
-    pdf.line(margin, pageHeight - footerHeight, pageWidth - margin, pageHeight - footerHeight);
-    
-    // Add footer text
-    pdf.setFontSize(8);
-    pdf.setTextColor(100, 116, 139);
-    pdf.text('© HireScribe Assessment Platform', margin, pageHeight - 12);
-    
-    // Add page number
-    pdf.text('Page 1 of 1', pageWidth - 30, pageHeight - 12);
-    
-    // Add disclaimer
-    pdf.setFontSize(6);
-    pdf.text('This report is confidential and intended only for authorized recipients.', margin, pageHeight - 6);
-
     // Save the PDF
     pdf.save(`${filename}.pdf`);
     return true;
@@ -183,4 +166,84 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     console.error('Error exporting to PDF:', error);
     return false;
   }
+};
+
+// Helper function to add content to a PDF page with headers and footers
+const addPageContent = (
+  pdf: any,
+  imgData: string,
+  margin: number,
+  contentTop: number,
+  contentWidth: number,
+  contentHeight: number,
+  pageNumber: number,
+  totalPages: number,
+  headerHeight: number,
+  footerHeight: number,
+  pageHeight: number,
+  pageWidth: number
+) => {
+  // Add header with branding
+  pdf.setFillColor(248, 250, 252); // Light background
+  pdf.rect(0, 0, pageWidth, headerHeight, 'F');
+  
+  // Add subtle header border
+  pdf.setDrawColor(230, 236, 241);
+  pdf.setLineWidth(0.5);
+  pdf.line(margin, headerHeight, pageWidth - margin, headerHeight);
+  
+  // Add logo/branding text
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(79, 70, 229); // hirescribe-primary
+  pdf.setFontSize(16);
+  pdf.text('HireScribe', margin, 12);
+  
+  // Add report title
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(45, 55, 72);
+  pdf.setFontSize(12);
+  pdf.text('Assessment Report', margin, 20);
+  
+  // Add date on the right side
+  const date = new Date().toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  pdf.setFontSize(9);
+  pdf.setTextColor(100, 116, 139);
+  pdf.text(`Generated: ${date}`, pageWidth - 60, 12);
+  pdf.text('CONFIDENTIAL', pageWidth - 60, 20);
+
+  // Add the image content (centered horizontally)
+  const xOffset = margin + (contentWidth - contentWidth) / 2;
+  pdf.addImage(
+    imgData,
+    'PNG',
+    xOffset,
+    contentTop,
+    contentWidth,
+    contentHeight
+  );
+  
+  // Add footer with branding
+  pdf.setFillColor(248, 250, 252);
+  pdf.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
+  
+  // Add subtle footer border
+  pdf.setDrawColor(230, 236, 241);
+  pdf.setLineWidth(0.5);
+  pdf.line(margin, pageHeight - footerHeight, pageWidth - margin, pageHeight - footerHeight);
+  
+  // Add footer text
+  pdf.setFontSize(8);
+  pdf.setTextColor(100, 116, 139);
+  pdf.text('© HireScribe Assessment Platform', margin, pageHeight - 12);
+  
+  // Add page number
+  pdf.text(`Page ${pageNumber} of ${totalPages}`, pageWidth - 30, pageHeight - 12);
+  
+  // Add disclaimer
+  pdf.setFontSize(6);
+  pdf.text('This report is confidential and intended only for authorized recipients.', margin, pageHeight - 6);
 };
