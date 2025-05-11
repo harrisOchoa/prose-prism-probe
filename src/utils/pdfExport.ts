@@ -1,10 +1,11 @@
-
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 // Enhanced PDF export with professional formatting
 export const exportToPdf = async (elementId: string, filename: string) => {
   try {
+    console.log(`Starting PDF export for element: ${elementId}`);
+    
     // Get the content element
     const element = document.getElementById(elementId);
     if (!element) {
@@ -41,6 +42,9 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     // Apply PDF-specific styles
     clone.classList.add('pdf-layout-portrait');
 
+    // Log what we're capturing
+    console.log(`PDF Export - Content prepared, capturing with html2canvas...`);
+    
     // Create canvas from the wrapper with high resolution
     const canvas = await html2canvas(wrapper, {
       scale: scale,
@@ -48,12 +52,40 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       logging: false,
       backgroundColor: '#ffffff',
       ignoreElements: (element) => {
-        return element.classList.contains('pdf-hide') ||
-               element.classList.contains('hidden-for-pdf') ||
-               (element.hasAttribute('role') && element.getAttribute('role') === 'tabpanel' && 
-                element.getAttribute('data-state') !== 'active');
+        // Don't ignore elements marked as visible for PDF
+        if (element.classList && (
+            element.classList.contains('pdf-show') || 
+            element.classList.contains('visible-for-pdf')
+        )) {
+          return false;
+        }
+        
+        // Hide elements marked as hidden for PDF
+        if (element.classList && element.classList.contains('hidden-for-pdf')) {
+          return true;
+        }
+        
+        // Special handling for tab panels - only hide if both conditions are true:
+        // 1. It has role="tabpanel" 
+        // 2. It's not marked with data-state="active" AND it's not inside a pdf-content container
+        if (element.hasAttribute('role') && element.getAttribute('role') === 'tabpanel') {
+          const isInsidePdfContent = !!element.closest('.pdf-content');
+          
+          // If it's inside pdf-content, we don't want to ignore it
+          if (isInsidePdfContent) {
+            return false;
+          }
+          
+          // Otherwise, only include active panels
+          return element.getAttribute('data-state') !== 'active';
+        }
+        
+        // Default case - don't ignore
+        return false;
       }
     });
+    
+    console.log(`PDF Export - Canvas generated, size: ${canvas.width}x${canvas.height}`);
     
     // Clean up - remove the wrapper from DOM
     document.body.removeChild(wrapper);
@@ -93,6 +125,8 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     
     // If the content is very long, we need to determine how many pages to create
     const totalPages = Math.ceil(imgHeight / availableHeight);
+    
+    console.log(`PDF Export - Creating ${totalPages} page(s)`);
     
     // Create PDF document
     const pdf = new jsPDF({
@@ -158,6 +192,8 @@ export const exportToPdf = async (elementId: string, filename: string) => {
         }
       }
     }
+    
+    console.log(`PDF Export - Saving PDF as ${filename}.pdf`);
     
     // Save the PDF
     pdf.save(`${filename}.pdf`);
