@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { exportToPdf } from "@/utils/pdfExport";
-import { prepareTabsForPdf, ADVANCED_SECTION_MAPPING } from "@/components/assessment/advanced-analysis/utils";
+import { prepareTabsForPdf, ADVANCED_SECTION_MAPPING } from "@/components/assessment/advanced-analysis/utils.tsx";
 
 export const usePdfExport = () => {
   const [exporting, setExporting] = useState(false);
