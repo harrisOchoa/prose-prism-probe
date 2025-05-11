@@ -38,6 +38,20 @@ export const exportToPdf = async (elementId: string, filename: string) => {
         el.setAttribute('data-state', 'active');
       }
     });
+    
+    // Hide tab lists and keep only content
+    document.querySelectorAll('[role="tablist"]').forEach(el => {
+      el.classList.add('hidden-for-pdf');
+    });
+    
+    // Process pdf-section-container elements to ensure they start on new pages
+    document.querySelectorAll('.pdf-section-container').forEach((section, index) => {
+      (section as HTMLElement).style.pageBreakBefore = 'always';
+      (section as HTMLElement).style.breakBefore = 'page';
+      
+      // Add index attribute to help identify sections
+      section.setAttribute('data-pdf-section-index', index.toString());
+    });
 
     // Use a higher scale for better quality
     const scale = 2;
@@ -71,12 +85,19 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       (panel as HTMLElement).style.position = 'static';
     });
 
+    // Process pdf-section-container elements in the clone
+    clone.querySelectorAll('.pdf-section-container').forEach((section, index) => {
+      (section as HTMLElement).style.pageBreakBefore = 'always';
+      (section as HTMLElement).style.breakBefore = 'page';
+    });
+
     // Log what we're capturing
     console.log(`PDF Export - Content prepared, capturing with html2canvas...`);
     
     // Log number of elements being captured
     console.log(`PDF Export - Elements in clone: ${clone.querySelectorAll('*').length}`);
     console.log(`PDF Export - Visible tabpanels in clone: ${clone.querySelectorAll('[role="tabpanel"]:not([style*="display: none"])').length}`);
+    console.log(`PDF Export - Section containers: ${clone.querySelectorAll('.pdf-section-container').length}`);
     
     // Create canvas from the wrapper with high resolution
     const canvas = await html2canvas(wrapper, {
@@ -88,7 +109,9 @@ export const exportToPdf = async (elementId: string, filename: string) => {
         // Don't ignore elements marked as visible for PDF
         if (element.classList && (
             element.classList.contains('pdf-show') || 
-            element.classList.contains('visible-for-pdf')
+            element.classList.contains('visible-for-pdf') ||
+            element.classList.contains('pdf-section-container') ||
+            element.classList.contains('pdf-section-divider')
         )) {
           console.log(`PDF Export - Including element due to visibility class: `, element.tagName, element.className);
           return false;
@@ -99,26 +122,19 @@ export const exportToPdf = async (elementId: string, filename: string) => {
           return true;
         }
         
-        // Special handling for tabpanels - MODIFIED LOGIC:
-        // 1. Always include tabpanels inside elements with visible-for-pdf class
-        // 2. For other tabpanels, only include if they have data-state="active"
+        // Handle tab panels specially
         if (element.hasAttribute('role') && element.getAttribute('role') === 'tabpanel') {
-          // Check if this tabpanel is inside a visible-for-pdf container
-          const isInsidePdfContent = !!element.closest('.pdf-content, .visible-for-pdf, .pdf-show');
+          // Include all tab panels in the pdf-content container
+          const isInsidePdfContent = !!element.closest('.pdf-content, .visible-for-pdf, .pdf-show, .pdf-section-container');
           
           if (isInsidePdfContent) {
             console.log(`PDF Export - Including tabpanel due to pdf-content parent: `, element.tagName, element.getAttribute('value') || '');
             return false;
           }
-          
-          // Otherwise, check active state
-          const isActive = element.getAttribute('data-state') === 'active';
-          if (isActive) {
-            console.log(`PDF Export - Including tabpanel due to active state: `, element.tagName, element.getAttribute('value') || '');
-            return false;
-          }
-          
-          console.log(`PDF Export - Ignoring inactive tabpanel: `, element.tagName, element.getAttribute('value') || '');
+        }
+        
+        // Handle tab lists - always hide them
+        if (element.hasAttribute('role') && element.getAttribute('role') === 'tablist') {
           return true;
         }
         
@@ -166,7 +182,9 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     let imgHeight = imgWidth / aspectRatio;
     
     // If the content is very long, we need to determine how many pages to create
-    const totalPages = Math.ceil(imgHeight / availableHeight);
+    // Count the number of section containers plus 2 for cover page and TOC
+    const numSectionContainers = document.querySelectorAll('.pdf-section-container').length;
+    const totalPages = Math.max(Math.ceil(imgHeight / availableHeight), numSectionContainers + 2);
     
     console.log(`PDF Export - Creating ${totalPages} page(s)`);
     
@@ -186,13 +204,76 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       creator: 'HireScribe'
     });
     
-    // Handle single-page vs multi-page content
-    if (imgHeight <= availableHeight) {
-      // Content fits on a single page
-      addPageContent(pdf, imgData, margin, contentTop, availableWidth, imgHeight, 1, totalPages, headerHeight, footerHeight, pageHeight, pageWidth);
+    // Handle multi-page content
+    const pageCount = Math.ceil(imgHeight / availableHeight);
+    
+    // Find section dividers in the canvas to determine page breaks
+    const sectionBreaks = [];
+    const sectionContainers = document.querySelectorAll('.pdf-section-container');
+    
+    if (sectionContainers.length > 0) {
+      console.log(`Found ${sectionContainers.length} section containers for page breaks`);
+      // Let's use the number of sections to determine page count
+      // Plus 2 for cover page and table of contents
+      const sectionPageCount = sectionContainers.length + 2;
+      
+      // Divide the canvas height into that many equal parts
+      const sectionHeight = canvas.height / sectionPageCount;
+      
+      // Create page breaks at each section boundary
+      for (let i = 1; i <= sectionPageCount; i++) {
+        sectionBreaks.push(i * sectionHeight);
+      }
+    }
+    
+    // Use section breaks if available, otherwise do auto pagination
+    if (sectionBreaks.length > 0) {
+      // Use pre-defined section breaks
+      for (let i = 0; i < sectionBreaks.length; i++) {
+        if (i > 0) {
+          pdf.addPage();
+        }
+        
+        // Calculate the portion of the image to use for this page
+        const startY = i === 0 ? 0 : sectionBreaks[i - 1];
+        const endY = sectionBreaks[i];
+        const sourceHeight = endY - startY;
+        
+        // Create a temporary canvas for this page section
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sourceHeight;
+        
+        const pageContext = pageCanvas.getContext('2d');
+        if (pageContext) {
+          pageContext.drawImage(
+            canvas, 
+            0, startY, canvas.width, sourceHeight, 
+            0, 0, pageCanvas.width, pageCanvas.height
+          );
+          
+          const pageImgData = pageCanvas.toDataURL('image/png');
+          
+          // Add this page section to the PDF
+          addPageContent(
+            pdf, 
+            pageImgData, 
+            margin, 
+            contentTop, 
+            availableWidth, 
+            Math.min(sourceHeight / scale, availableHeight),
+            i + 1,
+            sectionBreaks.length,
+            headerHeight, 
+            footerHeight, 
+            pageHeight, 
+            pageWidth
+          );
+        }
+      }
     } else {
-      // Content spans multiple pages
-      for (let i = 0; i < totalPages; i++) {
+      // Use automatic pagination based on available height
+      for (let i = 0; i < pageCount; i++) {
         if (i > 0) {
           pdf.addPage();
         }
@@ -225,7 +306,7 @@ export const exportToPdf = async (elementId: string, filename: string) => {
             availableWidth, 
             availableHeight,
             i + 1,
-            totalPages,
+            pageCount,
             headerHeight, 
             footerHeight, 
             pageHeight, 

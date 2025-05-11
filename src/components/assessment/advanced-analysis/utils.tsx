@@ -1,46 +1,64 @@
 
 import React from "react";
 
-export const getProgressColor = (value: number): string => {
-  if (value >= 80) return "bg-green-500";
-  if (value >= 60) return "bg-blue-500";
-  if (value >= 40) return "bg-yellow-500";
-  return "bg-red-500";
-};
-
-export const getConfidenceBadgeColor = (confidence: number): string => {
-  if (confidence >= 80) return "bg-green-100 text-green-800 border-green-200";
-  if (confidence >= 60) return "bg-blue-100 text-blue-800 border-blue-200";
-  if (confidence >= 40) return "bg-yellow-100 text-yellow-800 border-yellow-200";
-  return "bg-red-100 text-red-800 border-red-200";
-};
-
-export const getCategoryBadgeColor = (category: string): string => {
-  switch (category.toLowerCase()) {
-    case "technical":
-      return "bg-blue-100 text-blue-800 border-blue-200";
-    case "behavioral":
-      return "bg-purple-100 text-purple-800 border-purple-200";
-    case "problem solving":
-      return "bg-green-100 text-green-800 border-green-200";
-    case "experience":
-      return "bg-amber-100 text-amber-800 border-amber-200";
-    case "culture fit":
-      return "bg-pink-100 text-pink-800 border-pink-200";
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
-  }
-};
-
-export const getAnalysisButtonLabel = (type: string, exists: boolean = false): string => {
-  if (exists) {
-    return `Regenerate ${type.charAt(0).toUpperCase() + type.slice(1)} Analysis`;
-  }
+// Category badge colors mapping
+export const getCategoryBadgeColor = (category: string) => {
+  const categoryMap: {[key: string]: string} = {
+    "Technical": "bg-blue-100 text-blue-800",
+    "Behavioral": "bg-green-100 text-green-800",
+    "Problem Solving": "bg-purple-100 text-purple-800",
+    "Communication": "bg-amber-100 text-amber-800",
+    "Leadership": "bg-indigo-100 text-indigo-800",
+    "Critical Thinking": "bg-orange-100 text-orange-800",
+    "Cultural Fit": "bg-pink-100 text-pink-800"
+  };
   
-  return `Generate ${type.charAt(0).toUpperCase() + type.slice(1)} Analysis`;
+  return categoryMap[category] || "bg-gray-100 text-gray-800";
 };
 
-// Define a mapping for PDF export sections to their respective tabs
+// Confidence badge colors mapping
+export const getConfidenceBadgeColor = (confidence: number) => {
+  if (confidence >= 90) return "bg-green-100 text-green-800";
+  if (confidence >= 75) return "bg-blue-100 text-blue-800";
+  if (confidence >= 60) return "bg-amber-100 text-amber-800";
+  return "bg-gray-100 text-gray-800";
+};
+
+// Get button label based on analysis type and existence
+export const getAnalysisButtonLabel = (type: string, exists: boolean) => {
+  const typeLabels: {[key: string]: {exists: string, generate: string}} = {
+    writing: {
+      exists: "Regenerate Writing Analysis",
+      generate: "Generate Writing Analysis"
+    },
+    personality: {
+      exists: "Regenerate Personality Insights",
+      generate: "Generate Personality Insights"
+    },
+    questions: {
+      exists: "Regenerate Interview Questions",
+      generate: "Generate Interview Questions"
+    },
+    profile: {
+      exists: "Regenerate Profile Match",
+      generate: "Generate Profile Match"
+    },
+    aptitude: {
+      exists: "Regenerate Aptitude Analysis",
+      generate: "Generate Aptitude Analysis"
+    }
+  };
+  
+  const defaultLabels = {
+    exists: "Regenerate Analysis",
+    generate: "Generate Analysis"
+  };
+  
+  const labels = typeLabels[type] || defaultLabels;
+  return exists ? labels.exists : labels.generate;
+};
+
+// Map section names to tab values for advanced analysis
 export const ADVANCED_SECTION_MAPPING = {
   writingAnalysis: { parent: "advanced", child: "writing" },
   personality: { parent: "advanced", child: "personality" },
@@ -49,84 +67,85 @@ export const ADVANCED_SECTION_MAPPING = {
   aptitudeAnalysis: { parent: "advanced", child: "aptitude" }
 };
 
-// Enhanced helper function to ensure that tab panels are properly marked for PDF export
-export const prepareTabsForPdf = (sections: string[]): void => {
-  console.log("Preparing tabs for PDF export, sections:", sections);
+// Function to prepare tabs for PDF export by marking them as visible
+export const prepareTabsForPdf = (sections: string[]) => {
+  console.log("Preparing tabs for PDF export:", sections);
   
-  // First, ensure all tab panels are in a known state
-  document.querySelectorAll('[role="tabpanel"]').forEach(panel => {
-    panel.classList.remove('visible-for-pdf', 'pdf-show');
+  // Reset visibility classes first
+  document.querySelectorAll('.pdf-show, .visible-for-pdf').forEach(el => {
+    el.classList.remove('pdf-show', 'visible-for-pdf');
   });
   
-  // Process each section and mark its tab panel for inclusion
+  // Process each section
   sections.forEach(section => {
-    const mapping = ADVANCED_SECTION_MAPPING[section as keyof typeof ADVANCED_SECTION_MAPPING];
+    console.log(`Processing section: ${section}`);
     
-    if (mapping) {
-      // This is an advanced section with a parent-child tab structure
-      console.log(`Processing advanced section: ${section} => parent: ${mapping.parent}, child: ${mapping.child}`);
-      
-      // Find and mark the parent panel
-      const parentPanel = document.querySelector(`[role="tabpanel"][value="${mapping.parent}"]`);
-      if (parentPanel) {
-        parentPanel.classList.add('visible-for-pdf', 'pdf-show');
-        console.log(`- Marked parent panel for ${mapping.parent}`);
-        
-        // Now find and mark the child panel
-        const childPanel = parentPanel.querySelector(`[role="tabpanel"][value="${mapping.child}"]`);
-        if (childPanel) {
-          childPanel.classList.add('visible-for-pdf', 'pdf-show');
-          console.log(`- Marked child panel for ${mapping.child}`);
-        } else {
-          // Try alternative selector approaches since the structure might be different
-          const alternativeChildPanel = parentPanel.querySelector(`.tab-content-${mapping.child}, [data-tab="${mapping.child}"], [data-value="${mapping.child}"]`);
-          if (alternativeChildPanel) {
-            alternativeChildPanel.classList.add('visible-for-pdf', 'pdf-show');
-            console.log(`- Marked alternative child panel for ${mapping.child}`);
+    // For advanced analysis sections, we need to handle nested tabs
+    if (section in ADVANCED_SECTION_MAPPING) {
+      const mapping = ADVANCED_SECTION_MAPPING[section as keyof typeof ADVANCED_SECTION_MAPPING];
+      if (typeof mapping === 'object') {
+        // First, find and mark the parent tab panel
+        const parentTabPanel = document.querySelector(`[role="tabpanel"][value="${mapping.parent}"]`);
+        if (parentTabPanel) {
+          console.log(`Found parent tab panel for ${section}:`, parentTabPanel);
+          parentTabPanel.classList.add('visible-for-pdf', 'pdf-show');
+          parentTabPanel.setAttribute('data-state', 'active');
+          (parentTabPanel as HTMLElement).style.display = 'block';
+          (parentTabPanel as HTMLElement).style.opacity = '1';
+          (parentTabPanel as HTMLElement).style.visibility = 'visible';
+          
+          // Then find and mark the child tab panel
+          const childTabPanel = parentTabPanel.querySelector(
+            `[role="tabpanel"][value="${mapping.child}"], 
+             [data-value="${mapping.child}"], 
+             [data-tab="${mapping.child}"],
+             .tab-content-${mapping.child}`
+          );
+          
+          if (childTabPanel) {
+            console.log(`Found child tab panel for ${section}:`, childTabPanel);
+            childTabPanel.classList.add('visible-for-pdf', 'pdf-show');
+            childTabPanel.setAttribute('data-state', 'active');
+            (childTabPanel as HTMLElement).style.display = 'block';
+            (childTabPanel as HTMLElement).style.opacity = '1';
+            (childTabPanel as HTMLElement).style.visibility = 'visible';
+            
+            // Also mark any content inside this tab
+            childTabPanel.querySelectorAll('.card, .assessment-card').forEach(card => {
+              card.classList.add('visible-for-pdf', 'pdf-show');
+            });
           } else {
-            console.warn(`Could not find child panel for ${mapping.child} within ${mapping.parent}`);
+            console.warn(`Could not find child tab panel for ${section} in parent:`, parentTabPanel);
+            
+            // If we can't find the specific child, mark all child tabpanels as visible
+            parentTabPanel.querySelectorAll('[role="tabpanel"]').forEach(panel => {
+              panel.classList.add('visible-for-pdf', 'pdf-show');
+              panel.setAttribute('data-state', 'active');
+              (panel as HTMLElement).style.display = 'block';
+              (panel as HTMLElement).style.opacity = '1';
+              (panel as HTMLElement).style.visibility = 'visible';
+            });
           }
+        } else {
+          console.warn(`Could not find parent tab panel for ${section}`);
         }
-        
-        // Force all content within this parent panel to be visible
-        parentPanel.querySelectorAll('.tab-content, [role="tabpanel"]').forEach(el => {
-          el.classList.add('visible-for-pdf', 'pdf-show');
-          el.setAttribute('data-state', 'active');
-        });
-      } else {
-        console.warn(`Could not find parent panel for ${mapping.parent}`);
       }
     } else {
-      // Regular section with a single tab
-      console.log(`Processing regular section: ${section}`);
-      const panel = document.querySelector(`[role="tabpanel"][value="${section}"]`);
-      if (panel) {
-        panel.classList.add('visible-for-pdf', 'pdf-show');
-        console.log(`- Marked panel for ${section}`);
+      // For main tabs, simply find and mark the tab panel
+      const tabPanel = document.querySelector(`[role="tabpanel"][value="${section}"]`);
+      if (tabPanel) {
+        console.log(`Found tab panel for ${section}:`, tabPanel);
+        tabPanel.classList.add('visible-for-pdf', 'pdf-show');
+        tabPanel.setAttribute('data-state', 'active');
+        (tabPanel as HTMLElement).style.display = 'block';
+        (tabPanel as HTMLElement).style.opacity = '1';
+        (tabPanel as HTMLElement).style.visibility = 'visible';
       } else {
-        console.warn(`Could not find panel for ${section}`);
+        console.warn(`Could not find tab panel for ${section}`);
       }
     }
   });
   
-  // As a fail-safe, force all analysis tabs to be visible in PDF
-  if (sections.some(s => ADVANCED_SECTION_MAPPING[s as keyof typeof ADVANCED_SECTION_MAPPING])) {
-    console.log("Including advanced analysis section - force showing all analysis tabs");
-    const advancedPanel = document.querySelector('[role="tabpanel"][value="advanced"]');
-    if (advancedPanel) {
-      advancedPanel.classList.add('visible-for-pdf', 'pdf-show');
-      
-      // Also force all nested tab panels to be visible
-      advancedPanel.querySelectorAll('[role="tabpanel"]').forEach(nestedPanel => {
-        nestedPanel.classList.add('visible-for-pdf', 'pdf-show');
-        nestedPanel.setAttribute('data-state', 'active');
-      });
-    }
-  }
-  
-  // Debug help - log what's marked for inclusion
-  console.log("Elements marked for PDF inclusion:");
-  document.querySelectorAll('.visible-for-pdf, .pdf-show').forEach(el => {
-    console.log(`- ${el.tagName} ${el.className} ${el.getAttribute('value') || ''}`);
-  });
+  // Double check all tabs marked as visible
+  console.log("Tab panels marked as visible for PDF:", document.querySelectorAll('[role="tabpanel"].visible-for-pdf, [role="tabpanel"].pdf-show').length);
 };

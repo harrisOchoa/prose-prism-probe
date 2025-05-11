@@ -45,8 +45,8 @@ export const usePdfExport = () => {
       styleElement.textContent = `
         /* PDF Content Global Styles */
         .pdf-content * {
-          page-break-inside: avoid;
-          break-inside: avoid;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
         }
         .pdf-content {
           padding: 10px !important;
@@ -58,6 +58,8 @@ export const usePdfExport = () => {
           margin-bottom: 15px !important;
           border: 1px solid #e5e7eb !important;
           box-shadow: none !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
         }
         
         /* Header and title styling */
@@ -224,13 +226,16 @@ export const usePdfExport = () => {
           color: #4b5563 !important;
         }
         
-        /* Section dividers */
+        /* Section dividers - ENHANCED FOR PAGE BREAKS */
         .pdf-section-divider {
           page-break-before: always !important;
+          break-before: always !important;
           margin-top: 30px !important;
           margin-bottom: 20px !important;
           padding-bottom: 10px !important;
           border-bottom: 2px solid #EEF2FF !important;
+          display: block !important;
+          width: 100% !important;
         }
         
         .pdf-section-title {
@@ -280,6 +285,30 @@ export const usePdfExport = () => {
           height: auto !important;
           overflow: visible !important;
         }
+        
+        /* NEW: Fix for section page breaks */
+        .pdf-section-container {
+          page-break-before: always !important;
+          break-before: page !important;
+          page-break-after: auto !important;
+          break-after: auto !important;
+          display: block !important;
+          width: 100% !important;
+        }
+        
+        /* Ensure each section starts on a new page */
+        .pdf-section {
+          page-break-before: always !important;
+          break-before: page !important;
+          display: block !important;
+        }
+        
+        /* Ensure no page breaks in the middle of a card */
+        .pdf-content .card {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          margin-bottom: 20px !important;
+        }
       `;
       document.head.appendChild(styleElement);
       
@@ -321,6 +350,9 @@ export const usePdfExport = () => {
       
       // For multi-section exports, use our enhanced tab preparation
       if (Array.isArray(contentType)) {
+        // Clear any previous section containers
+        document.querySelectorAll('.pdf-section-container').forEach(el => el.remove());
+        
         // First, we want to mark all the necessary tab panels for inclusion
         prepareTabsForPdf(contentType);
         
@@ -391,6 +423,12 @@ export const usePdfExport = () => {
               console.log(`- ${panel.getAttribute('value') || 'unnamed'} panel is marked visible`);
             });
             
+            // Force each section container to have a page break
+            document.querySelectorAll('.pdf-section-container').forEach(section => {
+              (section as HTMLElement).style.pageBreakBefore = 'always';
+              (section as HTMLElement).style.breakBefore = 'page';
+            });
+            
             // Generate the PDF
             const success = await exportToPdf("assessment-content", filename);
             
@@ -406,7 +444,7 @@ export const usePdfExport = () => {
               if (footerEl) footerEl.remove();
               
               // Remove cover page, TOC and section dividers
-              document.querySelectorAll('.pdf-coverpage, .pdf-toc, .pdf-section-divider').forEach(el => el.remove());
+              document.querySelectorAll('.pdf-coverpage, .pdf-toc, .pdf-section-divider, .pdf-section-container').forEach(el => el.remove());
             }
             
             // Restore the DOM after PDF generation
@@ -452,7 +490,7 @@ export const usePdfExport = () => {
           } finally {
             setExporting(false);
           }
-        }, 500); // Increased delay to ensure DOM updates properly
+        }, 1000); // Increased delay to ensure DOM updates properly
       } catch (error) {
         console.error("PDF export preparation error:", error);
         toast({
@@ -588,7 +626,6 @@ export const usePdfExport = () => {
     toc.className = 'pdf-toc pdf-show visible-for-pdf';
     
     let tocHtml = `<h2 class="pdf-toc-title">Table of Contents</h2>`;
-    let pageCounter = 3; // Start from page 3 (1: cover page, 2: toc page)
     
     const sectionNames = {
       overview: "Overview",
@@ -608,10 +645,9 @@ export const usePdfExport = () => {
           <span class="pdf-toc-number">${index + 1}.</span>
           <span>${sectionName}</span>
           <span class="pdf-toc-dots"></span>
-          <span class="pdf-toc-page">${pageCounter}</span>
+          <span class="pdf-toc-page">${index + 3}</span> <!-- Cover (1) + TOC (1) + Section Number -->
         </div>
       `;
-      pageCounter += 2; // Assuming each section takes about 2 pages (conservative estimate)
     });
     
     toc.innerHTML = tocHtml;
@@ -624,9 +660,9 @@ export const usePdfExport = () => {
       activateTab(section);
     }
     
-    // Then add section dividers to each visible section
+    // Enhanced: Create section containers that ensure each section starts on a new page
     sections.forEach((section, index) => {
-      console.log(`Adding divider for section ${index + 1}: ${section}`);
+      console.log(`Adding container for section ${index + 1}: ${section}`);
       
       // Get the right tabpanel element for this section based on mapping
       let tabPanel = null;
@@ -638,7 +674,12 @@ export const usePdfExport = () => {
         const parentTabContent = document.querySelector(`[role="tabpanel"][value="${mapping.parent}"]`);
         if (parentTabContent) {
           // Then find the child tab panel within it
-          tabPanel = parentTabContent.querySelector(`[role="tabpanel"][value="${mapping.child}"], [data-value="${mapping.child}"], [data-tab="${mapping.child}"], .tab-content-${mapping.child}`);
+          tabPanel = parentTabContent.querySelector(
+            `[role="tabpanel"][value="${mapping.child}"], 
+             [data-value="${mapping.child}"], 
+             [data-tab="${mapping.child}"], 
+             .tab-content-${mapping.child}`
+          );
           
           // If we can't find the child tab panel directly, use the parent
           if (!tabPanel) {
@@ -654,26 +695,37 @@ export const usePdfExport = () => {
       if (tabPanel) {
         console.log(`Found tab panel for section: ${section}`);
         
-        // Create section divider
+        // Create a container that will force a page break
+        const sectionContainer = document.createElement('div');
+        sectionContainer.className = 'pdf-section-container pdf-show visible-for-pdf';
+        sectionContainer.style.pageBreakBefore = 'always';
+        sectionContainer.style.breakBefore = 'page';
+        
+        // Create section divider/header
         const divider = document.createElement('div');
         divider.className = 'pdf-section-divider pdf-show visible-for-pdf';
         divider.innerHTML = `
           <h2 class="pdf-section-title">${index + 1}. ${sectionNames[section as keyof typeof sectionNames] || section}</h2>
         `;
         
-        // Add to beginning of the tab content
-        tabPanel.insertBefore(divider, tabPanel.firstChild);
+        // Clone the tab panel content
+        const contentClone = tabPanel.cloneNode(true);
         
-        // Make this tab panel visible for PDF
+        // Add the divider and content to the container
+        sectionContainer.appendChild(divider);
+        sectionContainer.appendChild(contentClone);
+        
+        // Make this container visible for PDF
+        sectionContainer.classList.add('visible-for-pdf', 'pdf-show');
+        
+        // Add to the main content element
+        contentElement.appendChild(sectionContainer);
+        
+        // Also make the original tab panel visible (belt and suspenders approach)
         tabPanel.classList.add('visible-for-pdf', 'pdf-show');
-        
-        // Force the panel to be visible regardless of its data-state
         tabPanel.setAttribute('data-state', 'active');
-        
-        // Add style to ensure visibility
         (tabPanel as HTMLElement).style.display = 'block';
         (tabPanel as HTMLElement).style.opacity = '1';
-        (tabPanel as HTMLElement).style.height = 'auto';
         (tabPanel as HTMLElement).style.visibility = 'visible';
       } else {
         console.warn(`Tab panel not found for section: ${section}`);
@@ -685,16 +737,8 @@ export const usePdfExport = () => {
     const candidatePositionEl = document.getElementById('candidate-position');
     
     if (candidateNameEl && candidatePositionEl) {
-      const candidateNameDisplay = document.querySelector('.gradient-text');
-      const candidatePositionDisplay = document.querySelector('.gradient-text + p');
-      
-      if (candidateNameDisplay) {
-        candidateNameEl.textContent = candidateNameDisplay.textContent || '';
-      }
-      
-      if (candidatePositionDisplay) {
-        candidatePositionEl.textContent = candidatePositionDisplay.textContent || '';
-      }
+      candidateNameEl.textContent = assessmentData.candidateName || '';
+      candidatePositionEl.textContent = assessmentData.candidatePosition || '';
     }
   };
 
