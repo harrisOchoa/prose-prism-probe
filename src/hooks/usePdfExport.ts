@@ -357,7 +357,7 @@ export const usePdfExport = () => {
         prepareTabsForPdf(contentType);
         
         // Then prepare the visual structure with TOC and section dividers
-        prepareMultiSectionReport(contentType, reportTitle);
+        prepareMultiSectionReport(contentType, reportTitle, assessmentData);
       } else {
         // For single section exports, just switch to the correct tab
         activateTab(contentType.toLowerCase());
@@ -589,7 +589,11 @@ export const usePdfExport = () => {
   };
   
   // Enhanced function to prepare a multi-section report with cover page and TOC
-  const prepareMultiSectionReport = (sections: string[], reportTitle: string) => {
+  const prepareMultiSectionReport = (
+    sections: string[], 
+    reportTitle: string,
+    assessmentData: { candidateName: string; candidatePosition: string; } // Add assessmentData parameter
+  ) => {
     const contentElement = document.getElementById('assessment-content');
     if (!contentElement) return;
     
