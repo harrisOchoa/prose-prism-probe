@@ -49,29 +49,84 @@ export const ADVANCED_SECTION_MAPPING = {
   aptitudeAnalysis: { parent: "advanced", child: "aptitude" }
 };
 
-// Helper function to ensure that tab panels are properly marked for PDF export
+// Enhanced helper function to ensure that tab panels are properly marked for PDF export
 export const prepareTabsForPdf = (sections: string[]): void => {
+  console.log("Preparing tabs for PDF export, sections:", sections);
+  
+  // First, ensure all tab panels are in a known state
+  document.querySelectorAll('[role="tabpanel"]').forEach(panel => {
+    panel.classList.remove('visible-for-pdf', 'pdf-show');
+  });
+  
+  // Process each section and mark its tab panel for inclusion
   sections.forEach(section => {
     const mapping = ADVANCED_SECTION_MAPPING[section as keyof typeof ADVANCED_SECTION_MAPPING];
     
     if (mapping) {
       // This is an advanced section with a parent-child tab structure
+      console.log(`Processing advanced section: ${section} => parent: ${mapping.parent}, child: ${mapping.child}`);
+      
+      // Find and mark the parent panel
       const parentPanel = document.querySelector(`[role="tabpanel"][value="${mapping.parent}"]`);
-      const childPanel = parentPanel?.querySelector(`[role="tabpanel"][value="${mapping.child}"]`);
-      
       if (parentPanel) {
-        parentPanel.classList.add('visible-for-pdf');
-      }
-      
-      if (childPanel) {
-        childPanel.classList.add('visible-for-pdf');
+        parentPanel.classList.add('visible-for-pdf', 'pdf-show');
+        console.log(`- Marked parent panel for ${mapping.parent}`);
+        
+        // Now find and mark the child panel
+        const childPanel = parentPanel.querySelector(`[role="tabpanel"][value="${mapping.child}"]`);
+        if (childPanel) {
+          childPanel.classList.add('visible-for-pdf', 'pdf-show');
+          console.log(`- Marked child panel for ${mapping.child}`);
+        } else {
+          // Try alternative selector approaches since the structure might be different
+          const alternativeChildPanel = parentPanel.querySelector(`.tab-content-${mapping.child}, [data-tab="${mapping.child}"], [data-value="${mapping.child}"]`);
+          if (alternativeChildPanel) {
+            alternativeChildPanel.classList.add('visible-for-pdf', 'pdf-show');
+            console.log(`- Marked alternative child panel for ${mapping.child}`);
+          } else {
+            console.warn(`Could not find child panel for ${mapping.child} within ${mapping.parent}`);
+          }
+        }
+        
+        // Force all content within this parent panel to be visible
+        parentPanel.querySelectorAll('.tab-content, [role="tabpanel"]').forEach(el => {
+          el.classList.add('visible-for-pdf', 'pdf-show');
+          el.setAttribute('data-state', 'active');
+        });
+      } else {
+        console.warn(`Could not find parent panel for ${mapping.parent}`);
       }
     } else {
       // Regular section with a single tab
+      console.log(`Processing regular section: ${section}`);
       const panel = document.querySelector(`[role="tabpanel"][value="${section}"]`);
       if (panel) {
-        panel.classList.add('visible-for-pdf');
+        panel.classList.add('visible-for-pdf', 'pdf-show');
+        console.log(`- Marked panel for ${section}`);
+      } else {
+        console.warn(`Could not find panel for ${section}`);
       }
     }
+  });
+  
+  // As a fail-safe, force all analysis tabs to be visible in PDF
+  if (sections.some(s => ADVANCED_SECTION_MAPPING[s as keyof typeof ADVANCED_SECTION_MAPPING])) {
+    console.log("Including advanced analysis section - force showing all analysis tabs");
+    const advancedPanel = document.querySelector('[role="tabpanel"][value="advanced"]');
+    if (advancedPanel) {
+      advancedPanel.classList.add('visible-for-pdf', 'pdf-show');
+      
+      // Also force all nested tab panels to be visible
+      advancedPanel.querySelectorAll('[role="tabpanel"]').forEach(nestedPanel => {
+        nestedPanel.classList.add('visible-for-pdf', 'pdf-show');
+        nestedPanel.setAttribute('data-state', 'active');
+      });
+    }
+  }
+  
+  // Debug help - log what's marked for inclusion
+  console.log("Elements marked for PDF inclusion:");
+  document.querySelectorAll('.visible-for-pdf, .pdf-show').forEach(el => {
+    console.log(`- ${el.tagName} ${el.className} ${el.getAttribute('value') || ''}`);
   });
 };

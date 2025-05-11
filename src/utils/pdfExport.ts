@@ -19,6 +19,24 @@ export const exportToPdf = async (elementId: string, filename: string) => {
 
     document.querySelectorAll('.pdf-show').forEach((el) => {
       el.classList.add('visible-for-pdf');
+      // Also force active state for any tab panels
+      if (el.getAttribute('role') === 'tabpanel') {
+        el.setAttribute('data-state', 'active');
+      }
+    });
+    
+    // Force show all elements with visible-for-pdf class
+    document.querySelectorAll('.visible-for-pdf').forEach(el => {
+      (el as HTMLElement).style.display = 'block';
+      (el as HTMLElement).style.opacity = '1';
+      (el as HTMLElement).style.visibility = 'visible';
+      (el as HTMLElement).style.height = 'auto';
+      (el as HTMLElement).style.overflow = 'visible';
+      
+      // Force active state for tabpanels
+      if (el.getAttribute('role') === 'tabpanel') {
+        el.setAttribute('data-state', 'active');
+      }
     });
 
     // Use a higher scale for better quality
@@ -41,15 +59,30 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     
     // Apply PDF-specific styles
     clone.classList.add('pdf-layout-portrait');
+    
+    // Force all tabpanels in the clone to be active and visible
+    clone.querySelectorAll('[role="tabpanel"]').forEach(panel => {
+      panel.setAttribute('data-state', 'active');
+      (panel as HTMLElement).style.display = 'block';
+      (panel as HTMLElement).style.opacity = '1';
+      (panel as HTMLElement).style.visibility = 'visible';
+      (panel as HTMLElement).style.height = 'auto';
+      (panel as HTMLElement).style.overflow = 'visible';
+      (panel as HTMLElement).style.position = 'static';
+    });
 
     // Log what we're capturing
     console.log(`PDF Export - Content prepared, capturing with html2canvas...`);
+    
+    // Log number of elements being captured
+    console.log(`PDF Export - Elements in clone: ${clone.querySelectorAll('*').length}`);
+    console.log(`PDF Export - Visible tabpanels in clone: ${clone.querySelectorAll('[role="tabpanel"]:not([style*="display: none"])').length}`);
     
     // Create canvas from the wrapper with high resolution
     const canvas = await html2canvas(wrapper, {
       scale: scale,
       useCORS: true,
-      logging: false,
+      logging: true,
       backgroundColor: '#ffffff',
       ignoreElements: (element) => {
         // Don't ignore elements marked as visible for PDF
@@ -57,6 +90,7 @@ export const exportToPdf = async (elementId: string, filename: string) => {
             element.classList.contains('pdf-show') || 
             element.classList.contains('visible-for-pdf')
         )) {
+          console.log(`PDF Export - Including element due to visibility class: `, element.tagName, element.className);
           return false;
         }
         
@@ -65,19 +99,27 @@ export const exportToPdf = async (elementId: string, filename: string) => {
           return true;
         }
         
-        // Special handling for tab panels - only hide if both conditions are true:
-        // 1. It has role="tabpanel" 
-        // 2. It's not marked with data-state="active" AND it's not inside a pdf-content container
+        // Special handling for tabpanels - MODIFIED LOGIC:
+        // 1. Always include tabpanels inside elements with visible-for-pdf class
+        // 2. For other tabpanels, only include if they have data-state="active"
         if (element.hasAttribute('role') && element.getAttribute('role') === 'tabpanel') {
-          const isInsidePdfContent = !!element.closest('.pdf-content');
+          // Check if this tabpanel is inside a visible-for-pdf container
+          const isInsidePdfContent = !!element.closest('.pdf-content, .visible-for-pdf, .pdf-show');
           
-          // If it's inside pdf-content, we don't want to ignore it
           if (isInsidePdfContent) {
+            console.log(`PDF Export - Including tabpanel due to pdf-content parent: `, element.tagName, element.getAttribute('value') || '');
             return false;
           }
           
-          // Otherwise, only include active panels
-          return element.getAttribute('data-state') !== 'active';
+          // Otherwise, check active state
+          const isActive = element.getAttribute('data-state') === 'active';
+          if (isActive) {
+            console.log(`PDF Export - Including tabpanel due to active state: `, element.tagName, element.getAttribute('value') || '');
+            return false;
+          }
+          
+          console.log(`PDF Export - Ignoring inactive tabpanel: `, element.tagName, element.getAttribute('value') || '');
+          return true;
         }
         
         // Default case - don't ignore

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { exportToPdf } from "@/utils/pdfExport";
+import { prepareTabsForPdf, ADVANCED_SECTION_MAPPING } from "@/components/assessment/advanced-analysis/utils";
 
 export const usePdfExport = () => {
   const [exporting, setExporting] = useState(false);
@@ -258,6 +259,27 @@ export const usePdfExport = () => {
         .pdf-content [data-state="inactive"] {
           display: block !important;
         }
+        
+        /* CRITICAL: Make sure all tab panels are visible in PDF */
+        .pdf-content [role="tabpanel"],
+        .visible-for-pdf,
+        .pdf-show {
+          display: block !important;
+          opacity: 1 !important;
+          visibility: visible !important;
+          height: auto !important;
+          overflow: visible !important;
+          position: static !important;
+        }
+        
+        /* Force advanced analysis tabs to be visible */
+        .pdf-content [value="advanced"] [role="tabpanel"],
+        .pdf-content .tab-content {
+          display: block !important;
+          opacity: 1 !important;
+          height: auto !important;
+          overflow: visible !important;
+        }
       `;
       document.head.appendChild(styleElement);
       
@@ -282,7 +304,7 @@ export const usePdfExport = () => {
         reportTitle = `${contentType} Assessment Report`;
       }
       
-      // Before generating PDF, add classes for PDF export
+      // Before generating PDF, hide elements that shouldn't be included
       document.querySelectorAll('.pdf-hide').forEach((el) => {
         el.classList.add('hidden-for-pdf');
       });
@@ -297,8 +319,12 @@ export const usePdfExport = () => {
         tabsElement.classList.add('hidden-for-pdf');
       }
       
-      // Add table of contents and section dividers for multi-section exports
+      // For multi-section exports, use our enhanced tab preparation
       if (Array.isArray(contentType)) {
+        // First, we want to mark all the necessary tab panels for inclusion
+        prepareTabsForPdf(contentType);
+        
+        // Then prepare the visual structure with TOC and section dividers
         prepareMultiSectionReport(contentType, reportTitle);
       } else {
         // For single section exports, just switch to the correct tab
@@ -339,22 +365,32 @@ export const usePdfExport = () => {
         }
       }
       
-      // Add debugging outlines if needed
-      // Uncomment this to visualize what's being captured for PDF
-      /*
-      document.querySelectorAll('[role="tabpanel"]').forEach(panel => {
-        if (!panel.classList.contains('hidden-for-pdf')) {
-          (panel as HTMLElement).style.border = '3px solid green';
-        } else {
-          (panel as HTMLElement).style.border = '3px solid red';
-        }
-      });
-      */
+      // DEBUG HELPER: Add visual indicators for what's being captured 
+      const DEBUG_MODE = true; // Set to true to see what's being included/excluded
+      
+      if (DEBUG_MODE) {
+        // Add a green outline to elements that will be included in the PDF
+        document.querySelectorAll('.visible-for-pdf, .pdf-show').forEach(el => {
+          (el as HTMLElement).style.outline = '2px solid green';
+        });
+        
+        // Add a red outline to elements that will be excluded
+        document.querySelectorAll('[role="tabpanel"]:not(.visible-for-pdf):not(.pdf-show)').forEach(el => {
+          (el as HTMLElement).style.outline = '2px solid red';
+        });
+        
+        console.log('DEBUG MODE: Green outline = included in PDF, Red outline = excluded from PDF');
+      }
       
       try {
         // Add a slight delay before generating PDF to ensure DOM is updated
         setTimeout(async () => {
           try {
+            console.log('Starting PDF generation with the following tab panels visible:');
+            document.querySelectorAll('[role="tabpanel"].visible-for-pdf, [role="tabpanel"].pdf-show').forEach(panel => {
+              console.log(`- ${panel.getAttribute('value') || 'unnamed'} panel is marked visible`);
+            });
+            
             // Generate the PDF
             const success = await exportToPdf("assessment-content", filename);
             
@@ -383,9 +419,11 @@ export const usePdfExport = () => {
             });
             
             // Remove debug outlines if they were added
-            document.querySelectorAll('[style*="border: 3px"]').forEach((el: any) => {
-              el.style.border = '';
-            });
+            if (DEBUG_MODE) {
+              document.querySelectorAll('[style*="outline"]').forEach((el: any) => {
+                el.style.outline = '';
+              });
+            }
             
             // Remove custom styles
             document.head.removeChild(styleElement);
@@ -414,7 +452,7 @@ export const usePdfExport = () => {
           } finally {
             setExporting(false);
           }
-        }, 300); // Small delay to ensure DOM updates
+        }, 500); // Increased delay to ensure DOM updates properly
       } catch (error) {
         console.error("PDF export preparation error:", error);
         toast({
@@ -435,7 +473,7 @@ export const usePdfExport = () => {
     }
   };
   
-  // Function to activate both main and nested tabs
+  // Enhanced function to activate both main and nested tabs
   const activateTab = (tabId: string) => {
     console.log(`Activating tab: ${tabId}`);
     
@@ -458,10 +496,24 @@ export const usePdfExport = () => {
             childTabButton.click();
           } else {
             console.log(`Child tab button not found: ${mapping.child}`);
+            
+            // Alternative approach - find any button related to this child tab
+            const anyChildButton = document.querySelector(`[value="${mapping.child}"]`) as HTMLElement;
+            if (anyChildButton) {
+              console.log(`Found alternate child tab button: ${mapping.child}`);
+              anyChildButton.click();
+            }
           }
-        }, 100);
+        }, 200);
       } else {
         console.log(`Parent tab button not found: ${mapping.parent}`);
+        
+        // Alternative approach - try to find any button for this tab
+        const anyParentButton = document.querySelector(`[value="${mapping.parent}"]`) as HTMLElement;
+        if (anyParentButton) {
+          console.log(`Found alternate parent tab button: ${mapping.parent}`);
+          anyParentButton.click();
+        }
       }
     } else {
       // Simple tab
@@ -472,11 +524,33 @@ export const usePdfExport = () => {
         tabButton.click();
       } else {
         console.log(`Simple tab button not found: ${simpleTabId}`);
+        
+        // Alternative approach - try to find any button for this tab
+        const anyButton = document.querySelector(`[value="${simpleTabId}"]`) as HTMLElement;
+        if (anyButton) {
+          console.log(`Found alternate tab button: ${simpleTabId}`);
+          anyButton.click();
+        }
       }
     }
+    
+    // Wait for tab activation and then force all relevant content to be visible
+    setTimeout(() => {
+      document.querySelectorAll('[role="tabpanel"][data-state="active"]').forEach(panel => {
+        panel.classList.add('visible-for-pdf', 'pdf-show');
+        console.log(`Marked active panel as visible: ${panel.getAttribute('value') || 'unnamed'}`);
+        
+        // Also mark all nested tabpanels as visible
+        panel.querySelectorAll('[role="tabpanel"]').forEach(nestedPanel => {
+          nestedPanel.classList.add('visible-for-pdf', 'pdf-show');
+          nestedPanel.setAttribute('data-state', 'active');
+          console.log(`Marked nested panel as visible: ${nestedPanel.getAttribute('value') || 'unnamed'}`);
+        });
+      });
+    }, 300);
   };
   
-  // Function to prepare a multi-section report with cover page and TOC
+  // Enhanced function to prepare a multi-section report with cover page and TOC
   const prepareMultiSectionReport = (sections: string[], reportTitle: string) => {
     const contentElement = document.getElementById('assessment-content');
     if (!contentElement) return;
@@ -545,12 +619,14 @@ export const usePdfExport = () => {
     // Insert TOC after cover page
     coverPage.insertAdjacentElement('afterend', toc);
     
-    // Process each section: activate tabs and add dividers
-    sections.forEach((section, index) => {
-      console.log(`Processing section ${index + 1}: ${section}`);
-      
-      // Activate the appropriate tab for this section
+    // First activate all needed tabs and mark their panels for visibility
+    for (const section of sections) {
       activateTab(section);
+    }
+    
+    // Then add section dividers to each visible section
+    sections.forEach((section, index) => {
+      console.log(`Adding divider for section ${index + 1}: ${section}`);
       
       // Get the right tabpanel element for this section based on mapping
       let tabPanel = null;
@@ -562,17 +638,9 @@ export const usePdfExport = () => {
         const parentTabContent = document.querySelector(`[role="tabpanel"][value="${mapping.parent}"]`);
         if (parentTabContent) {
           // Then find the child tab panel within it
-          tabPanel = parentTabContent.querySelector(`[role="tabpanel"][value="${mapping.child}"]`);
+          tabPanel = parentTabContent.querySelector(`[role="tabpanel"][value="${mapping.child}"], [data-value="${mapping.child}"], [data-tab="${mapping.child}"], .tab-content-${mapping.child}`);
           
-          // If child not found directly, try looking for specific content
-          if (!tabPanel) {
-            const tabContent = parentTabContent.querySelector(`.tab-content-${mapping.child}`);
-            if (tabContent) {
-              tabPanel = tabContent;
-            }
-          }
-          
-          // Last resort: just use the parent panel
+          // If we can't find the child tab panel directly, use the parent
           if (!tabPanel) {
             tabPanel = parentTabContent;
           }
@@ -597,10 +665,16 @@ export const usePdfExport = () => {
         tabPanel.insertBefore(divider, tabPanel.firstChild);
         
         // Make this tab panel visible for PDF
-        tabPanel.classList.add('visible-for-pdf');
+        tabPanel.classList.add('visible-for-pdf', 'pdf-show');
         
         // Force the panel to be visible regardless of its data-state
         tabPanel.setAttribute('data-state', 'active');
+        
+        // Add style to ensure visibility
+        (tabPanel as HTMLElement).style.display = 'block';
+        (tabPanel as HTMLElement).style.opacity = '1';
+        (tabPanel as HTMLElement).style.height = 'auto';
+        (tabPanel as HTMLElement).style.visibility = 'visible';
       } else {
         console.warn(`Tab panel not found for section: ${section}`);
       }
@@ -621,17 +695,6 @@ export const usePdfExport = () => {
       if (candidatePositionDisplay) {
         candidatePositionEl.textContent = candidatePositionDisplay.textContent || '';
       }
-    }
-    
-    // Add a debug class to visually mark which elements are being exported
-    if (false) { // Set to true for debugging
-      document.querySelectorAll('[role="tabpanel"]').forEach(panel => {
-        if (panel.classList.contains('visible-for-pdf')) {
-          (panel as HTMLElement).style.outline = '2px solid green';
-        } else {
-          (panel as HTMLElement).style.outline = '2px solid red';
-        }
-      });
     }
   };
 
