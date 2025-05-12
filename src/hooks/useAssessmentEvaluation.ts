@@ -48,10 +48,11 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     });
     
     try {
+      // Call the regenerateInsights function and store the result
       const result = await regenerateInsights();
       
-      // If successful and result is truthy, show success toast
-      if (result) {
+      // Check if result exists and is truthy (not null, undefined, false, etc.)
+      if (result !== undefined && result !== null) {
         toast({
           title: "Regeneration Complete",
           description: "Insights have been successfully regenerated.",
