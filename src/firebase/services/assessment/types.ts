@@ -1,4 +1,3 @@
-
 import { DocumentData } from "firebase/firestore";
 
 // Analysis status types
@@ -8,7 +7,8 @@ export type AnalysisStatus =
   | 'basic_insights_generated' 
   | 'advanced_analysis_started'
   | 'completed' 
-  | 'failed';
+  | 'failed'
+  | 'rate_limited';
 
 export interface AntiCheatingMetrics {
   keystrokes: number;

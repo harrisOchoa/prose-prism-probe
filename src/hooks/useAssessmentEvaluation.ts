@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { useWritingEvaluation } from "./assessment/useWritingEvaluation";
 import { useAdvancedAnalysis } from "./assessment/useAdvancedAnalysis";
@@ -49,7 +50,7 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     try {
       const result = await regenerateInsights();
       
-      // If successful, show success toast
+      // If successful and result is truthy, show success toast
       if (result) {
         toast({
           title: "Regeneration Complete",

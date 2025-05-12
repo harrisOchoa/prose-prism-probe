@@ -5,7 +5,7 @@ import {
   ArrowLeft, FileText, Brain, BarChart, 
   Download, Loader2, RefreshCw, AlertTriangle 
 } from "lucide-react";
-import { ReadonlyURLSearchParams, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 
