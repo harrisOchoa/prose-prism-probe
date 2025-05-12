@@ -16,6 +16,13 @@ export const useInsightsGeneration = (
   setAssessmentData: (data: AssessmentData) => void
 ) => {
   const [generatingSummary, setGeneratingSummary] = useState(false);
+  // Track rate limit information
+  const [rateLimitInfo, setRateLimitInfo] = useState({
+    isRateLimited: false,
+    retryCount: 0,
+    maxRetries: 3,
+    backoffTime: 0
+  });
 
   const generateInsights = async (data: AssessmentData = assessmentData) => {
     if (!data.writingScores || data.writingScores.length === 0) {
@@ -29,6 +36,13 @@ export const useInsightsGeneration = (
     
     try {
       setGeneratingSummary(true);
+      setRateLimitInfo({
+        isRateLimited: false,
+        retryCount: 0,
+        maxRetries: 3,
+        backoffTime: 0
+      });
+      
       console.log("Starting insights generation for assessment:", data.id);
       
       // Update status to pending
@@ -62,17 +76,54 @@ export const useInsightsGeneration = (
         console.error("API error during generation:", apiError);
         // If the error includes rate limiting mention
         if (apiError.message && apiError.message.toLowerCase().includes("rate") && apiError.message.toLowerCase().includes("limit")) {
+          // Update rate limit state
+          setRateLimitInfo(prev => ({
+            isRateLimited: true,
+            retryCount: prev.retryCount + 1,
+            maxRetries: 3,
+            backoffTime: (prev.retryCount + 1) * 5 // Increases backoff time with each retry
+          }));
+          
+          // Show persistent rate limit toast with more detail
           toast({
-            title: "API Rate Limit Hit",
-            description: "The AI service is currently rate limited. Retrying with backoff...",
-            variant: "destructive", 
+            title: "API Rate Limit Detected",
+            description: "The AI service is currently rate limited. The system will try again automatically.",
+            variant: "destructive",
+            duration: 10000, // 10 seconds
           });
-          // For clarity, we'll try again but one at a time
+          
+          // For clarity, we'll try again but one at a time with delay
           console.log("Attempting sequential generation after rate limit...");
+          
+          // Add backoff delay before retrying
+          const backoffDelay = (rateLimitInfo.retryCount + 1) * 5000; // 5s, 10s, 15s
+          console.log(`Waiting for ${backoffDelay/1000}s before retry attempt ${rateLimitInfo.retryCount + 1}...`);
+          
+          try {
+            // Update the assessment with rate limit error info for the UI to detect
+            await updateAssessmentAnalysis(data.id, {
+              analysisStatus: 'rate_limited' as AnalysisStatus,
+              analysisError: 'API rate limit reached. Automatic retry in progress.'
+            });
+            
+            // Update local state to reflect rate limiting
+            setAssessmentData({
+              ...data,
+              analysisStatus: 'rate_limited' as AnalysisStatus,
+              analysisError: 'API rate limit reached. Automatic retry in progress.'
+            });
+          } catch (updateError) {
+            console.error("Error updating rate limit status:", updateError);
+          }
+          
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+          
+          // Try one at a time
           summary = await generateCandidateSummary(data);
-          console.log("Summary generated successfully");
+          console.log("Summary generated successfully after rate limit");
           analysis = await generateStrengthsAndWeaknesses(data);
-          console.log("Analysis generated successfully");
+          console.log("Analysis generated successfully after rate limit");
         } else {
           throw apiError; // Re-throw if it's not a rate limit issue
         }
@@ -87,6 +138,14 @@ export const useInsightsGeneration = (
       if (!summary || !analysis || !analysis.strengths || !analysis.weaknesses) {
         throw new Error("Failed to generate complete insights");
       }
+      
+      // Reset rate limit state since we succeeded
+      setRateLimitInfo({
+        isRateLimited: false,
+        retryCount: 0,
+        maxRetries: 3,
+        backoffTime: 0
+      });
       
       // Prepare update payload
       const updatePayload = {
@@ -130,23 +189,35 @@ export const useInsightsGeneration = (
     } catch (error: any) {
       console.error("Error generating insights:", error);
       
-      // Update status to failed
+      // Check if this is a rate limit error
+      const isRateLimit = error.message && error.message.toLowerCase().includes("rate limit");
+      
+      // Update status based on error type
       try {
         await updateAssessmentAnalysis(assessmentData.id, {
-          analysisStatus: 'failed' as AnalysisStatus,
+          analysisStatus: isRateLimit ? 'rate_limited' : 'failed' as AnalysisStatus,
           analysisError: error.message || "Unknown error"
         });
       } catch (updateError) {
         console.error("Failed to update analysis status:", updateError);
       }
       
-      toast({
-        title: "Failed to Generate Insights",
-        description: error.message && error.message.includes("rate limit") 
-          ? "API rate limit reached. Please wait a few minutes and try again." 
-          : `Error: ${error.message || "Unknown error"}`,
-        variant: "destructive",
-      });
+      // Show different toast messages based on error type
+      if (isRateLimit) {
+        toast({
+          title: "API Rate Limit Reached",
+          description: "The AI service is temporarily unavailable due to rate limiting. Please try again in a few minutes.",
+          variant: "destructive",
+          duration: 10000, // 10 seconds
+        });
+      } else {
+        toast({
+          title: "Failed to Generate Insights",
+          description: `Error: ${error.message || "Unknown error"}`,
+          variant: "destructive",
+        });
+      }
+      
       return null;
     } finally {
       setGeneratingSummary(false);
@@ -156,6 +227,7 @@ export const useInsightsGeneration = (
   return {
     generatingSummary,
     setGeneratingSummary,
-    generateInsights
+    generateInsights,
+    rateLimitInfo
   };
 };

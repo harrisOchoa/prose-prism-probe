@@ -66,6 +66,17 @@ export const makeGeminiRequest = async (promptTemplate: string, temperature: num
         const delayMs = retryAfterSeconds > 0 ? retryAfterSeconds * 1000 : retryDelay;
         console.log(`Rate limit hit, retrying in ${delayMs/1000} seconds...`);
         
+        // Throw a detailed rate limit error to help the UI communicate the issue
+        const retryMessage = `API rate limit reached. Will retry in ${Math.ceil(delayMs/1000)} seconds.`;
+        const error = new Error(retryMessage);
+        // @ts-ignore - Adding custom properties to the error
+        error.isRateLimit = true;
+        // @ts-ignore
+        error.retryIn = delayMs;
+        // @ts-ignore
+        error.retryAttempt = retries + 1;
+        throw error;
+        
         // Wait before retrying
         await new Promise(resolve => setTimeout(resolve, delayMs));
         
@@ -108,12 +119,30 @@ export const makeGeminiRequest = async (promptTemplate: string, temperature: num
       }
 
       return data.candidates[0].content.parts[0].text;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Attempt ${retries + 1} failed:`, error);
+      
+      // If it's a rate limit error that we've already formatted, just re-throw it
+      if (error.isRateLimit) {
+        throw error;
+      }
       
       if (retries >= maxRetries) {
         console.error("Gemini API request failed after all retries:", error);
-        throw error;
+        
+        // Check if this is a rate limit error and format it consistently
+        if (error.message && error.message.toLowerCase().includes('rate limit')) {
+          const formattedError = new Error(`API rate limit reached. Please try again in ${Math.ceil(retryDelay/1000)} seconds.`);
+          // @ts-ignore - Adding custom properties to the error
+          formattedError.isRateLimit = true;
+          // @ts-ignore
+          formattedError.retryIn = retryDelay;
+          // @ts-ignore
+          formattedError.retryAttempt = retries;
+          throw formattedError;
+        } else {
+          throw error;
+        }
       }
       
       console.warn(`Retrying in ${retryDelay/1000} seconds...`);

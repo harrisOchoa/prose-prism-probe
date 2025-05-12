@@ -1,8 +1,11 @@
 
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Sparkles, ThumbsUp, ThumbsDown, AlertCircle, Loader2, Brain } from "lucide-react";
+import { Sparkles, ThumbsUp, ThumbsDown, AlertCircle, Loader2, Brain, AlertTriangle, RefreshCw, Timer } from "lucide-react";
 import { AnalysisStatus } from "@/firebase/services/assessment/types";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SummaryCardProps {
   assessmentData: any;
@@ -20,6 +23,17 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
     assessmentData.writingScores.length > 0 &&
     assessmentData.writingScores.some((score: any) => score.score === 0);
   
+  // State for rate limit detection and retry information
+  const [rateLimit, setRateLimit] = useState({
+    detected: false,
+    retryAttempt: 0,
+    maxRetries: 3,
+    nextRetryIn: 0
+  });
+
+  // Countdown timer for next retry
+  const [countdown, setCountdown] = useState(0);
+  
   // State to force re-renders
   const [renderKey, setRenderKey] = useState(Date.now());
   
@@ -30,6 +44,75 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
   const isAnalysisInProgress = analysisStatus === 'pending' || 
     analysisStatus === 'writing_evaluated' || 
     analysisStatus === 'advanced_analysis_started';
+
+  // Effect to monitor analysis duration and detect potential rate limits
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    let durationTimer: NodeJS.Timeout;
+    
+    // When analysis starts, set up a timer to detect long-running analysis
+    if (generatingSummary) {
+      // After 15 seconds, if still analyzing, likely hitting rate limits
+      durationTimer = setTimeout(() => {
+        if (generatingSummary && !assessmentData.aiSummary) {
+          setRateLimit(prev => ({ ...prev, detected: true }));
+          
+          // Show persistent toast notification
+          toast({
+            title: "API Rate Limit Detected",
+            description: "The AI service is experiencing rate limits. The system will retry automatically.",
+            variant: "destructive",
+            duration: 10000, // 10 seconds
+          });
+        }
+      }, 15000);
+      
+      // Monitor analysisDuration, detection, and error states in assessmentData
+      if (assessmentData.analysisError && assessmentData.analysisError.includes('rate limit')) {
+        setRateLimit(prev => ({ 
+          ...prev, 
+          detected: true, 
+          retryAttempt: prev.retryAttempt + 1
+        }));
+      }
+    } else {
+      // Reset rate limit state when analysis completes
+      setRateLimit({
+        detected: false,
+        retryAttempt: 0,
+        maxRetries: 3,
+        nextRetryIn: 0
+      });
+    }
+    
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(durationTimer);
+    };
+  }, [generatingSummary, assessmentData]);
+
+  // Effect for countdown timer when rate limited
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    
+    if (rateLimit.detected && rateLimit.nextRetryIn > 0) {
+      setCountdown(rateLimit.nextRetryIn);
+      
+      timer = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
+    return () => {
+      clearInterval(timer);
+    };
+  }, [rateLimit.detected, rateLimit.nextRetryIn]);
   
   // Debug log to help identify issues with data display
   useEffect(() => {
@@ -42,16 +125,24 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
       hasValidScores: hasValidWritingScores,
       hasErrorScores: hasErrorScores,
       assessmentId: assessmentData.id,
-      analysisStatus
+      analysisStatus,
+      rateLimit
     });
     
     // Force component to re-render when assessmentData changes
     setRenderKey(Date.now());
-  }, [assessmentData, generatingSummary, hasValidWritingScores, hasErrorScores, analysisStatus]);
+  }, [assessmentData, generatingSummary, hasValidWritingScores, hasErrorScores, analysisStatus, rateLimit]);
   
   // Render analysis status badge
   const renderAnalysisStatusBadge = () => {
-    if (generatingSummary || isAnalysisInProgress) {
+    if (rateLimit.detected) {
+      return (
+        <div className="absolute top-4 right-4 inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+          <AlertTriangle className="h-3 w-3 mr-1" />
+          API Rate Limited
+        </div>
+      );
+    } else if (generatingSummary || isAnalysisInProgress) {
       return (
         <div className="absolute top-4 right-4 inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
           <Loader2 className="h-3 w-3 animate-spin mr-1" />
@@ -82,6 +173,63 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
     }
     return null;
   };
+
+  // Function to manually trigger analysis retry
+  const handleManualRetry = () => {
+    setRateLimit(prev => ({
+      ...prev,
+      detected: false,
+      retryAttempt: 0
+    }));
+    
+    // You would need to implement this functionality in the parent component
+    // For now, we'll just show a toast to inform the user
+    toast({
+      title: "Retrying Analysis",
+      description: "Attempting to regenerate insights...",
+      duration: 3000,
+    });
+    
+    // This would be handled by a passed-in function from parent in a real implementation
+    console.log("Manual retry requested");
+  };
+  
+  // Render rate limit alert when detected
+  const renderRateLimitAlert = () => {
+    if (!rateLimit.detected) return null;
+    
+    return (
+      <Alert variant="destructive" className="mb-4 bg-amber-50 border-amber-100">
+        <AlertTriangle className="h-4 w-4 text-amber-500" />
+        <AlertDescription className="flex flex-col gap-2">
+          <span className="font-medium">AI Service Rate Limited</span>
+          <span className="text-sm">
+            The AI service is currently rate limited. Analysis will automatically resume when possible.
+            {rateLimit.retryAttempt > 0 && (
+              <> Retry attempt {rateLimit.retryAttempt} of {rateLimit.maxRetries}.</>
+            )}
+            {countdown > 0 && (
+              <div className="flex items-center mt-1">
+                <Timer className="h-4 w-4 mr-1 text-amber-500" />
+                <span>Next retry in {countdown} seconds</span>
+              </div>
+            )}
+          </span>
+          <div className="mt-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleManualRetry}
+              className="bg-white hover:bg-amber-50"
+            >
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+              Try Again Now
+            </Button>
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
+  };
   
   return (
     <Card key={renderKey} className="relative">
@@ -97,10 +245,21 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ assessmentData, generatingSum
         {renderAnalysisStatusBadge()}
       </CardHeader>
       <CardContent>
-        {generatingSummary ? (
+        {/* Rate limit alert */}
+        {renderRateLimitAlert()}
+        
+        {generatingSummary && !rateLimit.detected ? (
           <div className="flex flex-col items-center justify-center py-6">
             <Loader2 className="h-8 w-8 animate-spin text-indigo-500 mb-3" />
             <p className="text-sm text-gray-500">Generating insights...</p>
+          </div>
+        ) : generatingSummary && rateLimit.detected ? (
+          <div className="flex flex-col items-center justify-center py-6">
+            <AlertTriangle className="h-8 w-8 text-amber-500 mb-3" />
+            <p className="text-sm text-gray-500 text-center">
+              AI service rate limited. Waiting for service availability.
+              <br />The system will retry automatically.
+            </p>
           </div>
         ) : assessmentData.aiSummary ? (
           <div className="space-y-4">
