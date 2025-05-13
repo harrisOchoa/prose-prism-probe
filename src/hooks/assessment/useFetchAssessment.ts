@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { getAssessmentByIdWithRetry } from "@/firebase/assessmentService";
+import { getAssessmentById } from "@/firebase/services/assessment";
 import { AssessmentData } from "@/types/assessment";
 import { getCacheItem, setCacheItem } from "@/services/cache/cacheService";
 import { trackApiCall } from "@/services/analytics/apiUsageTracker";
@@ -33,10 +33,27 @@ export const useFetchAssessment = (id: string | undefined) => {
         return cachedAssessment;
       }
       
-      // Not in cache, fetch from API
+      // Not in cache, fetch from API with retry logic
       console.log("Fetching assessment from API:", assessmentId);
       const startTime = Date.now();
-      const assessment = await getAssessmentByIdWithRetry(assessmentId);
+      
+      // Implement a simple retry mechanism
+      let attempts = 0;
+      const maxAttempts = 3;
+      let assessment = null;
+      
+      while (attempts < maxAttempts && !assessment) {
+        try {
+          attempts++;
+          assessment = await getAssessmentById(assessmentId);
+          break;
+        } catch (retryErr: any) {
+          console.warn(`Attempt ${attempts}/${maxAttempts} failed:`, retryErr.message);
+          if (attempts >= maxAttempts) throw retryErr;
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempts - 1)));
+        }
+      }
       
       if (!assessment) {
         trackApiCall(`assessment/${assessmentId}`, false, false, startTime);

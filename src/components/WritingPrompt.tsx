@@ -1,3 +1,3 @@
 
-import { WritingPrompt } from "./writing";
+import WritingPrompt from "./writing/WritingPrompt";
 export default WritingPrompt;
