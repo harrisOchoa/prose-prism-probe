@@ -10,6 +10,7 @@ import AptitudeStage from "@/components/stages/AptitudeStage";
 import SelectPromptsStage from "@/components/stages/SelectPromptsStage";
 import WritingStage from "@/components/stages/WritingStage";
 import CompleteStage from "@/components/stages/CompleteStage";
+import { AntiCheatingMetrics as AssessmentAntiCheatingMetrics } from "@/firebase/services/assessment/types";
 
 const Index = () => {
   useEffect(() => {
@@ -110,7 +111,7 @@ const Index = () => {
                   prompts={prompts}
                   aptitudeScore={aptitudeScore}
                   aptitudeTotal={aptitudeQuestions.length}
-                  antiCheatingMetrics={antiCheatingMetrics}
+                  antiCheatingMetrics={antiCheatingMetrics as AssessmentAntiCheatingMetrics}
                   restartAssessment={restartAssessment}
                   handleStageTransition={() => {}}
                 />

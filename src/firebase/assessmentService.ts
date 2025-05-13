@@ -8,7 +8,7 @@ export interface AntiCheatingMetrics {
   keystrokes: number;
   pauses: number;
   wordsPerMinute: number;
-  suspiciousActivity?: boolean;
+  suspiciousActivity: boolean;  // Changed from optional to required
   focusLost?: number;
   timeAwayFromTab?: number;
   blockedActions?: number;

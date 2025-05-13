@@ -16,7 +16,7 @@ export interface AntiCheatingMetrics {
   pauses: number;
   wordsPerMinute: number;
   tabSwitches: number;
-  suspiciousActivity: boolean;
+  suspiciousActivity: boolean;  // Changed from optional to required
   copyAttempts?: number;
   pasteAttempts?: number;
   rightClickAttempts?: number;

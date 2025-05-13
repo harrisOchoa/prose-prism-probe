@@ -59,9 +59,18 @@ export const useAntiCheating = (response: string) => {
         keystrokes: typingMetrics.keystrokes,
         pauses: typingMetrics.pauses,
         wordsPerMinute: typingMetrics.wordsPerMinute,
-        ...windowMetrics,
+        tabSwitches: windowMetrics.tabSwitches,
+        windowBlurs: windowMetrics.windowBlurs || 0,
+        windowFocuses: windowMetrics.windowFocuses || 0,
+        timeSpentMs: windowMetrics.timeSpentMs || 0,
+        inactivityPeriods: windowMetrics.inactivityPeriods || [],
+        totalInactivityTime: windowMetrics.totalInactivityTime || 0,
+        lastInactiveAt: windowMetrics.lastInactiveAt || null,
+        focusLossEvents: windowMetrics.focusLossEvents || [],
+        longestFocusLossDuration: windowMetrics.longestFocusLossDuration || 0,
+        averageFocusLossDuration: windowMetrics.averageFocusLossDuration || 0, 
         ...preventionMetrics,
-        suspiciousActivity: suspiciousActivity || suspiciousFocusLoss,
+        suspiciousActivity: suspiciousActivity || suspiciousFocusLoss || false, // Ensure this is ALWAYS a boolean
         suspiciousActivityDetail,
         userAgent,
       } as AntiCheatingMetrics;
@@ -74,7 +83,7 @@ export const useAntiCheating = (response: string) => {
     getAssessmentMetrics,
     tabSwitches,
     windowBlurs,
-    suspiciousActivity: suspiciousActivity || suspiciousFocusLoss,
+    suspiciousActivity: suspiciousActivity || suspiciousFocusLoss || false, // Also ensure it's boolean here
     suspiciousActivityDetail,
   };
 };
