@@ -31,22 +31,22 @@ export function ThemeToggle({
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className={ANIMATION_TYPES.scaleIn}>
+      <DropdownMenuContent align="end" className={`${ANIMATION_TYPES.scaleIn} dropdown-content`}>
         <DropdownMenuItem 
           onClick={() => setTheme("light")}
-          className={theme === "light" ? "bg-accent text-accent-foreground" : ""}
+          className={`${theme === "light" ? "bg-accent text-accent-foreground" : ""} dropdown-item`}
         >
           Light
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => setTheme("dark")}
-          className={theme === "dark" ? "bg-accent text-accent-foreground" : ""}
+          className={`${theme === "dark" ? "bg-accent text-accent-foreground" : ""} dropdown-item`}
         >
           Dark
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => setTheme("system")}
-          className={theme === "system" ? "bg-accent text-accent-foreground" : ""}
+          className={`${theme === "system" ? "bg-accent text-accent-foreground" : ""} dropdown-item`}
         >
           System
         </DropdownMenuItem>

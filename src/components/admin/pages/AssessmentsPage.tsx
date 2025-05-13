@@ -49,8 +49,8 @@ const AssessmentsPage = () => {
         />
         
         <TabsContent value={activeTab} className="mt-4">
-          <Card>
-            <CardHeader className="py-4">
+          <Card className="dark:bg-transparent dark:border-slate-700">
+            <CardHeader className="py-4 dark:border-slate-700">
               <CardTitle className="text-lg flex items-center">
                 <FileText className="mr-2 h-5 w-5" />
                 Assessment Submissions

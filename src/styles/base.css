@@ -32,6 +32,15 @@
     --hirescribe-danger: 0 84% 60%;
     --hirescribe-light: 240 100% 97%;
     --hirescribe-dark: 220 17% 18%;
+    
+    /* Sidebar specific colors */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --sidebar-muted: 210 40% 96.1%;
+    --sidebar-muted-foreground: 215.4 16.3% 46.9%;
+    --sidebar-hover: 210 40% 96.1%;
+    --sidebar-active: 246 83.3% 97.6%;
+    --sidebar-active-foreground: 246 83.3% 60%;
   }
 
   .dark {
@@ -63,8 +72,17 @@
     --hirescribe-success: 158 84% 39%;
     --hirescribe-warning: 35 92% 50%;
     --hirescribe-danger: 0 84% 60%;
-    --hirescribe-light: 240 20% 25%;
+    --hirescribe-light: 240 20% 25%; 
     --hirescribe-dark: 220 17% 18%;
+    
+    /* Sidebar dark mode colors */
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-muted: 217.2 32.6% 17.5%;
+    --sidebar-muted-foreground: 215 20.2% 65.1%;
+    --sidebar-hover: 217.2 32.6% 15%;
+    --sidebar-active: 246 60% 20%;
+    --sidebar-active-foreground: 246 70% 65%;
   }
 }
 
@@ -74,6 +92,7 @@
   }
   body {
     @apply bg-background text-foreground selection:bg-primary/20;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   /* Dark mode styles */
