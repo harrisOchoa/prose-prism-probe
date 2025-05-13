@@ -1,17 +1,9 @@
+
 @import './styles/base.css';
-@import './styles/components.css';
 @import './styles/utilities.css';
 @import './styles/animations.css';
+@import './styles/components.css';
 
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
