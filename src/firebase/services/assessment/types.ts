@@ -1,3 +1,4 @@
+
 import { DocumentData } from "firebase/firestore";
 
 // Analysis status types
@@ -28,6 +29,9 @@ export interface AntiCheatingMetrics {
   averageFocusLossDuration?: number;
   suspiciousFocusLoss?: boolean;
   totalInactivityTime?: number;
+  focusLost?: number;
+  timeAwayFromTab?: number;
+  blockedActions?: number;
 }
 
 export interface AssessmentSubmission {

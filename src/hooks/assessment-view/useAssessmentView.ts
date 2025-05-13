@@ -28,8 +28,9 @@ export const useAssessmentView = (id: string | undefined) => {
       }
       
       console.log(`Assessment ${assessmentId} loaded successfully`);
-      setAssessment(data);
-      return data;
+      // Make sure to cast the DocumentData to AssessmentData to satisfy TypeScript
+      setAssessment(data as AssessmentData);
+      return data as AssessmentData;
     } catch (error: any) {
       console.error(`Error fetching assessment ${assessmentId}:`, error);
       setError(error instanceof Error ? error : new Error(error?.message || 'Unknown error'));

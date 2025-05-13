@@ -5,6 +5,7 @@ import { useWindowEvents } from "./assessment/metrics/useWindowEvents";
 import { usePreventActions } from "./assessment/metrics/usePreventActions";
 import { useSuspiciousActivity } from "./assessment/metrics/useSuspiciousActivity";
 import { useAntiCheatingEffects } from "./assessment/metrics/useAntiCheatingEffects";
+import { AntiCheatingMetrics } from "@/firebase/assessmentService";
 
 export const useAntiCheating = (response: string) => {
   const userAgent = navigator?.userAgent || "unknown";
@@ -55,13 +56,15 @@ export const useAntiCheating = (response: string) => {
       const preventionMetrics = getPreventionMetrics();
 
       return {
-        ...typingMetrics,
+        keystrokes: typingMetrics.keystrokes,
+        pauses: typingMetrics.pauses,
+        wordsPerMinute: typingMetrics.wordsPerMinute,
         ...windowMetrics,
         ...preventionMetrics,
         suspiciousActivity: suspiciousActivity || suspiciousFocusLoss,
         suspiciousActivityDetail,
         userAgent,
-      };
+      } as AntiCheatingMetrics;
     };
   }, [getTypingMetrics, getWindowMetrics, getPreventionMetrics, suspiciousActivity, suspiciousFocusLoss, suspiciousActivityDetail, userAgent]);
 
