@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAntiCheating } from "@/hooks/useAntiCheating";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { memo } from "react";
 
@@ -124,7 +124,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
       
       // Force calculate words per minute based on text length and time
       if (metricsToSubmit && (!metricsToSubmit.wordsPerMinute || metricsToSubmit.wordsPerMinute === 0)) {
-        const estimatedWPM = Math.max(1, Math.min(120, wordCount / ((metrics.totalInactivityTime || 0) / 60000)));
+        const estimatedWPM = Math.max(1, Math.min(120, wordCount / (metricsToSubmit.timeSpentMs / 60000)));
         metricsToSubmit.wordsPerMinute = Math.round(estimatedWPM);
         console.log("Estimated WPM:", metricsToSubmit.wordsPerMinute);
       }

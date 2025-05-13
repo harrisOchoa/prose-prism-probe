@@ -1,8 +1,8 @@
 
-// This file exports all assessment service functionality from the modular files
+export * from './types';
 export * from './assessmentCreate';
-export * from './assessmentQuery';
 export * from './assessmentUpdate';
-export * from './utils/duplicateChecker';
+export * from './assessmentQuery';
 export * from './utils/metricsSanitizer';
+export * from './utils/duplicateChecker';
 export * from './utils/submissionCreator';

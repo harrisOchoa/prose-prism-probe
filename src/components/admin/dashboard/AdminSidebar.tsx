@@ -54,7 +54,7 @@ const AdminSidebar = () => {
     return pathname.startsWith(path) && path !== '/admin/';
   };
   
-  return <Sidebar className="border-r border-border h-screen bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))]">
+  return <Sidebar className="border-r border-gray-200 h-screen">
       <SidebarHeader className="px-4 py-6">
         <div className="flex items-center">
           <div className="ml-1 font-medium text-xl gradient-text">
@@ -77,22 +77,22 @@ const AdminSidebar = () => {
                   className={cn(
                     "admin-sidebar-menu-button-simplified", 
                     isActive(item.path) 
-                      ? 'sidebar-item-active' 
-                      : 'sidebar-item-hover'
+                      ? 'bg-purple-50 text-hirescribe-primary' 
+                      : 'hover:bg-gray-50'
                   )}
                 >
                   <div className="flex items-center w-full">
                     <div className={cn(
                       "admin-sidebar-icon-wrapper", 
                       isActive(item.path) 
-                        ? "sidebar-icon-active" 
-                        : "sidebar-icon-default"
+                        ? "text-hirescribe-primary" 
+                        : "text-gray-500"
                     )}>
                       {item.icon}
                     </div>
                     <span className={cn(
                       "admin-sidebar-menu-button-label",
-                      isActive(item.path) ? "text-[hsl(var(--sidebar-active-foreground))]" : "text-[hsl(var(--sidebar-foreground))]"
+                      isActive(item.path) ? "text-hirescribe-primary" : "text-gray-700"
                     )}>
                       {item.label}
                     </span>
@@ -116,22 +116,22 @@ const AdminSidebar = () => {
                   className={cn(
                     "admin-sidebar-menu-button-simplified", 
                     isActive(item.path) 
-                      ? 'sidebar-item-active' 
-                      : 'sidebar-item-hover'
+                      ? 'bg-purple-50 text-hirescribe-primary' 
+                      : 'hover:bg-gray-50'
                   )}
                 >
                   <div className="flex items-center w-full">
                     <div className={cn(
                       "admin-sidebar-icon-wrapper", 
                       isActive(item.path) 
-                        ? "sidebar-icon-active" 
-                        : "sidebar-icon-default"
+                        ? "text-hirescribe-primary" 
+                        : "text-gray-500"
                     )}>
                       {item.icon}
                     </div>
                     <span className={cn(
                       "admin-sidebar-menu-button-label",
-                      isActive(item.path) ? "text-[hsl(var(--sidebar-active-foreground))]" : "text-[hsl(var(--sidebar-foreground))]"
+                      isActive(item.path) ? "text-hirescribe-primary" : "text-gray-700"
                     )}>
                       {item.label}
                     </span>
@@ -143,11 +143,11 @@ const AdminSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 mt-auto border-t border-border">
+      <SidebarFooter className="p-4 mt-auto border-t border-gray-200">
         <Button 
           variant="outline" 
           size="sm" 
-          className="flex items-center justify-start w-full py-2.5 text-foreground hover:text-red-600 hover:border-red-200 dark:hover:text-red-400 dark:hover:border-red-800 transition-all" 
+          className="flex items-center justify-start w-full py-2.5 text-gray-700 hover:text-red-600 hover:border-red-200 transition-all" 
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4 mr-2" />

@@ -5,7 +5,6 @@ import { useWindowEvents } from "./assessment/metrics/useWindowEvents";
 import { usePreventActions } from "./assessment/metrics/usePreventActions";
 import { useSuspiciousActivity } from "./assessment/metrics/useSuspiciousActivity";
 import { useAntiCheatingEffects } from "./assessment/metrics/useAntiCheatingEffects";
-import { AntiCheatingMetrics } from "@/firebase/assessmentService";
 
 export const useAntiCheating = (response: string) => {
   const userAgent = navigator?.userAgent || "unknown";
@@ -56,24 +55,13 @@ export const useAntiCheating = (response: string) => {
       const preventionMetrics = getPreventionMetrics();
 
       return {
-        keystrokes: typingMetrics.keystrokes,
-        pauses: typingMetrics.pauses,
-        wordsPerMinute: typingMetrics.wordsPerMinute,
-        tabSwitches: windowMetrics.tabSwitches,
-        windowBlurs: windowMetrics.windowBlurs || 0,
-        windowFocuses: windowMetrics.windowFocuses || 0,
-        timeSpentMs: windowMetrics.timeSpentMs || 0,
-        inactivityPeriods: windowMetrics.inactivityPeriods || [],
-        totalInactivityTime: windowMetrics.totalInactivityTime || 0,
-        lastInactiveAt: windowMetrics.lastInactiveAt || null,
-        focusLossEvents: windowMetrics.focusLossEvents || [],
-        longestFocusLossDuration: windowMetrics.longestFocusLossDuration || 0,
-        averageFocusLossDuration: windowMetrics.averageFocusLossDuration || 0, 
+        ...typingMetrics,
+        ...windowMetrics,
         ...preventionMetrics,
-        suspiciousActivity: suspiciousActivity || suspiciousFocusLoss || false, // Ensure this is ALWAYS a boolean
+        suspiciousActivity: suspiciousActivity || suspiciousFocusLoss,
         suspiciousActivityDetail,
         userAgent,
-      } as AntiCheatingMetrics;
+      };
     };
   }, [getTypingMetrics, getWindowMetrics, getPreventionMetrics, suspiciousActivity, suspiciousFocusLoss, suspiciousActivityDetail, userAgent]);
 
@@ -83,7 +71,7 @@ export const useAntiCheating = (response: string) => {
     getAssessmentMetrics,
     tabSwitches,
     windowBlurs,
-    suspiciousActivity: suspiciousActivity || suspiciousFocusLoss || false, // Also ensure it's boolean here
+    suspiciousActivity: suspiciousActivity || suspiciousFocusLoss,
     suspiciousActivityDetail,
   };
 };

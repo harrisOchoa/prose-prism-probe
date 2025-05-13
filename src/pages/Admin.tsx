@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate, Route, Routes, Navigate } from "react-router-dom";
+import { useNavigate, Routes, Route, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -70,7 +70,7 @@ const Admin = () => {
     <div className={`container mx-auto ${isMobile ? 'py-6 px-3' : 'py-10 px-4'} max-w-full h-full p-0`}>
       {!isAuthenticated ? (
         <div className="flex justify-center items-center min-h-[80vh]">
-          <Card className="w-full max-w-md shadow-md border animate-fade-in dark:bg-slate-900/80 dark:border-slate-700">
+          <Card className="w-full max-w-md shadow-md bg-card border animate-fade-in">
             <CardHeader className="space-y-1 pb-3">
               <CardTitle className={`${isMobile ? 'text-xl' : 'text-2xl'} text-center gradient-text`}>
                 HireScribe Admin
@@ -113,7 +113,7 @@ const Admin = () => {
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="w-full dark:border-slate-700 dark:hover:bg-slate-800" 
+                  className="w-full" 
                   onClick={() => navigate("/")}
                   disabled={isLoading}
                 >
@@ -125,7 +125,7 @@ const Admin = () => {
           </Card>
         </div>
       ) : (
-        <div className="flex min-h-[80vh] w-full overflow-hidden">
+        <div className="flex min-h-[80vh] w-full bg-background overflow-hidden">
           <SidebarProvider>
             <div className="flex w-full">
               <AdminSidebar />

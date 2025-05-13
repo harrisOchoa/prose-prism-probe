@@ -1,4 +1,8 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -7,40 +11,23 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+    
+    /* Updated to use hirescribe brand colors */
+    --primary: 246 80% 60%;  /* Based on hirescribe-primary: #4F46E5 */
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
+    --secondary: 243 75% 69%; /* Based on hirescribe-secondary: #818CF8 */
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
+    --accent: 247 74% 42%; /* Based on hirescribe-accent: #3730A3 */
     --accent-foreground: 222.2 47.4% 11.2%;
+    
+    --muted: 240 5% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.75rem;
-
-    /* Assessment specific colors */
-    --hirescribe-primary: 246 84% 58%;
-    --hirescribe-secondary: 243 93% 73%;
-    --hirescribe-accent: 245 59% 42%;
-    --hirescribe-muted: 240 100% 98%;
-    --hirescribe-success: 158 84% 39%;
-    --hirescribe-warning: 35 92% 50%;
-    --hirescribe-danger: 0 84% 60%;
-    --hirescribe-light: 240 100% 97%;
-    --hirescribe-dark: 220 17% 18%;
-    
-    /* Sidebar specific colors */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222.2 84% 4.9%;
-    --sidebar-muted: 210 40% 96.1%;
-    --sidebar-muted-foreground: 215.4 16.3% 46.9%;
-    --sidebar-hover: 210 40% 96.1%;
-    --sidebar-active: 246 83.3% 97.6%;
-    --sidebar-active-foreground: 246 83.3% 60%;
+    --ring: 246 80% 60%; /* Same as primary */
+    --radius: 0.5rem;
   }
 
   .dark {
@@ -50,68 +37,33 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
+    
+    /* Updated to use hirescribe brand colors for dark mode */
+    --primary: 246 80% 75%; /* Lighter version of primary for dark mode */
     --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 243 75% 45%;
     --secondary-foreground: 210 40% 98%;
+    --accent: 247 74% 60%;
+    --accent-foreground: 210 40% 98%;
+    
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-
-    /* Dark mode adjustments for assessment colors */
-    --hirescribe-primary: 246 70% 65%;
-    --hirescribe-secondary: 243 70% 78%;
-    --hirescribe-accent: 245 59% 47%;
-    --hirescribe-muted: 240 20% 25%;
-    --hirescribe-success: 158 84% 39%;
-    --hirescribe-warning: 35 92% 50%;
-    --hirescribe-danger: 0 84% 60%;
-    --hirescribe-light: 240 20% 25%; 
-    --hirescribe-dark: 220 17% 18%;
-    
-    /* Sidebar dark mode colors */
-    --sidebar-background: 222.2 84% 4.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-muted: 217.2 32.6% 17.5%;
-    --sidebar-muted-foreground: 215 20.2% 65.1%;
-    --sidebar-hover: 217.2 32.6% 15%;
-    --sidebar-active: 246 60% 20%;
-    --sidebar-active-foreground: 246 70% 65%;
+    --ring: 246 80% 75%; /* Same as primary */
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
+
+  html {
+    @apply scroll-smooth;
+  }
+
   body {
-    @apply bg-background text-foreground selection:bg-primary/20;
-    transition: background-color 0.3s ease, color 0.3s ease;
-  }
-
-  /* Dark mode styles */
-  .dark .glass-effect {
-    @apply bg-slate-900/80 backdrop-blur-sm border border-slate-700/50;
-  }
-  
-  .glass-effect {
-    @apply bg-white/90 backdrop-blur-sm border border-gray-200/50;
-  }
-  
-  /* Animation utilities */
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-  }
-
-  .animate-shake {
-    animation: shake 0.5s ease-in-out;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }

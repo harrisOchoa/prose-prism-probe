@@ -67,63 +67,60 @@ const AssessmentsTable: React.FC<AssessmentsTableProps> = ({
   }
 
   return (
-    <div className="rounded-md border dark:border-slate-700 overflow-hidden">
-      <Table>
-        <TableHeader className="bg-muted/50 dark:bg-slate-800">
-          <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
-            <TableHead className="w-[250px] font-medium">Assessment</TableHead>
-            <TableHead className="font-medium">Position</TableHead>
-            <TableHead className="font-medium">Submitted</TableHead>
-            <TableHead className="text-center font-medium">Status</TableHead>
-            <TableHead className="text-center font-medium">Score</TableHead>
-            <TableHead className="text-right font-medium">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {assessments.map((assessment) => (
-            <TableRow key={assessment.id} className="dark:hover:bg-slate-800/50">
-              <TableCell className="font-medium">{assessment.candidateName || "Unknown"}</TableCell>
-              <TableCell>{assessment.candidatePosition || "Not specified"}</TableCell>
-              <TableCell>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-[250px]">Assessment</TableHead>
+          <TableHead>Position</TableHead>
+          <TableHead>Submitted</TableHead>
+          <TableHead className="text-center">Status</TableHead>
+          <TableHead className="text-center">Score</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {assessments.map((assessment) => (
+          <TableRow key={assessment.id}>
+            <TableCell className="font-medium">{assessment.candidateName || "Unknown"}</TableCell>
+            <TableCell>{assessment.candidatePosition || "Not specified"}</TableCell>
+            <TableCell>
+              <div className="flex items-center">
+                <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                {assessment.submittedAt?.toDate ? 
+                  format(assessment.submittedAt.toDate(), 'MMM d, yyyy') : 
+                  "Unknown date"}
+              </div>
+            </TableCell>
+            <TableCell className="text-center">
+              <Badge variant="outline" className={getBadgeStyle(assessment.status)}>
                 <div className="flex items-center">
-                  <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                  {assessment.submittedAt?.toDate ? 
-                    format(assessment.submittedAt.toDate(), 'MMM d, yyyy') : 
-                    "Unknown date"}
+                  {getStatusIcon(assessment.status)}
+                  {assessment.status.charAt(0).toUpperCase() + assessment.status.slice(1)}
                 </div>
-              </TableCell>
-              <TableCell className="text-center">
-                <Badge variant="outline" className={`${getBadgeStyle(assessment.status)}`}>
-                  <div className="flex items-center">
-                    {getStatusIcon(assessment.status)}
-                    {assessment.status.charAt(0).toUpperCase() + assessment.status.slice(1)}
-                  </div>
-                </Badge>
-              </TableCell>
-              <TableCell className="text-center">
-                <Badge variant="outline" 
-                  className={getScoreColor(
-                    assessment.aptitudeScore || 0, 
-                    assessment.aptitudeTotal || 30
-                  )}>
-                  {assessment.aptitudeScore || 0}/{assessment.aptitudeTotal || 30}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => openAssessmentDetails(assessment)}
-                  className="hover:bg-accent dark:hover:bg-slate-700"
-                >
-                  View
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+              </Badge>
+            </TableCell>
+            <TableCell className="text-center">
+              <Badge variant="outline" 
+                className={getScoreColor(
+                  assessment.aptitudeScore || 0, 
+                  assessment.aptitudeTotal || 30
+                )}>
+                {assessment.aptitudeScore || 0}/{assessment.aptitudeTotal || 30}
+              </Badge>
+            </TableCell>
+            <TableCell className="text-right">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => openAssessmentDetails(assessment)}
+              >
+                View
+              </Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 };
 

@@ -1,114 +1,71 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { getAssessmentById } from "@/firebase/services/assessment";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/firebase/config";
+import { toast } from "@/hooks/use-toast";
 import { AssessmentData } from "@/types/assessment";
-import { getCacheItem, setCacheItem } from "@/services/cache/cacheService";
-import { trackApiCall } from "@/services/analytics/apiUsageTracker";
 
-/**
- * Hook for fetching assessment data with caching
- */
 export const useFetchAssessment = (id: string | undefined) => {
   const [assessment, setAssessment] = useState<AssessmentData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const cacheNamespace = 'assessments';
-  
+
+  // Create a memoized fetchAssessment function that can be called on demand
   const fetchAssessment = useCallback(async (assessmentId: string) => {
-    if (!assessmentId) {
-      setError("No assessment ID provided");
-      setLoading(false);
-      return null;
-    }
-    
     try {
-      // Try to get from cache first
-      const cachedAssessment = getCacheItem<AssessmentData>(
-        assessmentId, 
-        { namespace: cacheNamespace }
-      );
+      console.log(`[${new Date().toISOString()}] Fetching assessment with ID:`, assessmentId);
+      setLoading(true);
       
-      if (cachedAssessment) {
-        console.log("Retrieved assessment from cache:", assessmentId);
-        return cachedAssessment;
+      const docRef = doc(db, "assessments", assessmentId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const assessmentData = {
+          id: docSnap.id,
+          ...docSnap.data()
+        } as AssessmentData;
+        
+        console.log("Assessment data retrieved:", {
+          id: assessmentData.id,
+          hasAiSummary: !!assessmentData.aiSummary,
+          hasStrengths: !!(assessmentData.strengths && assessmentData.strengths.length > 0),
+          hasWeaknesses: !!(assessmentData.weaknesses && assessmentData.weaknesses.length > 0),
+          hasWritingScores: !!(assessmentData.writingScores && assessmentData.writingScores.length > 0)
+        });
+        
+        setAssessment(assessmentData);
+        setError(null);
+        return assessmentData;
+      } else {
+        setError("Assessment not found");
+        console.log("Assessment document does not exist");
+        return null;
       }
-      
-      // Not in cache, fetch from API with retry logic
-      console.log("Fetching assessment from API:", assessmentId);
-      const startTime = Date.now();
-      
-      // Implement a simple retry mechanism
-      let attempts = 0;
-      const maxAttempts = 3;
-      let assessment = null;
-      
-      while (attempts < maxAttempts && !assessment) {
-        try {
-          attempts++;
-          assessment = await getAssessmentById(assessmentId);
-          break;
-        } catch (retryErr: any) {
-          console.warn(`Attempt ${attempts}/${maxAttempts} failed:`, retryErr.message);
-          if (attempts >= maxAttempts) throw retryErr;
-          // Wait before retry (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempts - 1)));
-        }
-      }
-      
-      if (!assessment) {
-        trackApiCall(`assessment/${assessmentId}`, false, false, startTime);
-        throw new Error(`Assessment with ID ${assessmentId} not found`);
-      }
-      
-      // Cache successful result
-      setCacheItem(
-        assessmentId, 
-        assessment, 
-        { 
-          namespace: cacheNamespace, 
-          expiry: 5 * 60 * 1000 // Cache for 5 minutes
-        }
-      );
-      
-      trackApiCall(`assessment/${assessmentId}`, true, false, startTime);
-      return assessment;
-    } catch (err: any) {
-      const isRateLimit = err.message?.toLowerCase().includes('rate limit');
+    } catch (err) {
       console.error("Error fetching assessment:", err);
-      trackApiCall(
-        `assessment/${assessmentId}`, 
-        false, 
-        isRateLimit, 
-        Date.now()
-      );
-      throw err;
-    }
-  }, []);
-  
-  const refreshAssessment = useCallback(async (assessmentId: string) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const result = await fetchAssessment(assessmentId);
-      setAssessment(result);
-      return result;
-    } catch (err: any) {
-      setError(err.message || "Failed to load assessment");
+      setError("Failed to load assessment");
       return null;
     } finally {
       setLoading(false);
     }
-  }, [fetchAssessment]);
-  
+  }, []);
+
+  // Initial fetch on component mount
   useEffect(() => {
     if (!id) {
+      setError("Assessment ID is missing");
       setLoading(false);
       return;
     }
     
-    refreshAssessment(id);
-  }, [id, refreshAssessment]);
-  
-  return { assessment, setAssessment, loading, error, refreshAssessment };
+    fetchAssessment(id);
+  }, [id, fetchAssessment]);
+
+  return { 
+    assessment, 
+    setAssessment, 
+    loading, 
+    error, 
+    refreshAssessment: fetchAssessment 
+  };
 };
