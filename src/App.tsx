@@ -1,6 +1,6 @@
 
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import Admin from "./pages/Admin"; // Import Admin directly instead of lazy loading
 
@@ -24,23 +24,21 @@ function App() {
   console.log("App component rendering");
   
   return (
-    <Router>
-      <Suspense fallback={<LoadingPage />}>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Index />} />
-            <Route path="about" element={<About />} />
-            <Route path="privacy" element={<PrivacyPolicy />} />
-            <Route path="terms" element={<Terms />} />
-            <Route path="404" element={<NotFound />} />
-            <Route path="view/:id" element={<View />} />
-            <Route path="*" element={<Navigate to="/404" replace />} />
-          </Route>
-          {/* Admin routes now handle their own layout and have nested routes */}
-          <Route path="admin/*" element={<Admin />} />
-        </Routes>
-      </Suspense>
-    </Router>
+    <Suspense fallback={<LoadingPage />}>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Index />} />
+          <Route path="about" element={<About />} />
+          <Route path="privacy" element={<PrivacyPolicy />} />
+          <Route path="terms" element={<Terms />} />
+          <Route path="404" element={<NotFound />} />
+          <Route path="view/:id" element={<View />} />
+          <Route path="*" element={<Navigate to="/404" replace />} />
+        </Route>
+        {/* Admin routes now handle their own layout and have nested routes */}
+        <Route path="admin/*" element={<Admin />} />
+      </Routes>
+    </Suspense>
   );
 }
 
