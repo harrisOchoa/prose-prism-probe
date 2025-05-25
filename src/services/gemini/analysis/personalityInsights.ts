@@ -5,45 +5,60 @@ import { makeGeminiRequest, parseJsonResponse } from "../config";
 
 export const generatePersonalityInsights = async (assessmentData: any): Promise<PersonalityInsight[]> => {
   try {
-    console.log("Generating personality insights for:", assessmentData.candidateName);
+    console.log("Generating communication pattern insights for:", assessmentData.candidateName);
     
-    const writingResponses = assessmentData.completedPrompts
-      .map((prompt: WritingPromptItem) => `Prompt: ${prompt.prompt}\nResponse: ${prompt.response}`)
-      .join("\n\n---\n\n");
+    const writingResponses = assessmentData.completedPrompts || [];
+    
+    if (!writingResponses || writingResponses.length === 0) {
+      throw new Error("No writing responses available for communication analysis");
+    }
+    
+    const responsesText = writingResponses
+      .map((prompt: WritingPromptItem, index: number) => `
+PROMPT ${index + 1}: ${prompt.prompt}
+RESPONSE: ${prompt.response}
+---`)
+      .join("\n");
     
     const promptTemplate = `
-You are an objective writing style analyst for job candidate assessments. Your task is to analyze writing samples to identify communication styles and tendencies shown in the text.
+You are a communication pattern analyst for professional assessments. Analyze ONLY the communication style and patterns visible in the provided writing samples.
 
 # WRITING SAMPLES
-${writingResponses}
+${responsesText}
 
-# ANALYSIS INSTRUCTIONS
-Analyze ONLY the language patterns and communication tendencies evident in the provided text samples. 
-Focus on identifying 5 key communication traits that are objectively demonstrated in the writing.
+# ANALYSIS REQUIREMENTS
+CRITICAL CONSTRAINTS:
+- Analyze ONLY communication patterns observable in the text
+- Base every insight on specific textual evidence
+- Do NOT infer personality traits, character, or psychological attributes
+- Focus on professional communication competencies only
+- Cite specific examples from responses for each insight
 
-For each trait:
-1. Identify a specific communication tendency or style element displayed in the writing
-2. Provide a brief description of how this trait is demonstrated in the text
-3. Assess your confidence level (0-100) based on how consistently this trait appears across all samples
+Analyze for these communication patterns:
+1. **Response Structure**: How the candidate organizes thoughts and ideas
+2. **Communication Clarity**: How clearly ideas are expressed
+3. **Professional Tone**: Level of formality and professionalism in communication
+4. **Problem-Solving Communication**: How they explain processes or solutions
+5. **Detail Orientation**: Level of specificity and thoroughness in responses
 
-Important guidelines:
-- Analyze ONLY writing and communication styles, NOT personality traits
-- Use neutral, professional language
-- Base ALL insights on text evidence, not assumptions
-- DO NOT attempt to diagnose personality types or make character judgments
-- Provide confidence levels that reflect the evidence strength
-- Focus on communication tendencies relevant to professional contexts
+For each pattern identified:
+- Describe the specific communication behavior observed
+- Provide direct quotes or specific references from responses
+- Rate confidence (0-100) based on consistency across samples
+- Ensure observation is relevant to workplace communication
+
+IMPORTANT: If insufficient evidence exists for a pattern, state "Insufficient evidence" rather than making assumptions.
 
 # FORMAT
-Return your analysis as a JSON object with this exact structure:
+Return as JSON:
 {
   "insights": [
     {
-      "trait": "Specific communication style element",
-      "description": "Brief description of how this is demonstrated in the text",
-      "confidence": confidence score as number between 0-100
+      "trait": "Specific communication pattern observed",
+      "description": "Detailed description with direct quotes or references from responses",
+      "confidence": confidence score 0-100 based on evidence strength
     },
-    ... (4 more traits with the same structure)
+    ... (up to 5 insights maximum, only if sufficient evidence exists)
   ]
 }
 `;
@@ -52,20 +67,33 @@ Return your analysis as a JSON object with this exact structure:
     const insightsData = parseJsonResponse(text);
     
     if (!insightsData.insights || !Array.isArray(insightsData.insights)) {
-      throw new Error("Invalid insights format");
+      throw new Error("Invalid insights format received from analysis");
     }
     
-    return insightsData.insights.map((i: any) => ({
-      trait: i.trait || "Unknown trait",
-      description: i.description || "No description provided",
-      confidence: i.confidence || 0
-    }));
+    // Filter out low-confidence insights and ensure evidence is provided
+    const validInsights = insightsData.insights
+      .filter((insight: any) => insight.confidence >= 30 && insight.description && !insight.description.includes("Insufficient evidence"))
+      .map((insight: any) => ({
+        trait: insight.trait || "Communication pattern",
+        description: insight.description || "No description available",
+        confidence: Math.min(100, Math.max(0, insight.confidence || 0))
+      }));
+    
+    if (validInsights.length === 0) {
+      return [{
+        trait: "Limited communication data",
+        description: "Insufficient writing samples to identify consistent communication patterns",
+        confidence: 100
+      }];
+    }
+    
+    return validInsights;
   } catch (error) {
-    console.error("Error generating personality insights:", error);
+    console.error("Error generating communication pattern insights:", error);
     return [
       {
-        trait: "Unable to analyze personality",
-        description: "An error occurred during analysis",
+        trait: "Analysis unavailable",
+        description: "Unable to analyze communication patterns due to technical error",
         confidence: 0
       }
     ];

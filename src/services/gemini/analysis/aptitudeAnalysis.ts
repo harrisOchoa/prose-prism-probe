@@ -1,94 +1,133 @@
 
 import { AptitudeAnalysis } from "../types";
 import { makeGeminiRequest, parseJsonResponse } from "../config";
-import { getRandomAptitudeQuestions } from "@/utils/aptitudeQuestions";
 
 export const generateAptitudeAnalysis = async (assessmentData: any): Promise<AptitudeAnalysis> => {
   try {
-    console.log("Generating aptitude analysis for:", assessmentData.candidateName);
+    console.log("Generating evidence-based aptitude analysis for:", assessmentData.candidateName);
     
     const aptitudeScore = assessmentData.aptitudeScore || 0;
     const aptitudeTotal = assessmentData.aptitudeTotal || 0;
     const aptitudePercentage = aptitudeTotal > 0 ? Math.round((aptitudeScore / aptitudeTotal) * 100) : 0;
+    const position = assessmentData.candidatePosition || "Not specified";
     
-    // Get all possible aptitude questions to understand categories being tested
-    const allQuestions = getRandomAptitudeQuestions(30);
-    
-    // Extract categories safely, using a default if category is not available
-    const questionCategories = [...new Set(allQuestions
-      .map(q => q.category || 'General Aptitude')
-      .filter(Boolean))]
-      .join(", ");
+    if (aptitudeTotal === 0) {
+      throw new Error("No aptitude assessment data available for analysis");
+    }
     
     const promptTemplate = `
-You are an expert aptitude test analyzer for job candidate assessments. Your task is to provide an objective, accurate, and realistic analysis of a candidate's aptitude test performance.
+Analyze this candidate's aptitude assessment performance using ONLY the provided score data.
 
-# CANDIDATE APTITUDE DATA
-Score: ${aptitudeScore}/${aptitudeTotal} (${aptitudePercentage}%)
+# APTITUDE ASSESSMENT DATA
+Position Applied For: ${position}
+Aptitude Score: ${aptitudeScore}/${aptitudeTotal} (${aptitudePercentage}%)
 
-# TESTED CATEGORIES
-The test covered the following categories: ${questionCategories}
+# ANALYSIS REQUIREMENTS
+CRITICAL: Base analysis ONLY on the numerical performance data provided:
 
-# ANALYSIS INSTRUCTIONS
-Analyze the candidate's aptitude test performance with the following considerations:
+1. **Score-Based Only**: Use only the actual score and percentage for analysis
+2. **No Category Assumptions**: Do not assume performance in specific aptitude areas unless data is provided
+3. **Performance Level**: Assess overall cognitive problem-solving based on percentage score
+4. **Evidence-Required**: Every statement must reference the actual score data
+5. **Position Relevance**: Connect score to cognitive demands only when directly relevant
 
-1. REALISTIC STRENGTHS ASSESSMENT:
-   - If the candidate scored below 40%, do NOT list any strength categories unless there's clear evidence of them
-   - If the candidate scored 40-60%, identify only 1-2 potential areas of relative strength if any
-   - For scores above 60%, identify 2-4 strength areas
-   - For scores above 80%, identify 3-5 strength areas
+Analysis Framework:
+- Performance Assessment: Based solely on ${aptitudePercentage}% achievement
+- Cognitive Indicators: What the score suggests about problem-solving capability
+- Role Alignment: How this performance level relates to ${position} cognitive requirements
+- Development Areas: Based on score gap from maximum performance
 
-2. WEAKNESSES ASSESSMENT:
-   - For low scores (below 40%), focus on fundamental skill gaps and most critical areas for improvement
-   - Prioritize weaknesses by impact on overall performance
-   - Keep the weakness list proportionate to performance (more weaknesses for lower scores)
-   - For high scores (above 80%), only identify minor areas for refinement
-
-3. RECOMMENDATIONS:
-   - Provide 3-5 specific, actionable recommendations tailored to the score level
-   - For low scores, focus on foundational skill building
-   - For medium scores, focus on targeted improvements
-   - For high scores, focus on mastery and advanced concepts
-   - Include resources or methods for improvement
-
-4. PERFORMANCE SUMMARY:
-   - Provide an honest but constructive 2-3 sentence assessment
-   - For low scores, acknowledge challenges while being encouraging
-   - For high scores, acknowledge strengths while suggesting refinement
-   - Be specific about performance level (e.g., "strong", "adequate", "needs significant improvement")
+Scoring Interpretation Guidelines:
+- 90-100%: Exceptional cognitive performance
+- 80-89%: Strong problem-solving abilities  
+- 70-79%: Adequate analytical skills
+- 60-69%: Developing problem-solving capabilities
+- Below 60%: Significant improvement needed in analytical thinking
 
 # FORMAT
-Return your analysis as a JSON object with this exact structure:
+Return as JSON:
 {
-  "strengthCategories": ["category 1", "category 2", ...],
-  "weaknessCategories": ["category 1", "category 2", ...],
-  "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3", ...],
-  "performance": "A concise 2-3 sentence overview of the candidate's performance"
+  "overallPerformance": "Assessment of ${aptitudePercentage}% performance with specific score reference",
+  "cognitiveStrengths": [
+    "Strength based on performance level with score citation",
+    "Another strength supported by score data"
+  ],
+  "developmentAreas": [
+    "Area for improvement based on score gap with specific reference",
+    "Another development area supported by performance data"
+  ],
+  "roleAlignment": "How ${aptitudePercentage}% performance aligns with ${position} cognitive demands",
+  "recommendations": [
+    "Specific recommendation based on actual performance level",
+    "Development suggestion tied to score data"
+  ]
 }
-
-IMPORTANT NOTES:
-- If the candidate performed poorly (below 40%), it's appropriate to have an empty or very small strengthCategories array
-- Your analysis should be proportionate to the score - don't artificially inflate strengths for poor performers
-- Be realistic but constructive - identify genuine issues without being discouraging
-- Base your analysis only on the given score and categories, don't make assumptions about specific questions answered
 `;
 
-    const text = await makeGeminiRequest(promptTemplate, 0.3);
-    const analysis = parseJsonResponse(text);
+    const text = await makeGeminiRequest(promptTemplate, 0.2);
+    const analysisData = parseJsonResponse(text);
+    
+    // Validate that analysis includes score references
+    const validateScoreReference = (text: string) => {
+      return text && (text.includes('%') || text.includes('/') || text.includes('score') || text.includes(aptitudeScore.toString()));
+    };
+    
+    // Ensure all analysis components reference the actual score
+    const overallPerformance = validateScoreReference(analysisData.overallPerformance) 
+      ? analysisData.overallPerformance 
+      : `Achieved ${aptitudePercentage}% (${aptitudeScore}/${aptitudeTotal}) on aptitude assessment`;
+    
+    const cognitiveStrengths = (analysisData.cognitiveStrengths || [])
+      .filter(validateScoreReference)
+      .slice(0, 2);
+    
+    const developmentAreas = (analysisData.developmentAreas || [])
+      .filter(validateScoreReference)
+      .slice(0, 2);
+    
+    const roleAlignment = validateScoreReference(analysisData.roleAlignment)
+      ? analysisData.roleAlignment
+      : `${aptitudePercentage}% aptitude performance provides baseline cognitive capability assessment for ${position} role`;
+    
+    const recommendations = (analysisData.recommendations || [])
+      .filter(validateScoreReference)
+      .slice(0, 3);
+    
+    // Add fallbacks if no valid evidence-based content
+    if (cognitiveStrengths.length === 0) {
+      if (aptitudePercentage >= 70) {
+        cognitiveStrengths.push(`Demonstrated solid problem-solving ability with ${aptitudePercentage}% assessment performance`);
+      } else {
+        cognitiveStrengths.push(`Completed aptitude assessment achieving ${aptitudeScore}/${aptitudeTotal} points`);
+      }
+    }
+    
+    if (developmentAreas.length === 0) {
+      const gapPoints = aptitudeTotal - aptitudeScore;
+      if (gapPoints > 0) {
+        developmentAreas.push(`Opportunity to improve analytical performance by ${gapPoints} points (${100 - aptitudePercentage}% improvement potential)`);
+      }
+    }
+    
+    if (recommendations.length === 0) {
+      recommendations.push(`Further assessment may be needed to supplement ${aptitudePercentage}% aptitude performance data`);
+    }
     
     return {
-      strengthCategories: analysis.strengthCategories || [],
-      weaknessCategories: analysis.weaknessCategories || ["Fundamental aptitude concepts"],
-      recommendations: analysis.recommendations || ["Focus on building core knowledge and skills"],
-      performance: analysis.performance || "The assessment indicates areas that need improvement."
+      overallPerformance,
+      cognitiveStrengths,
+      developmentAreas,
+      roleAlignment,
+      recommendations
     };
   } catch (error) {
     console.error("Error generating aptitude analysis:", error);
     return {
-      strengthCategories: ["Analysis failed"],
-      weaknessCategories: ["Analysis failed"],
-      recommendations: ["Unable to generate recommendations at this time"],
-      performance: "An error occurred during analysis"
+      overallPerformance: "Unable to analyze aptitude performance due to insufficient data",
+      cognitiveStrengths: ["Aptitude assessment data not available for analysis"],
+      developmentAreas: ["Cannot determine development needs without assessment data"],
+      roleAlignment: "Role alignment cannot be assessed without aptitude performance data",
+      recommendations: ["Complete aptitude assessment needed for meaningful analysis"]
     };
   }
 };

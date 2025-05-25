@@ -1,99 +1,113 @@
 
 import { WritingPromptItem } from "@/components/AssessmentManager";
-import { DetailedAnalysis } from "../types";
+import { DetailedWritingAnalysis } from "../types";
 import { makeGeminiRequest, parseJsonResponse } from "../config";
 
-export const generateDetailedWritingAnalysis = async (assessmentData: any): Promise<DetailedAnalysis> => {
+export const generateDetailedWritingAnalysis = async (assessmentData: any): Promise<DetailedWritingAnalysis> => {
   try {
     console.log("Generating detailed writing analysis for:", assessmentData.candidateName);
     
-    if (!assessmentData.completedPrompts || assessmentData.completedPrompts.length === 0) {
-      console.error("No writing samples found for analysis");
-      throw new Error("No writing samples found for analysis");
+    const writingResponses = assessmentData.completedPrompts || [];
+    const writingScores = assessmentData.writingScores || [];
+    const position = assessmentData.candidatePosition || "Not specified";
+    
+    if (!writingResponses || writingResponses.length === 0) {
+      throw new Error("No writing responses available for analysis");
     }
     
-    // Check if we already have a detailed analysis (to avoid duplicating work)
-    if (assessmentData.detailedWritingAnalysis) {
-      console.log("Detailed writing analysis already exists, returning existing analysis");
-      return assessmentData.detailedWritingAnalysis;
-    }
-    
-    const writingResponses = assessmentData.completedPrompts
-      .map((prompt: WritingPromptItem) => `Prompt: ${prompt.prompt}\nResponse: ${prompt.response}`)
-      .join("\n\n---\n\n");
-    
-    // If the writing responses are too short, throw error
-    if (writingResponses.length < 50) {
-      console.error("Writing samples are too short for meaningful analysis");
-      throw new Error("Writing samples are too short for meaningful analysis");
-    }
-    
-    console.log(`Preparing analysis request with ${writingResponses.length} characters of writing samples`);
+    const responsesWithScores = writingResponses.map((prompt: WritingPromptItem, index: number) => {
+      const score = writingScores[index];
+      return `
+PROMPT ${index + 1}: ${prompt.prompt}
+RESPONSE: ${prompt.response}
+${score ? `SCORE: ${score.score}/5
+FEEDBACK: ${score.feedback}` : 'Not yet scored'}
+---`;
+    }).join('\n');
     
     const promptTemplate = `
-You are an objective writing analyst for job candidate assessments. Your task is to analyze writing samples in a consistent, fair manner without making assumptions about the candidate.
+You are a professional writing analyst for job candidate assessments. Your task is to analyze writing samples based ONLY on the provided text evidence.
 
-# WRITING SAMPLES
-${writingResponses}
+# WRITING ASSESSMENT DATA
+Position Applied For: ${position}
+Number of Writing Samples: ${writingResponses.length}
 
-# ANALYSIS INSTRUCTIONS
-Analyze only the text provided above. Focus on writing style, vocabulary level, and critical thinking demonstrated in the responses.
+${responsesWithScores}
 
-Analyze ONLY these specific aspects:
-1. Writing style - formal, technical, conversational, etc.
-2. Vocabulary level - basic, intermediate, advanced
-3. Critical thinking ability - as demonstrated through logical reasoning, analysis, and problem-solving in writing
-4. Three specific strength areas 
-5. Three specific areas for improvement
+# ANALYSIS REQUIREMENTS
+CRITICAL: Base ALL analysis ONLY on evidence visible in the writing samples above. You must:
 
-Be factual and objective. Base ALL analysis on the text samples provided.
-DO NOT make assumptions about the candidate's background, personality, or characteristics that cannot be directly observed in the writing.
+1. **Evidence-Based Analysis**: Every observation must reference specific text from the responses
+2. **Quote Requirement**: Include actual quotes or paraphrases from responses to support each point
+3. **No Assumptions**: Do not infer abilities, personality traits, or characteristics not demonstrated in the text
+4. **Measurable Only**: Focus only on observable writing characteristics (vocabulary, structure, clarity, etc.)
+5. **Position Relevance**: Connect observations to ${position} role requirements only when directly supported by writing evidence
+
+For each analysis point:
+- State the observation
+- Provide specific textual evidence (quote or detailed reference)
+- Explain how this evidence supports your conclusion
+- Rate confidence (0-100) based on consistency across all samples
+
+Do NOT analyze:
+- Personality traits not directly shown in communication style
+- Technical skills unless explicitly demonstrated in responses
+- Motivations or attitudes unless clearly expressed in text
+- Background or experience unless mentioned by candidate
 
 # FORMAT
-Return your analysis as a JSON object with this exact structure:
+Return as JSON with this structure:
 {
-  "writingStyle": "Description of writing style, 1-2 sentences only",
-  "vocabularyLevel": "Assessment of vocabulary level, 1-2 sentences only",
-  "criticalThinking": "Evaluation of critical thinking ability, 1-2 sentences only",
-  "strengthAreas": ["strength 1 - one brief sentence", "strength 2 - one brief sentence", "strength 3 - one brief sentence"],
-  "improvementAreas": ["improvement 1 - one brief sentence", "improvement 2 - one brief sentence", "improvement 3 - one brief sentence"]
+  "communicationStyle": {
+    "observation": "Specific writing characteristic observed",
+    "evidence": "Direct quote or specific reference from responses",
+    "confidence": confidence score 0-100
+  },
+  "technicalWriting": {
+    "observation": "Technical communication ability if demonstrated",
+    "evidence": "Specific examples from responses",
+    "confidence": confidence score 0-100
+  },
+  "clarity": {
+    "observation": "How clearly candidate expresses ideas",
+    "evidence": "Examples of clear or unclear communication",
+    "confidence": confidence score 0-100
+  },
+  "roleAlignment": {
+    "observation": "How writing demonstrates ${position}-relevant skills",
+    "evidence": "Specific examples from responses",
+    "confidence": confidence score 0-100
+  },
+  "overallAssessment": "Summary based only on demonstrated writing abilities with specific evidence citations"
 }
 `;
 
-    console.log("Sending request to Gemini API...");
     const text = await makeGeminiRequest(promptTemplate, 0.2);
+    const analysisData = parseJsonResponse(text);
     
-    if (!text || text.trim() === '') {
-      console.error("Empty response received from Gemini API");
-      throw new Error("Empty response received from Gemini API");
+    // Validate that analysis includes evidence
+    const requiredFields = ['communicationStyle', 'technicalWriting', 'clarity', 'roleAlignment', 'overallAssessment'];
+    for (const field of requiredFields) {
+      if (!analysisData[field]) {
+        console.warn(`Missing required field: ${field}`);
+      }
     }
     
-    console.log("Received response, parsing JSON...");
-    const analysis = parseJsonResponse(text);
-    
-    if (!analysis) {
-      console.error("Failed to parse JSON response:", text);
-      throw new Error("Failed to parse response from Gemini API - invalid format received");
-    }
-    
-    // Validate that we have all the required fields
-    if (!analysis.writingStyle || !analysis.vocabularyLevel || !analysis.criticalThinking) {
-      console.error("Missing critical fields in analysis:", analysis);
-      throw new Error("Incomplete analysis result received from Gemini API");
-    }
-    
-    // Log success for debugging
-    console.log("Successfully generated writing analysis:", analysis);
-    
-    return { 
-      writingStyle: analysis.writingStyle || "Unable to analyze writing style",
-      vocabularyLevel: analysis.vocabularyLevel || "Unable to analyze vocabulary level",
-      criticalThinking: analysis.criticalThinking || "Unable to analyze critical thinking",
-      strengthAreas: analysis.strengthAreas || ["No specific strengths identified"],
-      improvementAreas: analysis.improvementAreas || ["No specific areas for improvement identified"]
+    return {
+      communicationStyle: analysisData.communicationStyle || { observation: "Insufficient data", evidence: "No evidence available", confidence: 0 },
+      technicalWriting: analysisData.technicalWriting || { observation: "Not assessed", evidence: "No technical content found", confidence: 0 },
+      clarity: analysisData.clarity || { observation: "Cannot assess", evidence: "Insufficient writing samples", confidence: 0 },
+      roleAlignment: analysisData.roleAlignment || { observation: "Cannot determine", evidence: "No role-specific content", confidence: 0 },
+      overallAssessment: analysisData.overallAssessment || "Insufficient data for comprehensive writing analysis"
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error generating detailed writing analysis:", error);
-    throw new Error(`Writing analysis failed: ${error.message}`);
+    return {
+      communicationStyle: { observation: "Analysis failed", evidence: "Error occurred during analysis", confidence: 0 },
+      technicalWriting: { observation: "Analysis failed", evidence: "Error occurred during analysis", confidence: 0 },
+      clarity: { observation: "Analysis failed", evidence: "Error occurred during analysis", confidence: 0 },
+      roleAlignment: { observation: "Analysis failed", evidence: "Error occurred during analysis", confidence: 0 },
+      overallAssessment: "Unable to complete writing analysis due to technical error"
+    };
   }
 };
