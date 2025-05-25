@@ -1,9 +1,8 @@
-
 import { WritingPromptItem } from "@/components/AssessmentManager";
-import { DetailedWritingAnalysis } from "../types";
+import { DetailedAnalysis } from "../types";
 import { makeGeminiRequest, parseJsonResponse } from "../config";
 
-export const generateDetailedWritingAnalysis = async (assessmentData: any): Promise<DetailedWritingAnalysis> => {
+export const generateDetailedWritingAnalysis = async (assessmentData: any): Promise<DetailedAnalysis> => {
   try {
     console.log("Generating detailed writing analysis for:", assessmentData.candidateName);
     
@@ -58,27 +57,11 @@ Do NOT analyze:
 # FORMAT
 Return as JSON with this structure:
 {
-  "communicationStyle": {
-    "observation": "Specific writing characteristic observed",
-    "evidence": "Direct quote or specific reference from responses",
-    "confidence": confidence score 0-100
-  },
-  "technicalWriting": {
-    "observation": "Technical communication ability if demonstrated",
-    "evidence": "Specific examples from responses",
-    "confidence": confidence score 0-100
-  },
-  "clarity": {
-    "observation": "How clearly candidate expresses ideas",
-    "evidence": "Examples of clear or unclear communication",
-    "confidence": confidence score 0-100
-  },
-  "roleAlignment": {
-    "observation": "How writing demonstrates ${position}-relevant skills",
-    "evidence": "Specific examples from responses",
-    "confidence": confidence score 0-100
-  },
-  "overallAssessment": "Summary based only on demonstrated writing abilities with specific evidence citations"
+  "writingStyle": "Specific writing characteristics observed with evidence citations",
+  "vocabularyLevel": "Vocabulary assessment based on actual word usage with examples",
+  "criticalThinking": "Critical thinking demonstration with specific response references",
+  "strengthAreas": ["Specific strength with evidence", "Another strength with quotes"],
+  "improvementAreas": ["Specific improvement area with evidence", "Another area with examples"]
 }
 `;
 
@@ -86,7 +69,7 @@ Return as JSON with this structure:
     const analysisData = parseJsonResponse(text);
     
     // Validate that analysis includes evidence
-    const requiredFields = ['communicationStyle', 'technicalWriting', 'clarity', 'roleAlignment', 'overallAssessment'];
+    const requiredFields = ['writingStyle', 'vocabularyLevel', 'criticalThinking', 'strengthAreas', 'improvementAreas'];
     for (const field of requiredFields) {
       if (!analysisData[field]) {
         console.warn(`Missing required field: ${field}`);
@@ -94,20 +77,20 @@ Return as JSON with this structure:
     }
     
     return {
-      communicationStyle: analysisData.communicationStyle || { observation: "Insufficient data", evidence: "No evidence available", confidence: 0 },
-      technicalWriting: analysisData.technicalWriting || { observation: "Not assessed", evidence: "No technical content found", confidence: 0 },
-      clarity: analysisData.clarity || { observation: "Cannot assess", evidence: "Insufficient writing samples", confidence: 0 },
-      roleAlignment: analysisData.roleAlignment || { observation: "Cannot determine", evidence: "No role-specific content", confidence: 0 },
-      overallAssessment: analysisData.overallAssessment || "Insufficient data for comprehensive writing analysis"
+      writingStyle: analysisData.writingStyle || "Insufficient data for writing style analysis",
+      vocabularyLevel: analysisData.vocabularyLevel || "Cannot assess vocabulary level from available samples",
+      criticalThinking: analysisData.criticalThinking || "Insufficient evidence for critical thinking assessment",
+      strengthAreas: analysisData.strengthAreas || ["Insufficient writing samples for strength identification"],
+      improvementAreas: analysisData.improvementAreas || ["Cannot determine improvement areas without more writing data"]
     };
   } catch (error) {
     console.error("Error generating detailed writing analysis:", error);
     return {
-      communicationStyle: { observation: "Analysis failed", evidence: "Error occurred during analysis", confidence: 0 },
-      technicalWriting: { observation: "Analysis failed", evidence: "Error occurred during analysis", confidence: 0 },
-      clarity: { observation: "Analysis failed", evidence: "Error occurred during analysis", confidence: 0 },
-      roleAlignment: { observation: "Analysis failed", evidence: "Error occurred during analysis", confidence: 0 },
-      overallAssessment: "Unable to complete writing analysis due to technical error"
+      writingStyle: "Analysis failed due to technical error",
+      vocabularyLevel: "Analysis failed due to technical error", 
+      criticalThinking: "Analysis failed due to technical error",
+      strengthAreas: ["Unable to analyze strengths due to technical error"],
+      improvementAreas: ["Unable to analyze improvement areas due to technical error"]
     };
   }
 };

@@ -47,16 +47,15 @@ Scoring Interpretation Guidelines:
 # FORMAT
 Return as JSON:
 {
-  "overallPerformance": "Assessment of ${aptitudePercentage}% performance with specific score reference",
-  "cognitiveStrengths": [
+  "performance": "Assessment of ${aptitudePercentage}% performance with specific score reference",
+  "strengthCategories": [
     "Strength based on performance level with score citation",
     "Another strength supported by score data"
   ],
-  "developmentAreas": [
+  "weaknessCategories": [
     "Area for improvement based on score gap with specific reference",
     "Another development area supported by performance data"
   ],
-  "roleAlignment": "How ${aptitudePercentage}% performance aligns with ${position} cognitive demands",
   "recommendations": [
     "Specific recommendation based on actual performance level",
     "Development suggestion tied to score data"
@@ -73,39 +72,35 @@ Return as JSON:
     };
     
     // Ensure all analysis components reference the actual score
-    const overallPerformance = validateScoreReference(analysisData.overallPerformance) 
-      ? analysisData.overallPerformance 
+    const performance = validateScoreReference(analysisData.performance) 
+      ? analysisData.performance 
       : `Achieved ${aptitudePercentage}% (${aptitudeScore}/${aptitudeTotal}) on aptitude assessment`;
     
-    const cognitiveStrengths = (analysisData.cognitiveStrengths || [])
+    const strengthCategories = (analysisData.strengthCategories || [])
       .filter(validateScoreReference)
       .slice(0, 2);
     
-    const developmentAreas = (analysisData.developmentAreas || [])
+    const weaknessCategories = (analysisData.weaknessCategories || [])
       .filter(validateScoreReference)
       .slice(0, 2);
-    
-    const roleAlignment = validateScoreReference(analysisData.roleAlignment)
-      ? analysisData.roleAlignment
-      : `${aptitudePercentage}% aptitude performance provides baseline cognitive capability assessment for ${position} role`;
     
     const recommendations = (analysisData.recommendations || [])
       .filter(validateScoreReference)
       .slice(0, 3);
     
     // Add fallbacks if no valid evidence-based content
-    if (cognitiveStrengths.length === 0) {
+    if (strengthCategories.length === 0) {
       if (aptitudePercentage >= 70) {
-        cognitiveStrengths.push(`Demonstrated solid problem-solving ability with ${aptitudePercentage}% assessment performance`);
+        strengthCategories.push(`Demonstrated solid problem-solving ability with ${aptitudePercentage}% assessment performance`);
       } else {
-        cognitiveStrengths.push(`Completed aptitude assessment achieving ${aptitudeScore}/${aptitudeTotal} points`);
+        strengthCategories.push(`Completed aptitude assessment achieving ${aptitudeScore}/${aptitudeTotal} points`);
       }
     }
     
-    if (developmentAreas.length === 0) {
+    if (weaknessCategories.length === 0) {
       const gapPoints = aptitudeTotal - aptitudeScore;
       if (gapPoints > 0) {
-        developmentAreas.push(`Opportunity to improve analytical performance by ${gapPoints} points (${100 - aptitudePercentage}% improvement potential)`);
+        weaknessCategories.push(`Opportunity to improve analytical performance by ${gapPoints} points (${100 - aptitudePercentage}% improvement potential)`);
       }
     }
     
@@ -114,19 +109,17 @@ Return as JSON:
     }
     
     return {
-      overallPerformance,
-      cognitiveStrengths,
-      developmentAreas,
-      roleAlignment,
+      performance,
+      strengthCategories,
+      weaknessCategories,
       recommendations
     };
   } catch (error) {
     console.error("Error generating aptitude analysis:", error);
     return {
-      overallPerformance: "Unable to analyze aptitude performance due to insufficient data",
-      cognitiveStrengths: ["Aptitude assessment data not available for analysis"],
-      developmentAreas: ["Cannot determine development needs without assessment data"],
-      roleAlignment: "Role alignment cannot be assessed without aptitude performance data",
+      performance: "Unable to analyze aptitude performance due to insufficient data",
+      strengthCategories: ["Aptitude assessment data not available for analysis"],
+      weaknessCategories: ["Cannot determine development needs without assessment data"],
       recommendations: ["Complete aptitude assessment needed for meaningful analysis"]
     };
   }

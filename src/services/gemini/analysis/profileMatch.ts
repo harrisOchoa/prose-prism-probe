@@ -73,9 +73,7 @@ Return as JSON:
     "Specific skill gap with assessment evidence (low score area, writing weakness, etc.)",
     "Another gap supported by assessment data",
     "Third gap with specific performance evidence"
-  ],
-  "evidenceStrength": "Assessment of how much data supports this analysis (High/Medium/Low)",
-  "dataLimitations": "What role requirements cannot be assessed with available data"
+  ]
 }
 `;
 
@@ -99,9 +97,7 @@ Return as JSON:
         position: position,
         matchPercentage: 0,
         keyMatches: [`Limited assessment data available for ${position} role evaluation`],
-        keyGaps: ["Insufficient assessment data to identify specific skill gaps"],
-        evidenceStrength: "Low",
-        dataLimitations: "Assessment does not cover enough role-specific competencies for reliable match analysis"
+        keyGaps: ["Insufficient assessment data to identify specific skill gaps"]
       };
     }
     
@@ -109,9 +105,7 @@ Return as JSON:
       position: profileData.position || position,
       matchPercentage: Math.min(100, Math.max(0, profileData.matchPercentage || 0)),
       keyMatches: validMatches.length > 0 ? validMatches : ["No evidence-based matches identified"],
-      keyGaps: validGaps.length > 0 ? validGaps : ["No evidence-based gaps identified"],
-      evidenceStrength: profileData.evidenceStrength || "Low",
-      dataLimitations: profileData.dataLimitations || "Limited assessment scope for role-specific analysis"
+      keyGaps: validGaps.length > 0 ? validGaps : ["No evidence-based gaps identified"]
     };
   } catch (error) {
     console.error("Error generating profile match analysis:", error);
@@ -119,9 +113,7 @@ Return as JSON:
       position: "Analysis failed",
       matchPercentage: 0,
       keyMatches: ["Unable to analyze role match due to technical error"],
-      keyGaps: ["Unable to analyze role gaps due to technical error"],
-      evidenceStrength: "None",
-      dataLimitations: "Analysis could not be completed"
+      keyGaps: ["Unable to analyze role gaps due to technical error"]
     };
   }
 };
