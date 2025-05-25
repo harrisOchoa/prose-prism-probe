@@ -1,4 +1,3 @@
-
 import { AssessmentData } from "@/types/assessment";
 import { updateAssessmentAnalysis } from "@/firebase/services/assessment";
 import { AnalysisStatus } from "@/firebase/services/assessment/types";
@@ -6,6 +5,9 @@ import { AnalysisProgress } from "./types";
 import { evaluateWritingEnhanced } from "./steps/evaluateWritingEnhanced";
 import { generateBasicInsightsEnhanced } from "./steps/generateBasicInsightsEnhanced";
 import { generateAdvancedAnalysisEnhanced } from "./steps/generateAdvancedAnalysisEnhanced";
+
+// Export the type for external use
+export type { AnalysisProgress } from "./types";
 
 /**
  * Enhanced automatic analysis with AI fallback
