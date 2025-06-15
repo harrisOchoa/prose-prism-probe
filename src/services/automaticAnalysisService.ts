@@ -1,5 +1,7 @@
 
 // This file now re-exports the unified analysis service for backward compatibility
+import { unifiedAnalysisService } from './analysis/UnifiedAnalysisService';
+
 export { unifiedAnalysisService as automaticAnalysisService } from './analysis/UnifiedAnalysisService';
 export { unifiedAnalysisService } from './analysis/UnifiedAnalysisService';
 export type { AnalysisProgress, AnalysisRequest } from './analysis/UnifiedAnalysisService';
