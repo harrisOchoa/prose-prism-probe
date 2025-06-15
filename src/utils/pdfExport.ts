@@ -1,10 +1,12 @@
+
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { logger } from '@/services/logging';
 
 // Enhanced PDF export with professional formatting
 export const exportToPdf = async (elementId: string, filename: string) => {
   try {
-    console.log(`Starting PDF export for element: ${elementId}`);
+    logger.info('PDF_EXPORT', 'Starting PDF export', { elementId, filename });
     
     // Get the content element
     const element = document.getElementById(elementId);
@@ -92,18 +94,17 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     });
 
     // Log what we're capturing
-    console.log(`PDF Export - Content prepared, capturing with html2canvas...`);
-    
-    // Log number of elements being captured
-    console.log(`PDF Export - Elements in clone: ${clone.querySelectorAll('*').length}`);
-    console.log(`PDF Export - Visible tabpanels in clone: ${clone.querySelectorAll('[role="tabpanel"]:not([style*="display: none"])').length}`);
-    console.log(`PDF Export - Section containers: ${clone.querySelectorAll('.pdf-section-container').length}`);
+    logger.debug('PDF_EXPORT', 'Content prepared, capturing with html2canvas', {
+      elementsInClone: clone.querySelectorAll('*').length,
+      visibleTabpanels: clone.querySelectorAll('[role="tabpanel"]:not([style*="display: none"])').length,
+      sectionContainers: clone.querySelectorAll('.pdf-section-container').length
+    });
     
     // Create canvas from the wrapper with high resolution
     const canvas = await html2canvas(wrapper, {
       scale: scale,
       useCORS: true,
-      logging: true,
+      logging: false, // Disable html2canvas logging
       backgroundColor: '#ffffff',
       ignoreElements: (element) => {
         // Don't ignore elements marked as visible for PDF
@@ -113,7 +114,6 @@ export const exportToPdf = async (elementId: string, filename: string) => {
             element.classList.contains('pdf-section-container') ||
             element.classList.contains('pdf-section-divider')
         )) {
-          console.log(`PDF Export - Including element due to visibility class: `, element.tagName, element.className);
           return false;
         }
         
@@ -128,7 +128,6 @@ export const exportToPdf = async (elementId: string, filename: string) => {
           const isInsidePdfContent = !!element.closest('.pdf-content, .visible-for-pdf, .pdf-show, .pdf-section-container');
           
           if (isInsidePdfContent) {
-            console.log(`PDF Export - Including tabpanel due to pdf-content parent: `, element.tagName, element.getAttribute('value') || '');
             return false;
           }
         }
@@ -143,7 +142,10 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       }
     });
     
-    console.log(`PDF Export - Canvas generated, size: ${canvas.width}x${canvas.height}`);
+    logger.info('PDF_EXPORT', 'Canvas generated', { 
+      canvasWidth: canvas.width, 
+      canvasHeight: canvas.height 
+    });
     
     // Clean up - remove the wrapper from DOM
     document.body.removeChild(wrapper);
@@ -186,7 +188,7 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     const numSectionContainers = document.querySelectorAll('.pdf-section-container').length;
     const totalPages = Math.max(Math.ceil(imgHeight / availableHeight), numSectionContainers + 2);
     
-    console.log(`PDF Export - Creating ${totalPages} page(s)`);
+    logger.info('PDF_EXPORT', 'Creating PDF', { totalPages });
     
     // Create PDF document
     const pdf = new jsPDF({
@@ -212,7 +214,6 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     const sectionContainers = document.querySelectorAll('.pdf-section-container');
     
     if (sectionContainers.length > 0) {
-      console.log(`Found ${sectionContainers.length} section containers for page breaks`);
       // Let's use the number of sections to determine page count
       // Plus 2 for cover page and table of contents
       const sectionPageCount = sectionContainers.length + 2;
@@ -316,13 +317,13 @@ export const exportToPdf = async (elementId: string, filename: string) => {
       }
     }
     
-    console.log(`PDF Export - Saving PDF as ${filename}.pdf`);
+    logger.info('PDF_EXPORT', 'PDF export completed successfully', { filename: `${filename}.pdf` });
     
     // Save the PDF
     pdf.save(`${filename}.pdf`);
     return true;
   } catch (error) {
-    console.error('Error exporting to PDF:', error);
+    logger.error('PDF_EXPORT', 'PDF export failed', error);
     return false;
   }
 };
