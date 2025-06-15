@@ -1,11 +1,14 @@
 
 import React from "react";
 import { TabsContent } from "@/components/ui/tabs";
-import OverviewTab from "@/components/assessment/tabs/OverviewTab";
-import { AptitudeTab } from "@/components/assessment/tabs/AptitudeTab";
-import WritingTab from "@/components/assessment/tabs/WritingTab";
-import AdvancedAnalysisTab from "@/components/assessment/AdvancedAnalysisTab";
-import CandidateComparison from "@/components/assessment/tabs/ComparisonTab";
+import LazyLoader from "@/components/common/LazyLoader";
+import { 
+  LazyOverviewTab,
+  LazyAptitudeTab, 
+  LazyWritingTab,
+  LazyAdvancedAnalysisTab,
+  LazyCandidateComparison 
+} from "./lazy/LazyTabComponents";
 
 interface AssessmentTabsContentProps {
   assessmentData: any;
@@ -33,50 +36,60 @@ const AssessmentTabsContent: React.FC<AssessmentTabsContentProps> = ({
   return (
     <div id="assessment-content">
       <TabsContent value="overview" className="space-y-4 md:space-y-6">
-        <OverviewTab 
-          assessmentData={assessmentData}
-          generatingSummary={generatingSummary}
-          getAptitudeScorePercentage={calculations.getAptitudeScorePercentage}
-          getWritingScorePercentage={calculations.getWritingScorePercentage}
-          getOverallScore={calculations.getOverallScore}
-          getProgressColor={calculations.getProgressColor}
-        />
+        <LazyLoader>
+          <LazyOverviewTab 
+            assessmentData={assessmentData}
+            generatingSummary={generatingSummary}
+            getAptitudeScorePercentage={calculations.getAptitudeScorePercentage}
+            getWritingScorePercentage={calculations.getWritingScorePercentage}
+            getOverallScore={calculations.getOverallScore}
+            getProgressColor={calculations.getProgressColor}
+          />
+        </LazyLoader>
       </TabsContent>
       
       <TabsContent value="aptitude" className="space-y-3 md:space-y-4">
-        <AptitudeTab 
-          assessmentData={assessmentData}
-          getAptitudeScorePercentage={calculations.getAptitudeScorePercentage}
-          generateAdvancedAnalysis={generateAdvancedAnalysis}
-          generatingAnalysis={generatingAnalysis}
-        />
+        <LazyLoader>
+          <LazyAptitudeTab 
+            assessmentData={assessmentData}
+            getAptitudeScorePercentage={calculations.getAptitudeScorePercentage}
+            generateAdvancedAnalysis={generateAdvancedAnalysis}
+            generatingAnalysis={generatingAnalysis}
+          />
+        </LazyLoader>
       </TabsContent>
       
       <TabsContent value="writing" className="space-y-3 md:space-y-4">
-        <WritingTab 
-          assessmentData={assessmentData}
-          getScoreColor={calculations.getScoreColor}
-          getScoreBgColor={calculations.getScoreBgColor}
-          getScoreLabel={calculations.getScoreLabel}
-        />
+        <LazyLoader>
+          <LazyWritingTab 
+            assessmentData={assessmentData}
+            getScoreColor={calculations.getScoreColor}
+            getScoreBgColor={calculations.getScoreBgColor}
+            getScoreLabel={calculations.getScoreLabel}
+          />
+        </LazyLoader>
       </TabsContent>
       
       <TabsContent value="advanced" className="space-y-3 md:space-y-4">
-        <AdvancedAnalysisTab 
-          assessmentData={assessmentData}
-          getProgressColor={calculations.getProgressColor}
-          generateAdvancedAnalysis={generateAdvancedAnalysis}
-          generatingAnalysis={generatingAnalysis || {}}
-        />
+        <LazyLoader>
+          <LazyAdvancedAnalysisTab 
+            assessmentData={assessmentData}
+            getProgressColor={calculations.getProgressColor}
+            generateAdvancedAnalysis={generateAdvancedAnalysis}
+            generatingAnalysis={generatingAnalysis || {}}
+          />
+        </LazyLoader>
       </TabsContent>
       
       <TabsContent value="comparison" className="space-y-3 md:space-y-4">
-        <CandidateComparison 
-          assessmentData={assessmentData}
-          getAptitudeScorePercentage={calculations.getAptitudeScorePercentage}
-          getWritingScorePercentage={calculations.getWritingScorePercentage}
-          getOverallScore={calculations.getOverallScore}
-        />
+        <LazyLoader>
+          <LazyCandidateComparison 
+            assessmentData={assessmentData}
+            getAptitudeScorePercentage={calculations.getAptitudeScorePercentage}
+            getWritingScorePercentage={calculations.getWritingScorePercentage}
+            getOverallScore={calculations.getOverallScore}
+          />
+        </LazyLoader>
       </TabsContent>
     </div>
   );
