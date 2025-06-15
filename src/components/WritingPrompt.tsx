@@ -1,3 +1,3 @@
 
-import { WritingPrompt } from "./writing";
-export default WritingPrompt;
+import OptimizedWritingPrompt from "./writing/OptimizedWritingPrompt";
+export default OptimizedWritingPrompt;

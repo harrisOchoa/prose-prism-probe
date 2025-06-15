@@ -1,6 +1,6 @@
 
 import React from "react";
-import AssessmentDetailsContainer from "@/components/assessment-details";
+import OptimizedAssessmentDetailsContainer from "@/components/assessment-details/OptimizedAssessmentDetailsContainer";
 
 interface AssessmentDetailsProps {
   assessment: any;
@@ -9,9 +9,9 @@ interface AssessmentDetailsProps {
   refreshAssessment?: () => Promise<any>;
 }
 
-// This component is now just a wrapper around the refactored components
+// This component now uses the optimized version with React.memo and performance improvements
 const AssessmentDetails: React.FC<AssessmentDetailsProps> = (props) => {
-  return <AssessmentDetailsContainer {...props} />;
+  return <OptimizedAssessmentDetailsContainer {...props} />;
 };
 
 export default AssessmentDetails;
