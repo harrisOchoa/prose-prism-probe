@@ -1,3 +1,4 @@
+
 import { logger } from '../logging';
 import { aiServiceManager } from '../ai/AIServiceManager';
 import { requestDeduplicator } from './RequestDeduplicator';
@@ -61,7 +62,7 @@ class UnifiedAnalysisService {
     const cacheKey = `${request.assessmentId}_${JSON.stringify(request.assessmentData).slice(0, 100)}`;
     
     logger.analysisStart(request.assessmentId, 'unified');
-    performanceMonitor.startOperation(`analysis_${requestId}`);
+    performanceMonitor.startTimer(`analysis_${requestId}`);
 
     // Check cache first
     const cached = this.getFromCache(cacheKey);
@@ -107,9 +108,9 @@ class UnifiedAnalysisService {
         currentStep = 'Evaluating writing responses';
         logger.info('ANALYSIS', currentStep, { promptCount: assessmentData.completedPrompts.length });
         
-        const writingScores = await this.evaluateWriting(assessmentData.completedPrompts);
-        results.writingScores = writingScores;
-        results.overallWritingScore = this.calculateOverallScore(writingScores);
+        const writingResponse = await this.evaluateWriting(assessmentData.completedPrompts);
+        results.writingScores = writingResponse;
+        results.overallWritingScore = this.calculateOverallScore(writingResponse);
       }
 
       // Step 2: Generate insights
@@ -132,8 +133,8 @@ class UnifiedAnalysisService {
       const cacheKey = `${assessmentId}_${JSON.stringify(assessmentData).slice(0, 100)}`;
       this.setCache(cacheKey, results, 300000); // 5 minutes TTL
 
-      const duration = performanceMonitor.endOperation(`analysis_${requestId!}`);
-      logger.analysisComplete(assessmentId, 'unified', duration);
+      const duration = performanceMonitor.endTimer(`analysis_${requestId!}`);
+      logger.analysisComplete(assessmentId, 'unified', duration || 0);
 
       return {
         status: 'completed',
@@ -143,7 +144,7 @@ class UnifiedAnalysisService {
 
     } catch (error: any) {
       logger.analysisError(assessmentId, 'unified', error);
-      performanceMonitor.endOperation(`analysis_${requestId!}`);
+      performanceMonitor.endTimer(`analysis_${requestId!}`);
       
       return {
         status: 'failed',
@@ -158,14 +159,22 @@ class UnifiedAnalysisService {
       logger.debug('ANALYSIS', 'Starting writing evaluation', { promptCount: prompts.length });
       
       const healthStatus = aiServiceManager.getHealthStatus();
-      if (!healthStatus.isHealthy) {
-        throw new Error(`AI service not available: ${healthStatus.issues.join(', ')}`);
+      const isHealthy = Object.values(healthStatus).some(status => status === true);
+      if (!isHealthy) {
+        const issues = Object.entries(healthStatus)
+          .filter(([_, status]) => !status)
+          .map(([name, _]) => `${name} unavailable`);
+        throw new Error(`AI service not available: ${issues.join(', ')}`);
       }
 
-      const results = await aiServiceManager.evaluateWriting(prompts);
-      logger.debug('ANALYSIS', 'Writing evaluation completed', { resultCount: results.length });
+      const response = await aiServiceManager.evaluateWriting(prompts);
+      if (!response.success || !response.data) {
+        throw new Error(`Writing evaluation failed: ${response.error || 'Unknown error'}`);
+      }
       
-      return results;
+      logger.debug('ANALYSIS', 'Writing evaluation completed', { resultCount: response.data.length });
+      
+      return response.data;
     } catch (error: any) {
       logger.error('ANALYSIS', 'Writing evaluation failed', error);
       throw error;
@@ -176,10 +185,14 @@ class UnifiedAnalysisService {
     try {
       logger.debug('ANALYSIS', 'Generating candidate insights');
       
-      const insights = await aiServiceManager.generateInsights(assessmentData, analysisResults);
+      const response = await aiServiceManager.generateSummary(assessmentData);
+      if (!response.success || !response.data) {
+        throw new Error(`Insights generation failed: ${response.error || 'Unknown error'}`);
+      }
+      
       logger.debug('ANALYSIS', 'Insights generation completed');
       
-      return insights;
+      return response.data;
     } catch (error: any) {
       logger.error('ANALYSIS', 'Insights generation failed', error);
       throw error;
@@ -190,7 +203,31 @@ class UnifiedAnalysisService {
     try {
       logger.debug('ANALYSIS', 'Generating advanced analysis');
       
-      const analysis = await aiServiceManager.generateAdvancedAnalysis(assessmentData, basicResults);
+      // Generate multiple types of advanced analysis
+      const [
+        strengthsWeaknesses,
+        writingAnalysis,
+        personalityInsights
+      ] = await Promise.allSettled([
+        aiServiceManager.generateStrengthsWeaknesses(assessmentData),
+        aiServiceManager.generateDetailedWritingAnalysis(assessmentData),
+        aiServiceManager.generatePersonalityInsights(assessmentData)
+      ]);
+
+      const analysis: any = {};
+
+      if (strengthsWeaknesses.status === 'fulfilled' && strengthsWeaknesses.value.success) {
+        analysis.strengthsWeaknesses = strengthsWeaknesses.value.data;
+      }
+
+      if (writingAnalysis.status === 'fulfilled' && writingAnalysis.value.success) {
+        analysis.writingAnalysis = writingAnalysis.value.data;
+      }
+
+      if (personalityInsights.status === 'fulfilled' && personalityInsights.value.success) {
+        analysis.personalityInsights = personalityInsights.value.data;
+      }
+      
       logger.debug('ANALYSIS', 'Advanced analysis completed');
       
       return analysis;
@@ -230,14 +267,19 @@ class UnifiedAnalysisService {
     });
   }
 
-  getHealthStatus() {
+  getHealthStatus(): HealthStatus {
     const aiHealth = aiServiceManager.getHealthStatus();
     const cacheSize = this.cache.size;
     const queueSize = this.processingQueue.size;
     
+    const isHealthy = Object.values(aiHealth).some(status => status === true);
+    const issues = Object.entries(aiHealth)
+      .filter(([_, status]) => !status)
+      .map(([name, _]) => `${name} unavailable`);
+    
     return {
-      isHealthy: aiHealth.isHealthy,
-      services: aiHealth,
+      isHealthy,
+      services: { isHealthy, issues },
       cache: { size: cacheSize },
       queue: { size: queueSize }
     };
