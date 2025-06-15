@@ -1,32 +1,71 @@
 
 import { useState, useEffect } from "react";
 import { Stage, WritingPromptItem } from "../types";
-import { AptitudeQuestion, getRandomAptitudeQuestions } from "@/utils/aptitudeQuestions";
-import { WritingPromptQuestion } from "@/utils/questionBank";
 import { AntiCheatingMetrics } from "@/firebase/assessmentService";
 import { usePromptGeneration } from "./usePromptGeneration";
-
-const APTITUDE_QUESTIONS_COUNT = 30;
+import { useAssessmentData } from "./useAssessmentData";
+import { useAssessmentActions } from "./useAssessmentActions";
 
 export const useAssessmentState = () => {
   const [stage, setStage] = useState<Stage>(Stage.LANDING);
-  const [candidateName, setCandidateName] = useState("");
-  const [candidatePosition, setCandidatePosition] = useState("");
-  const [candidateSkills, setCandidateSkills] = useState("");
-  const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
-  const [selectedPromptIds, setSelectedPromptIds] = useState<number[]>([]);
-  
-  const [prompts, setPrompts] = useState<WritingPromptItem[]>([]);
-  const [aptitudeQuestions, setAptitudeQuestions] = useState<AptitudeQuestion[]>([]);
-  const [aptitudeAnswers, setAptitudeAnswers] = useState<number[]>([]);
-  const [aptitudeScore, setAptitudeScore] = useState(0);
-  const [antiCheatingMetrics, setAntiCheatingMetrics] = useState<AntiCheatingMetrics | undefined>(undefined);
   
   const { 
     availablePrompts, 
     isGeneratingPrompts, 
     generatePrompts 
   } = usePromptGeneration();
+
+  const {
+    candidateName,
+    setCandidateName,
+    candidatePosition,
+    setCandidatePosition,
+    candidateSkills,
+    setCandidateSkills,
+    currentPromptIndex,
+    setCurrentPromptIndex,
+    selectedPromptIds,
+    setSelectedPromptIds,
+    prompts,
+    setPrompts,
+    aptitudeQuestions,
+    setAptitudeQuestions,
+    aptitudeAnswers,
+    setAptitudeAnswers,
+    aptitudeScore,
+    setAptitudeScore,
+    antiCheatingMetrics,
+    setAntiCheatingMetrics,
+    resetAssessmentData
+  } = useAssessmentData();
+
+  const {
+    startAssessment,
+    handleInfoSubmit,
+    handleStart,
+    handleAptitudeComplete,
+    handlePromptSelection,
+    restartAssessment
+  } = useAssessmentActions({
+    stage,
+    setStage,
+    availablePrompts,
+    generatePrompts,
+    prompts,
+    setPrompts,
+    currentPromptIndex,
+    setCurrentPromptIndex,
+    setSelectedPromptIds,
+    setAptitudeQuestions,
+    setAptitudeAnswers,
+    setAptitudeScore,
+    setAntiCheatingMetrics,
+    setCandidateName,
+    setCandidatePosition,
+    setCandidateSkills,
+    resetAssessmentData,
+    aptitudeQuestions
+  });
 
   // Set up session tracking
   useEffect(() => {
@@ -35,72 +74,6 @@ export const useAssessmentState = () => {
     sessionStorage.setItem("assessment-session-id", sessionId);
     console.log("Assessment session initialized:", sessionId);
   }, []);
-
-  const startAssessment = () => {
-    console.log("Starting new assessment");
-    setStage(Stage.INFO);
-  };
-
-  const handleInfoSubmit = async (name: string, position: string, skills: string) => {
-    console.log("Info submitted:", { name, position, skills });
-    setCandidateName(name);
-    setCandidatePosition(position);
-    setCandidateSkills(skills);
-
-    setStage(Stage.GENERATING_PROMPTS);
-    
-    try {
-      await generatePrompts(position, skills);
-    } finally {
-      setStage(Stage.INTRO);
-    }
-  };
-
-  const handleStart = () => {
-    console.log("Starting aptitude test");
-    const selectedAptitudeQuestions = getRandomAptitudeQuestions(APTITUDE_QUESTIONS_COUNT);
-    setAptitudeQuestions(selectedAptitudeQuestions);
-    console.log("Generated aptitude questions:", selectedAptitudeQuestions.length);
-
-    setStage(Stage.APTITUDE);
-  };
-
-  const handleAptitudeComplete = (answers: number[], score: number, metrics?: AntiCheatingMetrics) => {
-    // Store the answers and score
-    setAptitudeAnswers(answers);
-    setAptitudeScore(score);
-    
-    // Log the score to verify it's being saved
-    console.log("Aptitude test completed with score:", score, "out of", aptitudeQuestions.length);
-    console.log("Anti-cheating metrics provided:", !!metrics);
-    
-    // Save anti-cheating metrics if provided
-    if (metrics) {
-      console.log("Saving anti-cheating metrics:", metrics);
-      setAntiCheatingMetrics(metrics);
-    }
-    
-    setStage(Stage.SELECT_PROMPTS);
-    setPrompts([]);
-    setSelectedPromptIds([]);
-    setCurrentPromptIndex(0);
-  };
-
-  const handlePromptSelection = (chosenPromptIds: number[]) => {
-    console.log("Selected prompt IDs:", chosenPromptIds);
-    const selectedQuestions = availablePrompts.filter(q => chosenPromptIds.includes(q.id));
-    const initialPrompts: WritingPromptItem[] = selectedQuestions.map(q => ({
-      ...q,
-      response: "",
-      wordCount: 0
-    }));
-    setPrompts(initialPrompts);
-    setCurrentPromptIndex(0);
-    setSelectedPromptIds(chosenPromptIds);
-    console.log("Starting writing assessment with prompts:", initialPrompts.length);
-
-    setStage(Stage.WRITING);
-  };
 
   const handlePromptSubmit = (text: string, metrics?: AntiCheatingMetrics) => {
     console.log("Prompt submitted for index:", currentPromptIndex);
@@ -153,27 +126,6 @@ export const useAssessmentState = () => {
       
       setStage(Stage.COMPLETE);
     }
-  };
-
-  const restartAssessment = () => {
-    console.log("Restarting assessment");
-    
-    // Generate a new session ID
-    const newSessionId = `session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    sessionStorage.setItem("assessment-session-id", newSessionId);
-    console.log("New assessment session:", newSessionId);
-    
-    setStage(Stage.LANDING);
-    setCurrentPromptIndex(0);
-    setPrompts([]);
-    setSelectedPromptIds([]);
-    setAptitudeQuestions([]);
-    setAptitudeAnswers([]);
-    setAptitudeScore(0);
-    setCandidateName("");
-    setCandidatePosition("");
-    setCandidateSkills("");
-    setAntiCheatingMetrics(undefined);
   };
 
   return {

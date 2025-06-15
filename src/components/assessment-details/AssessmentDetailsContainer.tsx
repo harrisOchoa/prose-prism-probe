@@ -1,6 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect, useCallback } from "react";
 import { useAssessmentCalculations } from "@/hooks/useAssessmentCalculations";
 import { useAssessmentEvaluation } from "@/hooks/useAssessmentEvaluation";
 import { usePdfExport } from "@/hooks/usePdfExport";
@@ -9,6 +8,8 @@ import AssessmentHeader from "@/components/assessment/AssessmentHeader";
 import CandidateSummaryCard from "@/components/assessment/CandidateSummaryCard";
 import AssessmentTabs from "./AssessmentTabs";
 import { toast } from "@/hooks/use-toast";
+import { useAssessmentDetailsState } from "./hooks/useAssessmentDetailsState";
+import { useAdvancedAnalysisHandler } from "./hooks/useAdvancedAnalysisHandler";
 
 interface AssessmentDetailsContainerProps {
   assessment: any;
@@ -23,19 +24,17 @@ const AssessmentDetailsContainer: React.FC<AssessmentDetailsContainerProps> = ({
   isGeneratingSummary = false,
   refreshAssessment
 }) => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [assessmentData, setAssessmentData] = useState(assessment);
   const isMobile = useIsMobile();
-  const [renderKey, setRenderKey] = useState(Date.now().toString());
   
-  // Get activeTab from URL query parameter or default to "overview"
-  const getInitialTab = () => {
-    const params = new URLSearchParams(location.search);
-    return params.get("tab") || "overview";
-  };
-  
-  const [activeTab, setActiveTab] = useState(getInitialTab());
+  // Extract state management
+  const {
+    assessmentData,
+    setAssessmentData,
+    renderKey,
+    setRenderKey,
+    activeTab,
+    handleTabChange
+  } = useAssessmentDetailsState(assessment);
   
   const calculations = useAssessmentCalculations(assessmentData);
   
@@ -51,15 +50,13 @@ const AssessmentDetailsContainer: React.FC<AssessmentDetailsContainerProps> = ({
 
   const { handleExportPdf, exporting } = usePdfExport();
 
-  // Update local state when assessment prop changes
-  useEffect(() => {
-    if (assessment && JSON.stringify(assessment) !== JSON.stringify(assessmentData)) {
-      console.log("Assessment prop updated, updating local state");
-      setAssessmentData(assessment);
-      // Force re-render of components
-      setRenderKey(Date.now().toString());
-    }
-  }, [assessment, assessmentData]);
+  // Extract advanced analysis handler
+  const { handleGenerateAdvancedAnalysis } = useAdvancedAnalysisHandler({
+    generateAdvancedAnalysis,
+    refreshAssessment,
+    setAssessmentData,
+    setRenderKey
+  });
   
   // Set initial state for generatingSummary if provided
   useEffect(() => {
@@ -68,12 +65,9 @@ const AssessmentDetailsContainer: React.FC<AssessmentDetailsContainerProps> = ({
     }
   }, [isGeneratingSummary, setGeneratingSummary]);
   
-  // Update URL when tab changes
-  const handleTabChange = useCallback((value: string) => {
-    setActiveTab(value);
-    navigate(`${location.pathname}?tab=${value}`, { replace: true });
-    // Force re-render when changing tabs
-    setRenderKey(Date.now().toString());
+  // Handle tab change with refresh logic
+  const handleTabChangeWithRefresh = useCallback((value: string) => {
+    handleTabChange(value);
     
     // Auto-refresh data when changing to advanced tab to get latest analyses
     if (value === 'advanced' && refreshAssessment) {
@@ -83,7 +77,7 @@ const AssessmentDetailsContainer: React.FC<AssessmentDetailsContainerProps> = ({
         }
       });
     }
-  }, [location.pathname, navigate, refreshAssessment]);
+  }, [handleTabChange, refreshAssessment, setAssessmentData]);
 
   // Handle back with potential refresh
   const handleBack = useCallback(async () => {
@@ -98,51 +92,6 @@ const AssessmentDetailsContainer: React.FC<AssessmentDetailsContainerProps> = ({
     onBack();
   }, [onBack, refreshAssessment]);
 
-  // Enhanced advanced analysis function
-  const handleGenerateAdvancedAnalysis = async (type: string) => {
-    try {
-      console.log(`AssessmentDetails: Requesting ${type} analysis generation`);
-      const result = await generateAdvancedAnalysis(type);
-      
-      if (result) {
-        console.log(`AssessmentDetails: Analysis generated successfully for ${type}`);
-        // Force re-render on successful analysis generation
-        setRenderKey(Date.now().toString());
-        
-        // Refresh data after generation to ensure we have the latest
-        if (refreshAssessment) {
-          const refreshedData = await refreshAssessment();
-          if (refreshedData) {
-            setAssessmentData(refreshedData);
-          }
-        }
-      }
-      
-      return result;
-    } catch (error) {
-      console.error(`AssessmentDetails: Error generating ${type} analysis:`, error);
-      return null;
-    }
-  };
-
-  // Get the current tab for PDF export
-  const getCurrentTabContentType = (): "Overview" | "Aptitude" | "Writing" | "WritingAnalysis" | "Personality" | "ProfileMatch" | "InterviewQuestions" => {
-    switch (activeTab) {
-      case "aptitude":
-        return "Aptitude";
-      case "writing":
-        return "Writing";
-      case "advanced":
-        // Could be refined further based on sub-tabs if needed
-        return "WritingAnalysis";
-      case "comparison":
-        return "ProfileMatch";
-      case "overview":
-      default:
-        return "Overview";
-    }
-  };
-  
   // Enhanced PDF export with section support
   const handleExportPdfWithSections = async (
     assessmentData: {
@@ -157,7 +106,7 @@ const AssessmentDetailsContainer: React.FC<AssessmentDetailsContainerProps> = ({
       // Switch to the appropriate tab
       const tabValue = contentType.toLowerCase();
       if (activeTab !== tabValue) {
-        handleTabChange(tabValue);
+        handleTabChangeWithRefresh(tabValue);
         
         // Give the UI time to update before exporting
         setTimeout(() => {
@@ -199,7 +148,7 @@ const AssessmentDetailsContainer: React.FC<AssessmentDetailsContainerProps> = ({
       <AssessmentTabs 
         key={renderKey}
         activeTab={activeTab}
-        onTabChange={handleTabChange}
+        onTabChange={handleTabChangeWithRefresh}
         assessmentData={assessmentData}
         generatingSummary={generatingSummary}
         generatingAnalysis={generatingAnalysis}
