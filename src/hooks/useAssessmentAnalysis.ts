@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
-import { initiateAutomaticAnalysis, AnalysisProgress } from "@/services/automaticAnalysis";
+import { unifiedAnalysisService, AnalysisProgress } from "@/services/analysis/UnifiedAnalysisService";
 import { AssessmentData } from "@/types/assessment";
 
 export const useAssessmentAnalysis = () => {
@@ -13,20 +13,28 @@ export const useAssessmentAnalysis = () => {
     
     try {
       setAnalysisInProgress(true);
+      
+      const healthStatus = unifiedAnalysisService.getHealthStatus();
+      console.log("AI Service Health Status:", healthStatus);
+      
       toast({
         title: "Analysis Started",
-        description: "We're analyzing your assessment in the background. This might take a few moments.",
+        description: "We're analyzing your assessment with our optimized unified system.",
       });
       
-      // Start automatic analysis
-      const progress = await initiateAutomaticAnalysis(id, assessmentData);
+      const progress = await unifiedAnalysisService.analyzeAssessment({
+        assessmentId: id,
+        assessmentData,
+        priority: 'normal'
+      });
+      
       setAnalysisProgress(progress);
       
       if (progress.status === 'failed') {
-        console.error("Automatic analysis failed:", progress.error);
+        console.error("Unified analysis failed:", progress.error);
         toast({
           title: "Analysis Incomplete",
-          description: "Some parts of the analysis couldn't be completed automatically. An admin will review your assessment.",
+          description: "Analysis couldn't be completed. An admin will review your assessment.",
           variant: "default",
         });
         return false;
@@ -38,7 +46,7 @@ export const useAssessmentAnalysis = () => {
         return true;
       }
     } catch (error: any) {
-      console.error("Error during automatic analysis:", error);
+      console.error("Error during unified analysis:", error);
       toast({
         title: "Analysis Error",
         description: "There was an error analyzing your assessment. An admin will review it manually.",
@@ -53,6 +61,7 @@ export const useAssessmentAnalysis = () => {
   return {
     analysisInProgress,
     analysisProgress,
-    startAutomaticAnalysis
+    startAutomaticAnalysis,
+    getHealthStatus: () => unifiedAnalysisService.getHealthStatus()
   };
 };

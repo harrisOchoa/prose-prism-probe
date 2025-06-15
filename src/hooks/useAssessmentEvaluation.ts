@@ -2,14 +2,14 @@
 import { useState, useCallback } from "react";
 import { useWritingEvaluation } from "./assessment/useWritingEvaluation";
 import { useAdvancedAnalysis } from "./assessment/useAdvancedAnalysis";
+import { useUnifiedAnalysis } from "./assessment/useUnifiedAnalysis";
 import { toast } from "@/hooks/use-toast";
 import { AssessmentData } from "@/types/assessment";
 
 /**
- * Main hook for assessment evaluation that combines writing evaluation and advanced analysis
+ * Main hook for assessment evaluation using the unified analysis system
  */
 export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: (data: any) => void) => {
-  // Track rate limit information at the top level
   const [rateLimitInfo, setRateLimitInfo] = useState({
     isRateLimited: false,
     retryAttempt: 0,
@@ -17,10 +17,18 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     nextRetryTime: 0
   });
 
-  // Initialize sub-hooks
+  // Use the unified analysis system
   const {
+    analysisInProgress,
     evaluating,
     generatingSummary,
+    startAnalysis,
+    evaluateWritingOnly,
+    generateInsightsOnly
+  } = useUnifiedAnalysis();
+
+  // Legacy support for older analysis hooks
+  const {
     handleManualEvaluation,
     regenerateInsights,
     setGeneratingSummary
@@ -31,9 +39,8 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     generateAdvancedAnalysis
   } = useAdvancedAnalysis(assessmentData, setAssessmentData);
 
-  // Enhanced regenerate insights with improved rate limit handling
+  // Enhanced regenerate insights with unified system
   const handleRegenerateWithRetry = useCallback(async () => {
-    // Reset rate limit state
     setRateLimitInfo({
       isRateLimited: false,
       retryAttempt: 0,
@@ -41,18 +48,15 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
       nextRetryTime: 0
     });
     
-    // Show toast notification
     toast({
       title: "Regenerating Insights",
-      description: "Manual regeneration initiated. This may take a moment.",
+      description: "Using unified analysis system for faster results.",
     });
     
     try {
-      // Call the regenerateInsights function and store the result
-      const result = await regenerateInsights();
+      const result = await startAnalysis(assessmentData.id, assessmentData, 'high');
       
-      // Check if result exists and is truthy (not null, undefined, false, etc.)
-      if (result !== undefined && result !== null) {
+      if (result) {
         toast({
           title: "Regeneration Complete",
           description: "Insights have been successfully regenerated.",
@@ -60,30 +64,11 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
         return result;
       }
       
-      // Otherwise, check if we have rate limiting in the assessment data
-      if (assessmentData.analysisStatus === 'rate_limited' || 
-          (assessmentData.analysisError && 
-           assessmentData.analysisError.toLowerCase().includes('rate limit'))) {
-        
-        setRateLimitInfo(prev => ({
-          isRateLimited: true,
-          retryAttempt: prev.retryAttempt + 1,
-          maxRetries: 3,
-          nextRetryTime: Date.now() + ((prev.retryAttempt + 1) * 5000)
-        }));
-        
-        toast({
-          title: "Rate Limit Detected",
-          description: "The analysis will retry automatically when the rate limit clears.",
-          duration: 8000,
-        });
-      }
-      
-      return null;
+      // Fallback to legacy system if needed
+      return await regenerateInsights();
     } catch (error: any) {
       console.error("Error in handleRegenerateWithRetry:", error);
       
-      // Check for rate limit errors
       if (error.message && error.message.toLowerCase().includes('rate limit')) {
         setRateLimitInfo(prev => ({
           isRateLimited: true,
@@ -108,17 +93,22 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
       
       return null;
     }
-  }, [assessmentData, regenerateInsights]);
+  }, [assessmentData, startAnalysis, regenerateInsights]);
 
-  // Return a combined API for the components to use
   return {
+    // Unified analysis interface
+    analysisInProgress,
     evaluating,
     generatingSummary,
     generatingAnalysis,
+    
+    // Actions
     handleManualEvaluation,
     regenerateInsights: handleRegenerateWithRetry,
     generateAdvancedAnalysis,
     setGeneratingSummary,
+    
+    // Legacy support
     rateLimitInfo
   };
 };
