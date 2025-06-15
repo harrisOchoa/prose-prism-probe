@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { Stage, WritingPromptItem } from "../types";
 import { getRandomAptitudeQuestions } from "@/utils/aptitudeQuestions";
 import { AntiCheatingMetrics } from "@/firebase/assessmentService";
+import { WritingPromptQuestion } from "@/utils/questionBank";
 
 const APTITUDE_QUESTIONS_COUNT = 30;
 
@@ -10,7 +11,7 @@ interface UseAssessmentActionsProps {
   stage: Stage;
   setStage: (stage: Stage) => void;
   availablePrompts: any[];
-  generatePrompts: (position: string, skills: string) => Promise<void>;
+  generatePrompts: (position: string, skills: string) => Promise<WritingPromptQuestion[]>;
   prompts: WritingPromptItem[];
   setPrompts: (prompts: WritingPromptItem[]) => void;
   currentPromptIndex: number;
