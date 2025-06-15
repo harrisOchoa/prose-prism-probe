@@ -2,7 +2,10 @@
 import { AIServiceManager } from "../ai/AIServiceManager";
 import { AssessmentData } from "@/types/assessment";
 import { updateAssessmentAnalysis } from "@/firebase/services/assessment";
+import { optimizedAssessmentUpdater } from "@/firebase/services/assessment/optimizedUpdates";
 import { AnalysisStatus } from "@/firebase/services/assessment/types";
+import { performanceMonitor } from "../monitoring/PerformanceMonitor";
+import { requestDeduplicator } from "./RequestDeduplicator";
 
 export interface AnalysisProgress {
   status: 'pending' | 'writing_evaluated' | 'basic_insights_generated' | 'advanced_analysis_started' | 'completed' | 'failed' | 'rate_limited';
@@ -20,8 +23,6 @@ export interface AnalysisRequest {
 
 export class UnifiedAnalysisService {
   private aiService: AIServiceManager;
-  private requestQueue: AnalysisRequest[] = [];
-  private processingQueue = false;
   private analysisCache = new Map<string, any>();
   private readonly CACHE_TTL = 300000; // 5 minutes
 
@@ -31,6 +32,13 @@ export class UnifiedAnalysisService {
 
   async analyzeAssessment(request: AnalysisRequest): Promise<AnalysisProgress> {
     const { assessmentId, assessmentData } = request;
+    const timerName = `analysis_${assessmentId}`;
+    
+    performanceMonitor.startTimer(timerName, {
+      assessmentId,
+      priority: request.priority,
+      hasWritingScores: !!assessmentData.writingScores?.length
+    });
     
     console.log(`Starting unified analysis for assessment ${assessmentId}`);
     
@@ -41,17 +49,17 @@ export class UnifiedAnalysisService {
     };
 
     try {
-      await updateAssessmentAnalysis(assessmentId, {
+      await optimizedAssessmentUpdater.updateAssessmentOptimized(assessmentId, {
         analysisStatus: 'pending' as AnalysisStatus
       });
 
-      // Step 1: Evaluate writing with caching
+      // Step 1: Evaluate writing with caching and deduplication
       const writingData = await this.evaluateWritingWithCache(assessmentId, assessmentData, progress);
       if (!writingData) {
         throw new Error("Writing evaluation failed");
       }
 
-      // Step 2: Generate basic insights with batching
+      // Step 2: Generate basic insights with batching and deduplication
       const insightsData = await this.generateBasicInsightsWithBatch(assessmentId, writingData, progress);
       if (!insightsData) {
         throw new Error("Basic insights generation failed");
@@ -63,10 +71,11 @@ export class UnifiedAnalysisService {
       });
 
       progress.status = 'basic_insights_generated';
-      await updateAssessmentAnalysis(assessmentId, {
+      await optimizedAssessmentUpdater.updateAssessmentOptimized(assessmentId, {
         analysisStatus: progress.status
       });
       
+      performanceMonitor.endTimer(timerName);
       console.log(`Unified analysis completed successfully for ${assessmentId}`);
       return progress;
     } catch (error: any) {
@@ -76,14 +85,15 @@ export class UnifiedAnalysisService {
       progress.error = error.message || "Unknown error in unified analysis";
       
       try {
-        await updateAssessmentAnalysis(assessmentId, {
+        await optimizedAssessmentUpdater.updateAssessmentOptimized(assessmentId, {
           analysisStatus: 'failed' as AnalysisStatus,
           analysisError: progress.error
-        });
+        }, true); // Immediate update for failures
       } catch (updateError) {
         console.error("Failed to update analysis status:", updateError);
       }
       
+      performanceMonitor.endTimer(timerName);
       return progress;
     }
   }
@@ -93,59 +103,66 @@ export class UnifiedAnalysisService {
     data: AssessmentData,
     progress: AnalysisProgress
   ): Promise<AssessmentData | null> {
-    try {
-      if (!data.completedPrompts || data.completedPrompts.length === 0) {
-        throw new Error("No writing prompts to evaluate");
+    const deduplicationKey = `writing_eval_${assessmentId}`;
+    
+    return requestDeduplicator.deduplicate(deduplicationKey, async () => {
+      try {
+        if (!data.completedPrompts || data.completedPrompts.length === 0) {
+          throw new Error("No writing prompts to evaluate");
+        }
+
+        // Check cache first
+        const cacheKey = `writing_${this.generateCacheKey(data.completedPrompts)}`;
+        const cached = this.getFromCache(cacheKey);
+        if (cached) {
+          console.log("Using cached writing evaluation");
+          progress.completedSteps.push('writing_evaluation_cached');
+          return { ...data, ...cached };
+        }
+
+        performanceMonitor.startTimer(`writing_eval_${assessmentId}`);
+        console.log(`Evaluating writing for assessment ${assessmentId}`);
+        const response = await this.aiService.evaluateWriting(data.completedPrompts);
+        
+        if (!response.data || response.data.length === 0) {
+          throw new Error("No scores returned from writing evaluation");
+        }
+
+        const validScores = response.data.filter(score => score.score > 0);
+        if (validScores.length === 0) {
+          throw new Error("No valid scores generated from writing evaluation");
+        }
+        
+        const overallScore = validScores.length > 0
+          ? Number((validScores.reduce((sum, score) => sum + score.score, 0) / validScores.length).toFixed(1))
+          : 0;
+
+        const result = {
+          writingScores: response.data,
+          overallWritingScore: overallScore
+        };
+
+        // Cache the result
+        this.setCache(cacheKey, result);
+        
+        await optimizedAssessmentUpdater.updateAssessmentOptimized(assessmentId, {
+          ...result,
+          analysisStatus: 'writing_evaluated' as AnalysisStatus
+        });
+        
+        progress.status = 'writing_evaluated';
+        progress.completedSteps.push('writing_evaluation');
+        
+        performanceMonitor.endTimer(`writing_eval_${assessmentId}`);
+        return { ...data, ...result };
+      } catch (error: any) {
+        console.error(`Writing evaluation failed:`, error);
+        progress.error = `Writing evaluation: ${error.message}`;
+        progress.failedSteps.push('writing_evaluation');
+        performanceMonitor.endTimer(`writing_eval_${assessmentId}`);
+        return null;
       }
-
-      // Check cache first
-      const cacheKey = `writing_${this.generateCacheKey(data.completedPrompts)}`;
-      const cached = this.getFromCache(cacheKey);
-      if (cached) {
-        console.log("Using cached writing evaluation");
-        progress.completedSteps.push('writing_evaluation_cached');
-        return { ...data, ...cached };
-      }
-
-      console.log(`Evaluating writing for assessment ${assessmentId}`);
-      const response = await this.aiService.evaluateWriting(data.completedPrompts);
-      
-      if (!response.data || response.data.length === 0) {
-        throw new Error("No scores returned from writing evaluation");
-      }
-
-      const validScores = response.data.filter(score => score.score > 0);
-      if (validScores.length === 0) {
-        throw new Error("No valid scores generated from writing evaluation");
-      }
-      
-      const overallScore = validScores.length > 0
-        ? Number((validScores.reduce((sum, score) => sum + score.score, 0) / validScores.length).toFixed(1))
-        : 0;
-
-      const result = {
-        writingScores: response.data,
-        overallWritingScore: overallScore
-      };
-
-      // Cache the result
-      this.setCache(cacheKey, result);
-      
-      await updateAssessmentAnalysis(assessmentId, {
-        ...result,
-        analysisStatus: 'writing_evaluated' as AnalysisStatus
-      });
-      
-      progress.status = 'writing_evaluated';
-      progress.completedSteps.push('writing_evaluation');
-      
-      return { ...data, ...result };
-    } catch (error: any) {
-      console.error(`Writing evaluation failed:`, error);
-      progress.error = `Writing evaluation: ${error.message}`;
-      progress.failedSteps.push('writing_evaluation');
-      return null;
-    }
+    });
   }
 
   private async generateBasicInsightsWithBatch(
@@ -153,52 +170,59 @@ export class UnifiedAnalysisService {
     data: AssessmentData,
     progress: AnalysisProgress
   ): Promise<AssessmentData | null> {
-    try {
-      if (!data.writingScores || data.writingScores.length === 0) {
-        throw new Error("No writing scores available for insights generation");
-      }
-      
-      // Check cache
-      const cacheKey = `insights_${assessmentId}_${data.overallWritingScore}`;
-      const cached = this.getFromCache(cacheKey);
-      if (cached) {
-        console.log("Using cached basic insights");
-        progress.completedSteps.push('basic_insights_cached');
-        return { ...data, ...cached };
-      }
+    const deduplicationKey = `basic_insights_${assessmentId}_${data.overallWritingScore}`;
+    
+    return requestDeduplicator.deduplicate(deduplicationKey, async () => {
+      try {
+        if (!data.writingScores || data.writingScores.length === 0) {
+          throw new Error("No writing scores available for insights generation");
+        }
+        
+        // Check cache
+        const cacheKey = `insights_${assessmentId}_${data.overallWritingScore}`;
+        const cached = this.getFromCache(cacheKey);
+        if (cached) {
+          console.log("Using cached basic insights");
+          progress.completedSteps.push('basic_insights_cached');
+          return { ...data, ...cached };
+        }
 
-      console.log("Generating basic insights with batched requests...");
-      
-      // Batch both requests together for efficiency
-      const [summaryResponse, analysisResponse] = await Promise.all([
-        this.aiService.generateSummary(data),
-        this.aiService.generateStrengthsWeaknesses(data)
-      ]);
-      
-      if (!summaryResponse.data || !analysisResponse.data) {
-        throw new Error("Failed to generate complete insights");
+        performanceMonitor.startTimer(`basic_insights_${assessmentId}`);
+        console.log("Generating basic insights with batched requests...");
+        
+        // Batch both requests together for efficiency
+        const [summaryResponse, analysisResponse] = await Promise.all([
+          this.aiService.generateSummary(data),
+          this.aiService.generateStrengthsWeaknesses(data)
+        ]);
+        
+        if (!summaryResponse.data || !analysisResponse.data) {
+          throw new Error("Failed to generate complete insights");
+        }
+
+        const result = {
+          aiSummary: summaryResponse.data,
+          strengths: analysisResponse.data.strengths,
+          weaknesses: analysisResponse.data.weaknesses
+        };
+
+        // Cache the result
+        this.setCache(cacheKey, result);
+        
+        await optimizedAssessmentUpdater.updateAssessmentOptimized(assessmentId, result);
+        
+        progress.completedSteps.push('basic_insights');
+        
+        performanceMonitor.endTimer(`basic_insights_${assessmentId}`);
+        return { ...data, ...result };
+      } catch (error: any) {
+        console.error(`Basic insights generation failed:`, error);
+        progress.error = `Basic insights: ${error.message}`;
+        progress.failedSteps.push('basic_insights');
+        performanceMonitor.endTimer(`basic_insights_${assessmentId}`);
+        return null;
       }
-
-      const result = {
-        aiSummary: summaryResponse.data,
-        strengths: analysisResponse.data.strengths,
-        weaknesses: analysisResponse.data.weaknesses
-      };
-
-      // Cache the result
-      this.setCache(cacheKey, result);
-      
-      await updateAssessmentAnalysis(assessmentId, result);
-      
-      progress.completedSteps.push('basic_insights');
-      
-      return { ...data, ...result };
-    } catch (error: any) {
-      console.error(`Basic insights generation failed:`, error);
-      progress.error = `Basic insights: ${error.message}`;
-      progress.failedSteps.push('basic_insights');
-      return null;
-    }
+    });
   }
 
   private async generateAdvancedAnalysisBatched(
@@ -207,9 +231,10 @@ export class UnifiedAnalysisService {
     progress: AnalysisProgress
   ): Promise<void> {
     try {
+      performanceMonitor.startTimer(`advanced_analysis_${assessmentId}`);
       console.log(`Starting batched advanced analysis for assessment ${assessmentId}`);
       
-      await updateAssessmentAnalysis(assessmentId, {
+      await optimizedAssessmentUpdater.updateAssessmentOptimized(assessmentId, {
         analysisStatus: 'advanced_analysis_started' as AnalysisStatus
       });
       
@@ -271,18 +296,20 @@ export class UnifiedAnalysisService {
       
       // Batch update all results at once
       if (Object.keys(updateData).length > 0) {
-        await updateAssessmentAnalysis(assessmentId, {
+        await optimizedAssessmentUpdater.updateAssessmentOptimized(assessmentId, {
           ...updateData,
           analysisStatus: 'completed' as AnalysisStatus
         });
       }
       
       progress.status = 'completed';
+      performanceMonitor.endTimer(`advanced_analysis_${assessmentId}`);
       console.log(`Batched advanced analysis completed for assessment ${assessmentId}`);
       
     } catch (error) {
       console.error(`Advanced analysis process failed:`, error);
       progress.failedSteps.push('advanced_analysis_batch');
+      performanceMonitor.endTimer(`advanced_analysis_${assessmentId}`);
     }
   }
 
@@ -307,6 +334,15 @@ export class UnifiedAnalysisService {
 
   getHealthStatus() {
     return this.aiService.getHealthStatus();
+  }
+
+  getPerformanceMetrics() {
+    return performanceMonitor.getMetrics();
+  }
+
+  clearCache() {
+    this.analysisCache.clear();
+    requestDeduplicator.clear();
   }
 }
 
