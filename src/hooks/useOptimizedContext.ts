@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useMemo, useCallback } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import { shallowEqual } from '@/utils/shallowCompare';
 
 // Generic optimized context creator to reduce prop drilling
