@@ -37,20 +37,20 @@ export const useOptimizedAssessmentCalculations = (assessmentData: AssessmentCal
     return "Needs Improvement";
   }, []);
 
-  // Memoize percentage calculations
-  const getAptitudeScorePercentage = useMemo(() => {
+  // Memoize percentage calculations as functions
+  const getAptitudeScorePercentage = useCallback(() => {
     if (!assessmentData.aptitudeTotal) return 0;
     return Math.round((assessmentData.aptitudeScore / assessmentData.aptitudeTotal) * 100);
   }, [assessmentData.aptitudeScore, assessmentData.aptitudeTotal]);
 
-  const getWritingScorePercentage = useMemo(() => {
+  const getWritingScorePercentage = useCallback(() => {
     if (!assessmentData.overallWritingScore) return 0;
     return Math.round((assessmentData.overallWritingScore / 5) * 100);
   }, [assessmentData.overallWritingScore]);
 
-  const getOverallScore = useMemo(() => {
-    const aptitudePercentage = getAptitudeScorePercentage;
-    const writingPercentage = getWritingScorePercentage;
+  const getOverallScore = useCallback(() => {
+    const aptitudePercentage = getAptitudeScorePercentage();
+    const writingPercentage = getWritingScorePercentage();
     
     if (!assessmentData.overallWritingScore) {
       return aptitudePercentage;
