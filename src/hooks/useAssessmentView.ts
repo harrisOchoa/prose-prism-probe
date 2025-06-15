@@ -1,19 +1,18 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { generateCandidateSummary, generateStrengthsAndWeaknesses } from "@/services/geminiService";
-import { updateAssessmentAnalysis } from "@/firebase/services/assessment";
 import { toast } from "@/hooks/use-toast";
 import { useFetchAssessment } from "./assessment/useFetchAssessment";
 import { useAptitudeRecovery } from "./assessment/useAptitudeRecovery";
 import { useAptitudeCategories } from "./assessment/useAptitudeCategories";
+import { useUnifiedAnalysis } from "./assessment/useUnifiedAnalysis";
 import { AssessmentData } from "@/types/assessment";
 import { AnalysisStatus } from "@/firebase/services/assessment/types";
 
 export const useAssessmentView = (id: string | undefined) => {
   const { assessment, setAssessment, loading, error, refreshAssessment } = useFetchAssessment(id);
-  const [generatingSummary, setGeneratingSummary] = useState(false);
   const { recoverAptitudeScore } = useAptitudeRecovery(assessment);
   const { generateAptitudeCategories } = useAptitudeCategories(assessment);
+  const { startAnalysis, generatingSummary, evaluating } = useUnifiedAnalysis();
 
   // Process assessment data when it's loaded
   useEffect(() => {
@@ -36,39 +35,19 @@ export const useAssessmentView = (id: string | undefined) => {
           (!updatedData.aiSummary || !updatedData.strengths || !updatedData.weaknesses) &&
           (!analysisStatus || analysisStatus === 'writing_evaluated' || analysisStatus === 'failed')) {
         
-        console.log("Missing insights detected, attempting to generate");
-        setGeneratingSummary(true);
+        console.log("Missing insights detected, starting unified analysis");
         
         try {
-          const [summary, analysis] = await Promise.all([
-            generateCandidateSummary(updatedData),
-            generateStrengthsAndWeaknesses(updatedData)
-          ]);
-
-          const updateData = {
-            aiSummary: summary,
-            strengths: analysis.strengths,
-            weaknesses: analysis.weaknesses,
-            analysisStatus: 'basic_insights_generated' as AnalysisStatus
-          };
-          
-          // Create a new object reference to ensure React detects the change
-          updatedData = {
-            ...updatedData,
-            ...updateData
-          };
-          
-          // Update state immediately with a new object reference to trigger rerender
-          console.log("Local state updated with auto-generated insights");
-          setAssessment(JSON.parse(JSON.stringify(updatedData)));
-
-          // Update database in background
-          await updateAssessmentAnalysis(updatedData.id, updateData);
-          console.log("Auto-generated insights saved to assessment:", updatedData);
-        } catch (aiError) {
-          console.error("Error auto-generating insights:", aiError);
-        } finally {
-          setGeneratingSummary(false);
+          const success = await startAnalysis(updatedData.id, updatedData, 'normal');
+          if (success) {
+            // Refresh the assessment data after analysis
+            const refreshedData = await refreshAssessment(updatedData.id);
+            if (refreshedData) {
+              setAssessment(JSON.parse(JSON.stringify(refreshedData)));
+            }
+          }
+        } catch (error) {
+          console.error("Error auto-starting unified analysis:", error);
         }
       } else if (
         updatedData.writingScores && 
@@ -79,30 +58,14 @@ export const useAssessmentView = (id: string | undefined) => {
         console.log("Found error scores, notifying user");
         toast({
           title: "Writing Evaluation Issues",
-          description: `Some writing prompts could not be evaluated. Try using the 'Evaluate Writing' button to retry.`,
+          description: `Some writing prompts could not be evaluated. The system will automatically retry.`,
           variant: "default",
         });
-        
-        // Update status to failed
-        try {
-          await updateAssessmentAnalysis(updatedData.id, {
-            analysisStatus: 'failed' as AnalysisStatus,
-            analysisError: 'Some writing prompts could not be evaluated'
-          });
-          
-          updatedData = {
-            ...updatedData,
-            analysisStatus: 'failed' as AnalysisStatus,
-            analysisError: 'Some writing prompts could not be evaluated'
-          };
-        } catch (updateError) {
-          console.error("Failed to update analysis status:", updateError);
-        }
       }
 
-      // Always update state with processed data
+      // Always update state with processed data if it has changed
       if (JSON.stringify(updatedData) !== JSON.stringify(assessment)) {
-        console.log("Assessment data has changed, updating state with a new object reference");
+        console.log("Assessment data has changed, updating state");
         setAssessment(JSON.parse(JSON.stringify(updatedData)));
       }
     };
@@ -110,7 +73,7 @@ export const useAssessmentView = (id: string | undefined) => {
     if (assessment) {
       processData();
     }
-  }, [assessment?.id, assessment, setAssessment, recoverAptitudeScore, generateAptitudeCategories]);
+  }, [assessment?.id, assessment, setAssessment, recoverAptitudeScore, generateAptitudeCategories, startAnalysis, refreshAssessment]);
 
   // Function to manually refresh assessment data
   const refresh = useCallback(async () => {
@@ -119,7 +82,6 @@ export const useAssessmentView = (id: string | undefined) => {
       const refreshedData = await refreshAssessment(id);
       if (refreshedData) {
         console.log("Assessment data refreshed successfully");
-        // Create a deep copy to ensure React detects the change
         setAssessment(JSON.parse(JSON.stringify(refreshedData)));
       }
       return refreshedData;
@@ -132,8 +94,9 @@ export const useAssessmentView = (id: string | undefined) => {
     loading,
     error,
     generatingSummary,
+    evaluating,
     setAssessment,
-    setGeneratingSummary,
+    setGeneratingSummary: () => {}, // Handled by unified analysis now
     refreshAssessment: refresh
   };
 };
