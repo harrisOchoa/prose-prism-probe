@@ -1,6 +1,5 @@
 
 import { createContext, useContext, useMemo } from 'react';
-import { shallowEqual } from '@/utils/shallowCompare';
 
 // Generic optimized context creator to reduce prop drilling
 export function createOptimizedContext<T>() {
@@ -17,7 +16,7 @@ export function createOptimizedContext<T>() {
   const Provider = ({ value, children }: { value: T; children: React.ReactNode }) => {
     // Memoize the context value to prevent unnecessary re-renders
     const memoizedValue = useMemo(() => value, [
-      // Use shallow comparison for better performance
+      // Use JSON.stringify for deep comparison (not ideal for performance but simple)
       JSON.stringify(value)
     ]);
 
