@@ -2,13 +2,14 @@ import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { unifiedAnalysisService, AnalysisProgress, AnalysisRequest } from "@/services/analysis/UnifiedAnalysisService";
 import { useOptimizedUnifiedAnalysis } from "./useOptimizedUnifiedAnalysis";
+import { useAnalysisStateManager } from "./useAnalysisStateManager";
 import { AssessmentData } from "@/types/assessment";
+import { analysisLoopPrevention } from "@/services/analysis/AnalysisLoopPrevention";
+import { logger } from "@/services/logging";
 
 export const useUnifiedAnalysis = () => {
   const [analysisInProgress, setAnalysisInProgress] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState<AnalysisProgress | null>(null);
-  const [evaluating, setEvaluating] = useState(false);
-  const [generatingSummary, setGeneratingSummary] = useState(false);
 
   // Use the optimized analysis service
   const {
@@ -17,33 +18,114 @@ export const useUnifiedAnalysis = () => {
     getAnalysisHealth
   } = useOptimizedUnifiedAnalysis();
 
+  // Use the new state manager
+  const stateManager = useAnalysisStateManager();
+
   const startAnalysis = async (
     assessmentId: string, 
     assessmentData: AssessmentData,
     priority: 'high' | 'normal' | 'low' = 'normal'
   ): Promise<boolean> => {
-    if (!assessmentId) return false;
+    if (!assessmentId) {
+      logger.error('UNIFIED_ANALYSIS', 'Missing assessment ID');
+      return false;
+    }
     
-    try {
-      // Try optimized analysis first
-      const optimizedResult = await startOptimizedAnalysis(assessmentId, assessmentData, priority);
-      
-      if (optimizedResult) {
-        return true;
-      }
-      
-      // Fallback to original unified analysis
-      console.log("Falling back to original unified analysis service");
-      return await startLegacyAnalysis(assessmentId, assessmentData, priority);
-      
-    } catch (error: any) {
-      console.error("Error in unified analysis:", error);
+    // Check if analysis can start
+    if (!stateManager.canStartAnalysis) {
       toast({
-        title: "Analysis Error",
-        description: "There was an error with the analysis system. Please try again.",
+        title: "Analysis Blocked",
+        description: stateManager.getStatusMessage(),
         variant: "destructive",
       });
       return false;
+    }
+
+    // Start analysis with loop prevention
+    if (!stateManager.startAnalysis(assessmentId)) {
+      toast({
+        title: "Analysis In Progress",
+        description: "An analysis is already running for this assessment.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    try {
+      setAnalysisInProgress(true);
+      
+      logger.info('UNIFIED_ANALYSIS', 'Starting analysis with loop prevention', {
+        assessmentId,
+        priority,
+        hasWritingPrompts: !!assessmentData.completedPrompts?.length
+      });
+      
+      toast({
+        title: "Analysis Started",
+        description: "Using optimized analysis system with enhanced error handling.",
+      });
+
+      // Try optimized analysis first with timeout
+      const optimizedResult = await analysisLoopPrevention.withTimeout(
+        () => startOptimizedAnalysis(assessmentId, assessmentData, priority),
+        45000 // 45 second timeout
+      );
+      
+      if (optimizedResult) {
+        stateManager.completeAnalysis(assessmentId);
+        toast({
+          title: "Analysis Complete",
+          description: "Your assessment has been analyzed successfully.",
+        });
+        return true;
+      }
+      
+      // Fallback to legacy system with timeout
+      logger.info('UNIFIED_ANALYSIS', 'Falling back to legacy analysis');
+      const legacyResult = await analysisLoopPrevention.withTimeout(
+        () => startLegacyAnalysis(assessmentId, assessmentData, priority),
+        45000
+      );
+      
+      if (legacyResult) {
+        stateManager.completeAnalysis(assessmentId);
+        return true;
+      }
+      
+      throw new Error('Both optimized and legacy analysis failed');
+      
+    } catch (error: any) {
+      logger.error('UNIFIED_ANALYSIS', 'Analysis failed', { assessmentId, error: error.message });
+      
+      stateManager.failAnalysis(assessmentId, error.message);
+      
+      const isTimeout = error.message.includes('timeout') || error.message.includes('timed out');
+      const isRateLimit = error.message.toLowerCase().includes('rate limit');
+      
+      if (isTimeout) {
+        toast({
+          title: "Analysis Timeout",
+          description: "The analysis took too long and was cancelled. Please try again.",
+          variant: "destructive",
+        });
+      } else if (isRateLimit) {
+        toast({
+          title: "Rate Limit Reached",
+          description: "AI service rate limit reached. Please wait before trying again.",
+          variant: "destructive",
+          duration: 8000,
+        });
+      } else {
+        toast({
+          title: "Analysis Error",
+          description: "There was an error with the analysis system. Please try again.",
+          variant: "destructive",
+        });
+      }
+      
+      return false;
+    } finally {
+      setAnalysisInProgress(false);
     }
   };
 
@@ -53,13 +135,9 @@ export const useUnifiedAnalysis = () => {
     priority: 'high' | 'normal' | 'low' = 'normal'
   ): Promise<boolean> => {
     try {
-      setAnalysisInProgress(true);
-      setEvaluating(true);
-      setGeneratingSummary(true);
-      
       toast({
-        title: "Analysis Started",
-        description: "Using legacy analysis system...",
+        title: "Using Legacy Analysis",
+        description: "Falling back to legacy analysis system...",
       });
 
       const request: AnalysisRequest = {
@@ -72,32 +150,17 @@ export const useUnifiedAnalysis = () => {
       setAnalysisProgress(progress);
       
       if (progress.status === 'failed') {
-        console.error("Legacy analysis failed:", progress.error);
-        toast({
-          title: "Analysis Failed",
-          description: "Analysis couldn't be completed.",
-          variant: "destructive",
-        });
-        return false;
-      } else {
-        toast({
-          title: "Analysis Complete",
-          description: "Your assessment has been analyzed successfully.",
-        });
-        return true;
+        throw new Error(progress.error || 'Legacy analysis failed');
       }
-    } catch (error: any) {
-      console.error("Error during legacy analysis:", error);
+      
       toast({
-        title: "Analysis Error",
-        description: `Error: ${error.message}`,
-        variant: "destructive",
+        title: "Analysis Complete",
+        description: "Your assessment has been analyzed successfully.",
       });
-      return false;
-    } finally {
-      setAnalysisInProgress(false);
-      setEvaluating(false);
-      setGeneratingSummary(false);
+      return true;
+    } catch (error: any) {
+      logger.error('UNIFIED_ANALYSIS', 'Legacy analysis failed', error);
+      throw error;
     }
   };
 
@@ -106,7 +169,11 @@ export const useUnifiedAnalysis = () => {
     assessmentData: AssessmentData
   ): Promise<boolean> => {
     try {
-      setEvaluating(true);
+      if (!stateManager.canStartAnalysis) {
+        return false;
+      }
+
+      stateManager.startAnalysis(assessmentId);
       
       toast({
         title: "Evaluating Writing",
@@ -119,32 +186,28 @@ export const useUnifiedAnalysis = () => {
         priority: 'high'
       };
       
-      const progress = await unifiedAnalysisService.analyzeAssessment(request);
+      const progress = await analysisLoopPrevention.withTimeout(
+        () => unifiedAnalysisService.analyzeAssessment(request)
+      );
       
       if (progress.status === 'failed') {
-        toast({
-          title: "Evaluation Failed",
-          description: "Could not evaluate writing responses.",
-          variant: "destructive",
-        });
-        return false;
+        throw new Error(progress.error || 'Writing evaluation failed');
       }
       
+      stateManager.completeAnalysis(assessmentId);
       toast({
         title: "Writing Evaluated",
         description: "Writing responses have been successfully evaluated.",
       });
       return true;
     } catch (error: any) {
-      console.error("Error evaluating writing:", error);
+      stateManager.failAnalysis(assessmentId, error.message);
       toast({
         title: "Evaluation Error",
         description: `Error: ${error.message}`,
         variant: "destructive",
       });
       return false;
-    } finally {
-      setEvaluating(false);
     }
   };
 
@@ -153,7 +216,11 @@ export const useUnifiedAnalysis = () => {
     assessmentData: AssessmentData
   ): Promise<boolean> => {
     try {
-      setGeneratingSummary(true);
+      if (!stateManager.canStartAnalysis) {
+        return false;
+      }
+
+      stateManager.startAnalysis(assessmentId);
       
       toast({
         title: "Generating Insights",
@@ -166,32 +233,28 @@ export const useUnifiedAnalysis = () => {
         priority: 'high'
       };
       
-      const progress = await unifiedAnalysisService.analyzeAssessment(request);
+      const progress = await analysisLoopPrevention.withTimeout(
+        () => unifiedAnalysisService.analyzeAssessment(request)
+      );
       
       if (progress.status === 'failed') {
-        toast({
-          title: "Insights Failed",
-          description: "Could not generate insights.",
-          variant: "destructive",
-        });
-        return false;
+        throw new Error(progress.error || 'Insights generation failed');
       }
       
+      stateManager.completeAnalysis(assessmentId);
       toast({
         title: "Insights Generated",
         description: "Assessment insights have been successfully generated.",
       });
       return true;
     } catch (error: any) {
-      console.error("Error generating insights:", error);
+      stateManager.failAnalysis(assessmentId, error.message);
       toast({
         title: "Insights Error",
         description: `Error: ${error.message}`,
         variant: "destructive",
       });
       return false;
-    } finally {
-      setGeneratingSummary(false);
     }
   };
 
@@ -201,9 +264,14 @@ export const useUnifiedAnalysis = () => {
     analysisProgress: optimizedProgress || analysisProgress,
     startAnalysis,
     
+    // State management
+    analysisState: stateManager.state,
+    canStartAnalysis: stateManager.canStartAnalysis,
+    resetAnalysisState: stateManager.resetState,
+    
     // Backward compatibility
-    evaluating,
-    generatingSummary,
+    evaluating: stateManager.state === 'evaluating',
+    generatingSummary: stateManager.state === 'generating_summary',
     evaluateWritingOnly,
     generateInsightsOnly,
     
@@ -214,7 +282,12 @@ export const useUnifiedAnalysis = () => {
       
       return {
         ...legacyHealth,
-        optimizedAnalysis: optimizedHealth
+        optimizedAnalysis: optimizedHealth,
+        loopPrevention: {
+          canStart: stateManager.canStartAnalysis,
+          state: stateManager.state,
+          error: stateManager.error
+        }
       };
     }
   };
