@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { unifiedAnalysisService, AnalysisProgress, AnalysisRequest } from "@/services/analysis/UnifiedAnalysisService";
+import { useOptimizedUnifiedAnalysis } from "./useOptimizedUnifiedAnalysis";
 import { AssessmentData } from "@/types/assessment";
 
 export const useUnifiedAnalysis = () => {
@@ -9,6 +9,13 @@ export const useUnifiedAnalysis = () => {
   const [analysisProgress, setAnalysisProgress] = useState<AnalysisProgress | null>(null);
   const [evaluating, setEvaluating] = useState(false);
   const [generatingSummary, setGeneratingSummary] = useState(false);
+
+  // Use the optimized analysis service
+  const {
+    startOptimizedAnalysis,
+    analysisProgress: optimizedProgress,
+    getAnalysisHealth
+  } = useOptimizedUnifiedAnalysis();
 
   const startAnalysis = async (
     assessmentId: string, 
@@ -18,16 +25,41 @@ export const useUnifiedAnalysis = () => {
     if (!assessmentId) return false;
     
     try {
+      // Try optimized analysis first
+      const optimizedResult = await startOptimizedAnalysis(assessmentId, assessmentData, priority);
+      
+      if (optimizedResult) {
+        return true;
+      }
+      
+      // Fallback to original unified analysis
+      console.log("Falling back to original unified analysis service");
+      return await startLegacyAnalysis(assessmentId, assessmentData, priority);
+      
+    } catch (error: any) {
+      console.error("Error in unified analysis:", error);
+      toast({
+        title: "Analysis Error",
+        description: "There was an error with the analysis system. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const startLegacyAnalysis = async (
+    assessmentId: string,
+    assessmentData: AssessmentData,
+    priority: 'high' | 'normal' | 'low' = 'normal'
+  ): Promise<boolean> => {
+    try {
       setAnalysisInProgress(true);
       setEvaluating(true);
       setGeneratingSummary(true);
       
-      const healthStatus = unifiedAnalysisService.getHealthStatus();
-      console.log("AI Service Health Status:", healthStatus);
-      
       toast({
         title: "Analysis Started",
-        description: "We're analyzing your assessment with our optimized AI system. This should be fast and reliable.",
+        description: "Using legacy analysis system...",
       });
 
       const request: AnalysisRequest = {
@@ -40,26 +72,26 @@ export const useUnifiedAnalysis = () => {
       setAnalysisProgress(progress);
       
       if (progress.status === 'failed') {
-        console.error("Unified analysis failed:", progress.error);
+        console.error("Legacy analysis failed:", progress.error);
         toast({
-          title: "Analysis Incomplete",
-          description: "Analysis couldn't be completed. An admin will review your assessment.",
-          variant: "default",
+          title: "Analysis Failed",
+          description: "Analysis couldn't be completed.",
+          variant: "destructive",
         });
         return false;
       } else {
         toast({
           title: "Analysis Complete",
-          description: "Your assessment has been analyzed successfully using our optimized system.",
+          description: "Your assessment has been analyzed successfully.",
         });
         return true;
       }
     } catch (error: any) {
-      console.error("Error during unified analysis:", error);
+      console.error("Error during legacy analysis:", error);
       toast({
         title: "Analysis Error",
-        description: "There was an error with the analysis system. An admin will review it manually.",
-        variant: "default",
+        description: `Error: ${error.message}`,
+        variant: "destructive",
       });
       return false;
     } finally {
@@ -164,9 +196,9 @@ export const useUnifiedAnalysis = () => {
   };
 
   return {
-    // Unified interface
+    // Enhanced unified interface
     analysisInProgress,
-    analysisProgress,
+    analysisProgress: optimizedProgress || analysisProgress,
     startAnalysis,
     
     // Backward compatibility
@@ -175,7 +207,15 @@ export const useUnifiedAnalysis = () => {
     evaluateWritingOnly,
     generateInsightsOnly,
     
-    // Health status
-    getHealthStatus: () => unifiedAnalysisService.getHealthStatus()
+    // Health status with enhanced monitoring
+    getHealthStatus: () => {
+      const legacyHealth = unifiedAnalysisService.getHealthStatus();
+      const optimizedHealth = getAnalysisHealth();
+      
+      return {
+        ...legacyHealth,
+        optimizedAnalysis: optimizedHealth
+      };
+    }
   };
 };

@@ -16,8 +16,9 @@ export function createOptimizedContext<T>() {
   const Provider = ({ value, children }: { value: T; children: React.ReactNode }) => {
     // Memoize the context value to prevent unnecessary re-renders
     const memoizedValue = useMemo(() => value, [
-      // Use JSON.stringify for deep comparison (not ideal for performance but simple)
-      JSON.stringify(value)
+      // Use shallow comparison for better performance
+      Object.keys(value || {}).join(','),
+      JSON.stringify(Object.values(value || {}))
     ]);
 
     return (
