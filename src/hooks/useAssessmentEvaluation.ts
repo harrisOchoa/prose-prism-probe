@@ -1,13 +1,12 @@
 
 import { useState, useCallback } from "react";
-import { useWritingEvaluation } from "./assessment/useWritingEvaluation";
+import { useSimplifiedUnifiedAnalysis } from "./assessment/useSimplifiedUnifiedAnalysis";
 import { useAdvancedAnalysis } from "./assessment/useAdvancedAnalysis";
-import { useUnifiedAnalysis } from "./assessment/useUnifiedAnalysis";
 import { toast } from "@/hooks/use-toast";
 import { AssessmentData } from "@/types/assessment";
 
 /**
- * Main hook for assessment evaluation using the unified analysis system
+ * Main hook for assessment evaluation using the simplified unified analysis system
  */
 export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: (data: any) => void) => {
   const [rateLimitInfo, setRateLimitInfo] = useState({
@@ -17,83 +16,73 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     nextRetryTime: 0
   });
 
-  // Use the unified analysis system
+  // Use the simplified unified analysis system
   const {
     analysisInProgress,
     evaluating,
     generatingSummary,
     startAnalysis,
-    evaluateWritingOnly,
-    generateInsightsOnly
-  } = useUnifiedAnalysis();
-
-  // Legacy support for older analysis hooks
-  const {
-    handleManualEvaluation,
-    regenerateInsights,
-    setGeneratingSummary
-  } = useWritingEvaluation(assessmentData, setAssessmentData);
+    generateInsightsOnly,
+    canStartAnalysis,
+    resetAnalysisState
+  } = useSimplifiedUnifiedAnalysis(assessmentData?.id);
 
   const {
     generatingAnalysis,
     generateAdvancedAnalysis
   } = useAdvancedAnalysis(assessmentData, setAssessmentData);
 
+  // Enhanced manual evaluation with unified system
+  const handleManualEvaluation = useCallback(async () => {
+    if (!assessmentData || !assessmentData.id) {
+      toast({
+        title: "Missing Assessment",
+        description: "No assessment data available.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log("Starting manual evaluation for:", assessmentData.id);
+    
+    const result = await startAnalysis(assessmentData.id, assessmentData);
+    
+    if (result) {
+      // Refresh assessment data after successful analysis
+      toast({
+        title: "Evaluation Complete",
+        description: "Assessment has been successfully evaluated.",
+      });
+      
+      // You might want to refresh the assessment data here
+      // This would depend on your data fetching setup
+    }
+  }, [assessmentData, startAnalysis]);
+
   // Enhanced regenerate insights with unified system
-  const handleRegenerateWithRetry = useCallback(async () => {
-    setRateLimitInfo({
-      isRateLimited: false,
-      retryAttempt: 0,
-      maxRetries: 3,
-      nextRetryTime: 0
-    });
-    
-    toast({
-      title: "Regenerating Insights",
-      description: "Using unified analysis system for faster results.",
-    });
-    
-    try {
-      const result = await startAnalysis(assessmentData.id, assessmentData, 'high');
-      
-      if (result) {
-        toast({
-          title: "Regeneration Complete",
-          description: "Insights have been successfully regenerated.",
-        });
-        return result;
-      }
-      
-      // Fallback to legacy system if needed
-      return await regenerateInsights();
-    } catch (error: any) {
-      console.error("Error in handleRegenerateWithRetry:", error);
-      
-      if (error.message && error.message.toLowerCase().includes('rate limit')) {
-        setRateLimitInfo(prev => ({
-          isRateLimited: true,
-          retryAttempt: prev.retryAttempt + 1,
-          maxRetries: 3,
-          nextRetryTime: Date.now() + ((prev.retryAttempt + 1) * 5000)
-        }));
-        
-        toast({
-          title: "Rate Limit Error",
-          description: "API rate limit reached. Please wait before trying again.",
-          variant: "destructive",
-          duration: 8000,
-        });
-      } else {
-        toast({
-          title: "Regeneration Failed",
-          description: error.message || "Unknown error occurred",
-          variant: "destructive",
-        });
-      }
-      
+  const regenerateInsights = useCallback(async () => {
+    if (!assessmentData || !assessmentData.id) {
+      toast({
+        title: "Missing Assessment",
+        description: "No assessment data available.",
+        variant: "destructive",
+      });
       return null;
     }
-  }, [assessmentData, startAnalysis, regenerateInsights]);
+
+    console.log("Regenerating insights for:", assessmentData.id);
+    
+    const result = await generateInsightsOnly(assessmentData.id, assessmentData);
+    
+    if (result) {
+      toast({
+        title: "Insights Regenerated",
+        description: "Assessment insights have been successfully regenerated.",
+      });
+    }
+    
+    return result;
+  }, [assessmentData, generateInsightsOnly]);
 
   return {
     // Unified analysis interface
@@ -101,14 +90,16 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     evaluating,
     generatingSummary,
     generatingAnalysis,
+    canStartAnalysis,
     
     // Actions
     handleManualEvaluation,
-    regenerateInsights: handleRegenerateWithRetry,
+    regenerateInsights,
     generateAdvancedAnalysis,
-    setGeneratingSummary,
+    resetAnalysisState,
     
     // Legacy support
-    rateLimitInfo
+    rateLimitInfo,
+    setGeneratingSummary: () => {} // No-op for backward compatibility
   };
 };

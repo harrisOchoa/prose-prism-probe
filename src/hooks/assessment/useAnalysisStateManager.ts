@@ -28,7 +28,7 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
     stateRef.current = state;
   }, [state]);
 
-  // Auto-reset stuck states
+  // Auto-reset stuck states with timeout
   useEffect(() => {
     if (state === 'evaluating' || state === 'generating_summary') {
       // Clear any existing timeout
@@ -36,13 +36,10 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
         clearTimeout(timeoutRef.current);
       }
 
-      // Set timeout to prevent stuck states
+      // Set timeout to prevent stuck states - 45 seconds
       timeoutRef.current = setTimeout(() => {
         if (stateRef.current === 'evaluating' || stateRef.current === 'generating_summary') {
-          logger.warn('ANALYSIS_STATE', 'Analysis state stuck, auto-resetting', {
-            assessmentId,
-            stuckState: stateRef.current
-          });
+          console.log('Analysis state stuck, auto-resetting:', stateRef.current);
           
           setState('failed');
           setError('Analysis timed out and was automatically reset');
@@ -57,7 +54,7 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
             variant: "destructive",
           });
         }
-      }, 45000); // 45 second timeout
+      }, 45000);
     }
 
     return () => {
@@ -68,21 +65,37 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
   }, [state, assessmentId]);
 
   const canStartAnalysis = useCallback(() => {
-    if (!assessmentId) return false;
+    if (!assessmentId) {
+      console.log('Cannot start analysis: no assessment ID');
+      return false;
+    }
     
     const canStart = analysisLoopPrevention.canStartAnalysis(assessmentId);
     const status = analysisLoopPrevention.getStatus(assessmentId);
     
-    if (!canStart && status.cooldownRemaining > 0) {
-      setState('blocked');
-      setError(`Analysis is temporarily blocked. Please wait ${Math.ceil(status.cooldownRemaining / 1000 / 60)} minutes before trying again.`);
+    if (!canStart) {
+      if (status.cooldownRemaining > 0) {
+        setState('blocked');
+        const minutesRemaining = Math.ceil(status.cooldownRemaining / 1000 / 60);
+        setError(`Analysis is temporarily blocked. Please wait ${minutesRemaining} minutes before trying again.`);
+        
+        toast({
+          title: "Analysis Blocked",
+          description: `Too many failed attempts. Please wait ${minutesRemaining} minutes before trying again.`,
+          variant: "destructive",
+        });
+      }
+      return false;
     }
     
-    return canStart && state === 'idle';
+    return state === 'idle' || state === 'failed';
   }, [assessmentId, state]);
 
   const startAnalysis = useCallback((id: string) => {
+    console.log('Attempting to start analysis for:', id);
+    
     if (!canStartAnalysis()) {
+      console.log('Cannot start analysis - conditions not met');
       return false;
     }
 
@@ -90,13 +103,26 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
     if (success) {
       setState('evaluating');
       setError(null);
-      logger.info('ANALYSIS_STATE', 'Analysis started', { assessmentId: id });
+      console.log('Analysis started successfully for:', id);
+      
+      toast({
+        title: "Analysis Started",
+        description: "Evaluating your assessment responses...",
+      });
+    } else {
+      console.log('Failed to start analysis - loop prevention blocked it');
+      toast({
+        title: "Analysis In Progress",
+        description: "An analysis is already running for this assessment.",
+        variant: "destructive",
+      });
     }
     
     return success;
   }, [canStartAnalysis]);
 
   const completeAnalysis = useCallback((id: string) => {
+    console.log('Completing analysis for:', id);
     analysisLoopPrevention.completeAnalysis(id);
     setState('completed');
     setError(null);
@@ -106,10 +132,14 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
       clearTimeout(timeoutRef.current);
     }
     
-    logger.info('ANALYSIS_STATE', 'Analysis completed', { assessmentId: id });
+    toast({
+      title: "Analysis Complete",
+      description: "Your assessment has been analyzed successfully.",
+    });
   }, []);
 
   const failAnalysis = useCallback((id: string, errorMessage: string) => {
+    console.log('Analysis failed for:', id, 'Error:', errorMessage);
     analysisLoopPrevention.failAnalysis(id, errorMessage);
     setState('failed');
     setError(errorMessage);
@@ -119,10 +149,15 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
       clearTimeout(timeoutRef.current);
     }
     
-    logger.error('ANALYSIS_STATE', 'Analysis failed', { assessmentId: id, error: errorMessage });
+    toast({
+      title: "Analysis Failed",
+      description: errorMessage || "Analysis encountered an error. Please try again.",
+      variant: "destructive",
+    });
   }, []);
 
   const resetState = useCallback(() => {
+    console.log('Resetting analysis state for:', assessmentId);
     setState('idle');
     setError(null);
     
@@ -130,8 +165,6 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    
-    logger.info('ANALYSIS_STATE', 'Analysis state reset', { assessmentId });
   }, [assessmentId]);
 
   const getStatusMessage = useCallback(() => {
