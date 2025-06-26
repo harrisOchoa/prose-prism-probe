@@ -3,11 +3,12 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowLeft, FileText, Brain, BarChart, 
-  Download, Loader2, RefreshCw, AlertTriangle 
+  Download, Loader2, RefreshCw, AlertTriangle, StopCircle 
 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
+import { emergencyAnalysisReset } from "@/hooks/useOptimizedContext";
 
 interface AssessmentHeaderProps {
   assessmentData: any;
@@ -51,6 +52,16 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
     }
     
     return "Re-Evaluate Writing";
+  };
+
+  const handleForceStopAnalysis = () => {
+    if (window.confirm('This will force stop all analysis and reload the page. Continue?')) {
+      toast({
+        title: "Force Stopping Analysis",
+        description: "Resetting analysis state and reloading...",
+      });
+      emergencyAnalysisReset();
+    }
   };
 
   const handleRegenerateInsightsWithFeedback = async () => {
@@ -174,6 +185,19 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
       </div>
       
       <div className={`flex gap-2 flex-wrap ${isMobile ? 'w-full' : ''}`}>
+        {/* Emergency Force Stop Button - show when stuck in analysis */}
+        {(evaluating || generatingSummary) && (
+          <Button 
+            variant="destructive" 
+            size={isMobile ? "sm" : "default"}
+            className="flex-1 md:flex-none"
+            onClick={handleForceStopAnalysis}
+          >
+            <StopCircle className="h-4 w-4 mr-2" />
+            Force Stop
+          </Button>
+        )}
+        
         {/* Action buttons based on the active tab */}
         {activeTab === "writing" && (
           <Button 
