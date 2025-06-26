@@ -41,10 +41,12 @@ export interface AssessmentContextType {
   };
   handlers: {
     generateAdvancedAnalysis: (type: string) => Promise<any>;
+    forceStopAnalysis?: () => void;
   };
   state: {
     generatingSummary: boolean;
     generatingAnalysis: Record<string, boolean>;
+    analysisBlocked?: boolean;
   };
 }
 
@@ -52,3 +54,35 @@ export const {
   Provider: AssessmentProvider,
   useContext: useAssessmentContext
 } = createOptimizedContext<AssessmentContextType>();
+
+// Emergency analysis reset utility
+export const emergencyAnalysisReset = () => {
+  console.log('🚨 Emergency analysis reset triggered');
+  
+  // Clear any analysis state from sessionStorage/localStorage
+  try {
+    const keys = Object.keys(sessionStorage);
+    keys.forEach(key => {
+      if (key.includes('analysis') || key.includes('generating')) {
+        sessionStorage.removeItem(key);
+        console.log('Cleared session key:', key);
+      }
+    });
+    
+    const localKeys = Object.keys(localStorage);
+    localKeys.forEach(key => {
+      if (key.includes('analysis') || key.includes('generating')) {
+        localStorage.removeItem(key);
+        console.log('Cleared local key:', key);
+      }
+    });
+  } catch (error) {
+    console.error('Error clearing storage:', error);
+  }
+  
+  // Force page reload to reset all state
+  setTimeout(() => {
+    console.log('🔄 Force reloading page to reset analysis state');
+    window.location.reload();
+  }, 1000);
+};

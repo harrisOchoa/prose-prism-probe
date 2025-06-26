@@ -40,7 +40,6 @@ export const useSimplifiedUnifiedAnalysis = (assessmentId?: string) => {
       setAnalysisInProgress(true);
       
       console.log('Phase 1: Evaluating writing responses');
-      stateManager.setState?.('evaluating');
       
       // Step 1: Evaluate writing if not already done
       let updatedData = { ...assessmentData };
@@ -79,7 +78,6 @@ export const useSimplifiedUnifiedAnalysis = (assessmentId?: string) => {
       }
       
       console.log('Phase 2: Generating insights');
-      stateManager.setState?.('generating_summary');
       
       // Step 2: Generate insights
       const [summary, analysis] = await Promise.all([
@@ -194,6 +192,7 @@ export const useSimplifiedUnifiedAnalysis = (assessmentId?: string) => {
     startAnalysis,
     generateInsightsOnly,
     resetAnalysisState: stateManager.resetState,
+    forceStopAnalysis: stateManager.forceStopAnalysis,
     
     // Status
     getStatusMessage: stateManager.getStatusMessage,

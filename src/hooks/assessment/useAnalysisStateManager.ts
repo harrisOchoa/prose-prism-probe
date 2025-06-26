@@ -14,6 +14,7 @@ interface AnalysisStateManager {
   completeAnalysis: (assessmentId: string) => void;
   failAnalysis: (assessmentId: string, error: string) => void;
   resetState: () => void;
+  forceStopAnalysis: () => void;
   getStatusMessage: () => string;
 }
 
@@ -28,9 +29,33 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
     stateRef.current = state;
   }, [state]);
 
+  // Emergency detection of stuck analysis on mount
+  useEffect(() => {
+    const checkForStuckAnalysis = () => {
+      const stuckStates = ['evaluating', 'generating_summary'];
+      if (stuckStates.includes(state)) {
+        const stateStartTime = sessionStorage.getItem(`analysis-start-${assessmentId}`);
+        if (stateStartTime) {
+          const elapsed = Date.now() - parseInt(stateStartTime);
+          if (elapsed > 60000) { // 1 minute = definitely stuck
+            console.log('🚨 Detected stuck analysis on mount, auto-resetting');
+            forceStopAnalysis();
+          }
+        }
+      }
+    };
+
+    checkForStuckAnalysis();
+  }, [assessmentId]);
+
   // Auto-reset stuck states with timeout
   useEffect(() => {
     if (state === 'evaluating' || state === 'generating_summary') {
+      // Store start time for stuck detection
+      if (assessmentId) {
+        sessionStorage.setItem(`analysis-start-${assessmentId}`, Date.now().toString());
+      }
+
       // Clear any existing timeout
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -46,6 +71,7 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
           
           if (assessmentId) {
             analysisLoopPrevention.failAnalysis(assessmentId, 'Analysis state timeout');
+            sessionStorage.removeItem(`analysis-start-${assessmentId}`);
           }
 
           toast({
@@ -55,6 +81,11 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
           });
         }
       }, 45000);
+    } else {
+      // Clear start time when not in analysis state
+      if (assessmentId) {
+        sessionStorage.removeItem(`analysis-start-${assessmentId}`);
+      }
     }
 
     return () => {
@@ -127,10 +158,11 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
     setState('completed');
     setError(null);
     
-    // Clear timeout
+    // Clear timeout and start time
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
+    sessionStorage.removeItem(`analysis-start-${id}`);
     
     toast({
       title: "Analysis Complete",
@@ -144,10 +176,11 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
     setState('failed');
     setError(errorMessage);
     
-    // Clear timeout
+    // Clear timeout and start time
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
+    sessionStorage.removeItem(`analysis-start-${id}`);
     
     toast({
       title: "Analysis Failed",
@@ -161,10 +194,49 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
     setState('idle');
     setError(null);
     
-    // Clear timeout
+    // Clear timeout and start time
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
+    if (assessmentId) {
+      sessionStorage.removeItem(`analysis-start-${assessmentId}`);
+    }
+  }, [assessmentId]);
+
+  const forceStopAnalysis = useCallback(() => {
+    console.log('🚨 Force stopping analysis for:', assessmentId);
+    
+    // Clear all timeouts
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    // Reset state immediately
+    setState('idle');
+    setError(null);
+    
+    // Clear analysis prevention state
+    if (assessmentId) {
+      analysisLoopPrevention.completeAnalysis(assessmentId);
+      sessionStorage.removeItem(`analysis-start-${assessmentId}`);
+    }
+    
+    // Clear all analysis-related storage
+    try {
+      const keys = Object.keys(sessionStorage);
+      keys.forEach(key => {
+        if (key.includes('analysis') || key.includes('generating')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    } catch (error) {
+      console.error('Error clearing analysis storage:', error);
+    }
+    
+    toast({
+      title: "Analysis Stopped",
+      description: "Analysis has been forcefully stopped and reset.",
+    });
   }, [assessmentId]);
 
   const getStatusMessage = useCallback(() => {
@@ -194,6 +266,7 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
     completeAnalysis,
     failAnalysis,
     resetState,
+    forceStopAnalysis,
     getStatusMessage
   };
 };

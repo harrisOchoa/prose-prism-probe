@@ -24,7 +24,8 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     startAnalysis,
     generateInsightsOnly,
     canStartAnalysis,
-    resetAnalysisState
+    resetAnalysisState,
+    forceStopAnalysis
   } = useSimplifiedUnifiedAnalysis(assessmentData?.id);
 
   const {
@@ -84,6 +85,13 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     return result;
   }, [assessmentData, generateInsightsOnly]);
 
+  // Force stop analysis with user confirmation
+  const handleForceStopAnalysis = useCallback(() => {
+    if (window.confirm('Are you sure you want to force stop the analysis? This will reset all analysis progress.')) {
+      forceStopAnalysis();
+    }
+  }, [forceStopAnalysis]);
+
   return {
     // Unified analysis interface
     analysisInProgress,
@@ -97,6 +105,7 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     regenerateInsights,
     generateAdvancedAnalysis,
     resetAnalysisState,
+    handleForceStopAnalysis,
     
     // Legacy support
     rateLimitInfo,
