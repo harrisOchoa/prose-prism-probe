@@ -1,4 +1,3 @@
-
 import React, { useEffect, useCallback, memo } from "react";
 import { useOptimizedAssessmentCalculations } from "@/hooks/useOptimizedAssessmentCalculations";
 import { useAssessmentEvaluation } from "@/hooks/useAssessmentEvaluation";
@@ -63,7 +62,7 @@ const OptimizedAssessmentDetailsContainer: React.FC<OptimizedAssessmentDetailsCo
   // Memoize the initial state effect
   useEffect(() => {
     if (isGeneratingSummary) {
-      setGeneratingSummary(true);
+      setGeneratingSummary();
     }
   }, [isGeneratingSummary, setGeneratingSummary]);
   

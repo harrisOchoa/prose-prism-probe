@@ -61,7 +61,7 @@ const AssessmentDetailsContainer: React.FC<AssessmentDetailsContainerProps> = ({
   // Set initial state for generatingSummary if provided
   useEffect(() => {
     if (isGeneratingSummary) {
-      setGeneratingSummary(true);
+      setGeneratingSummary();
     }
   }, [isGeneratingSummary, setGeneratingSummary]);
   

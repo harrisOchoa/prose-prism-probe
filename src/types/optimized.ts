@@ -69,12 +69,24 @@ export interface WritingResponse {
 }
 
 export interface AntiCheatingMetrics {
+  keystrokes: number;
+  pauses: number;
+  wordsPerMinute: number;
   tabSwitches: number;
-  windowBlurs: number;
   suspiciousActivity: boolean;
   timeSpentMs: number;
-  wordsPerMinute?: number;
-  keystrokes?: number;
+  copyAttempts?: number;
+  pasteAttempts?: number;
+  rightClickAttempts?: number;
+  keyboardShortcuts?: number;
+  windowBlurs?: number;
+  windowFocuses?: number;
+  suspiciousActivityDetail?: string;
+  focusLossEvents?: Array<{timestamp: number, duration: number}>;
+  longestFocusLossDuration?: number;
+  averageFocusLossDuration?: number;
+  suspiciousFocusLoss?: boolean;
+  totalInactivityTime?: number;
   totalTypingTime?: number;
 }
 

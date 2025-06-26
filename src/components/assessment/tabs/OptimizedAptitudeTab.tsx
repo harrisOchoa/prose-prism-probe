@@ -31,6 +31,14 @@ const OptimizedAptitudeTab: React.FC<OptimizedAptitudeTabProps> = memo(({
   const timeSpentMs = assessmentData?.antiCheatingMetrics?.timeSpentMs || 
                       assessmentData?.antiCheatingMetrics?.totalTypingTime || 0;
 
+  // Convert categories to expected format for CategoryBreakdown
+  const categoryData = categories.map(cat => ({
+    name: cat.name,
+    correct: cat.score || 0,
+    total: cat.total || 0,
+    source: 'aptitude'
+  }));
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -45,7 +53,7 @@ const OptimizedAptitudeTab: React.FC<OptimizedAptitudeTabProps> = memo(({
           />
         </div>
         <CategoryBreakdown 
-          categories={categories} 
+          categories={categoryData} 
           actualScore={correctAnswers} 
           totalQuestions={totalQuestions} 
         />

@@ -27,11 +27,14 @@ class PerformanceOptimizer {
   // Track component render performance
   trackRenderTime(componentName: string, renderTime: number): void {
     const existing = this.metrics.get(componentName);
+    // Safely access memory if available
+    const memoryUsage = (performance as any).memory?.usedJSHeapSize || 0;
+    
     this.metrics.set(componentName, {
       componentRenderTime: renderTime,
       apiResponseTime: existing?.apiResponseTime || 0,
       cacheHitRate: existing?.cacheHitRate || 0,
-      memoryUsage: performance.memory?.usedJSHeapSize || 0
+      memoryUsage
     });
   }
 

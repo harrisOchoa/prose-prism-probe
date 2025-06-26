@@ -49,7 +49,7 @@ export const useOptimizedAssessmentView = (id: string | undefined) => {
           setAssessment(refreshedData);
           
           setApiResponse({
-            data: refreshedData as StrictAssessmentData,
+            data: refreshedData as unknown as StrictAssessmentData,
             error: undefined,
             loading: false,
             timestamp: new Date()
@@ -147,7 +147,7 @@ export const useOptimizedAssessmentView = (id: string | undefined) => {
           assessmentCache.set(updatedData.id, updatedData);
           
           setApiResponse({
-            data: updatedData as StrictAssessmentData,
+            data: updatedData as unknown as StrictAssessmentData,
             error: undefined,
             loading: false,
             timestamp: new Date()
