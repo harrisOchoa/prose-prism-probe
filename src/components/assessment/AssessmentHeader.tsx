@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowLeft, FileText, Brain, BarChart, 
@@ -8,7 +8,6 @@ import {
 import { useSearchParams } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
-import { emergencyAnalysisReset } from "@/hooks/useOptimizedContext";
 
 interface AssessmentHeaderProps {
   assessmentData: any;
@@ -36,6 +35,108 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const activeTab = searchParams.get("tab") || "overview";
+  const [stuckAnalysisDetected, setStuckAnalysisDetected] = useState(false);
+
+  // Detect stuck analysis states
+  useEffect(() => {
+    const checkForStuckAnalysis = () => {
+      const now = Date.now();
+      const keys = Object.keys(sessionStorage);
+      
+      // Check for analysis start times that are too old
+      for (const key of keys) {
+        if (key.includes('analysis-start-')) {
+          const startTime = parseInt(sessionStorage.getItem(key) || '0');
+          if (startTime && (now - startTime) > 300000) { // 5 minutes
+            console.log('🚨 Detected stuck analysis:', key, 'started:', new Date(startTime));
+            setStuckAnalysisDetected(true);
+            return;
+          }
+        }
+      }
+      
+      // Check for localStorage indicators of stuck state
+      const localKeys = Object.keys(localStorage);
+      for (const key of localKeys) {
+        if (key.includes('generating') || key.includes('analysis')) {
+          try {
+            const data = JSON.parse(localStorage.getItem(key) || '{}');
+            if (data.timestamp && (now - data.timestamp) > 300000) {
+              console.log('🚨 Detected stuck analysis in localStorage:', key);
+              setStuckAnalysisDetected(true);
+              return;
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+      }
+      
+      setStuckAnalysisDetected(false);
+    };
+
+    // Check immediately and then every 30 seconds
+    checkForStuckAnalysis();
+    const interval = setInterval(checkForStuckAnalysis, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Enhanced emergency reset function
+  const handleEmergencyReset = () => {
+    if (window.confirm('This will force stop all analysis and reload the page. This should fix any stuck analysis states. Continue?')) {
+      console.log('🚨 Emergency analysis reset triggered');
+      
+      toast({
+        title: "Emergency Reset",
+        description: "Clearing all analysis state and reloading...",
+      });
+      
+      // Clear all possible stuck state from storage
+      try {
+        // Clear sessionStorage
+        const sessionKeys = Object.keys(sessionStorage);
+        sessionKeys.forEach(key => {
+          if (key.includes('analysis') || key.includes('generating') || key.includes('evaluating')) {
+            sessionStorage.removeItem(key);
+            console.log('Cleared session key:', key);
+          }
+        });
+        
+        // Clear localStorage  
+        const localKeys = Object.keys(localStorage);
+        localKeys.forEach(key => {
+          if (key.includes('analysis') || key.includes('generating') || key.includes('evaluating')) {
+            localStorage.removeItem(key);
+            console.log('Cleared local key:', key);
+          }
+        });
+        
+        // Clear any cached analysis states
+        const assessmentKeys = Object.keys(localStorage).filter(k => k.startsWith('assessment-'));
+        assessmentKeys.forEach(key => {
+          try {
+            const data = JSON.parse(localStorage.getItem(key) || '{}');
+            if (data.analysisStatus || data.evaluating || data.generatingSummary) {
+              localStorage.removeItem(key);
+              console.log('Cleared cached assessment:', key);
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        });
+        
+      } catch (error) {
+        console.error('Error clearing storage:', error);
+      }
+      
+      // Force reload after a short delay
+      setTimeout(() => {
+        console.log('🔄 Force reloading page to reset all state');
+        window.location.reload();
+      }, 1000);
+    }
+  };
 
   const getButtonLabel = () => {
     if (evaluating) {
@@ -52,16 +153,6 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
     }
     
     return "Re-Evaluate Writing";
-  };
-
-  const handleForceStopAnalysis = () => {
-    if (window.confirm('This will force stop all analysis and reload the page. Continue?')) {
-      toast({
-        title: "Force Stopping Analysis",
-        description: "Resetting analysis state and reloading...",
-      });
-      emergencyAnalysisReset();
-    }
   };
 
   const handleRegenerateInsightsWithFeedback = async () => {
@@ -167,6 +258,9 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
     handleExportPdf(assessmentData, allSections, "Full Assessment Report");
   };
 
+  // Determine if we should show force stop button
+  const shouldShowForceStop = evaluating || generatingSummary || stuckAnalysisDetected;
+
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div className="flex items-center">
@@ -185,16 +279,16 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
       </div>
       
       <div className={`flex gap-2 flex-wrap ${isMobile ? 'w-full' : ''}`}>
-        {/* Emergency Force Stop Button - show when stuck in analysis */}
-        {(evaluating || generatingSummary) && (
+        {/* Always-visible Force Stop Button when analysis is stuck */}
+        {shouldShowForceStop && (
           <Button 
             variant="destructive" 
             size={isMobile ? "sm" : "default"}
             className="flex-1 md:flex-none"
-            onClick={handleForceStopAnalysis}
+            onClick={handleEmergencyReset}
           >
             <StopCircle className="h-4 w-4 mr-2" />
-            Force Stop
+            {stuckAnalysisDetected ? "Emergency Reset" : "Force Stop"}
           </Button>
         )}
         

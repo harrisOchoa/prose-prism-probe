@@ -3,6 +3,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { analysisLoopPrevention } from '@/services/analysis/AnalysisLoopPrevention';
 import { logger } from '@/services/logging';
+import { StuckAnalysisDetector } from '@/utils/stuckAnalysisDetector';
 
 export type AnalysisState = 'idle' | 'evaluating' | 'generating_summary' | 'completed' | 'failed' | 'blocked';
 
@@ -10,6 +11,7 @@ interface AnalysisStateManager {
   state: AnalysisState;
   error: string | null;
   canStartAnalysis: boolean;
+  isStuck: boolean;
   startAnalysis: (assessmentId: string) => boolean;
   completeAnalysis: (assessmentId: string) => void;
   failAnalysis: (assessmentId: string, error: string) => void;
@@ -21,6 +23,7 @@ interface AnalysisStateManager {
 export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateManager => {
   const [state, setState] = useState<AnalysisState>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [isStuck, setIsStuck] = useState(false);
   const stateRef = useRef<AnalysisState>('idle');
   const timeoutRef = useRef<NodeJS.Timeout>();
 
@@ -28,6 +31,27 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  // Monitor for stuck analysis on mount and periodically
+  useEffect(() => {
+    const checkStuckAnalysis = () => {
+      const stuckInfo = StuckAnalysisDetector.detect();
+      setIsStuck(stuckInfo.isStuck);
+      
+      if (stuckInfo.isStuck) {
+        console.log('🚨 Stuck analysis detected:', stuckInfo);
+        StuckAnalysisDetector.logStuckAnalysisReport();
+      }
+    };
+
+    // Check immediately
+    checkStuckAnalysis();
+    
+    // Check every 30 seconds
+    const interval = setInterval(checkStuckAnalysis, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // Emergency detection of stuck analysis on mount
   useEffect(() => {
@@ -134,6 +158,7 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
     if (success) {
       setState('evaluating');
       setError(null);
+      setIsStuck(false);
       console.log('Analysis started successfully for:', id);
       
       toast({
@@ -157,6 +182,7 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
     analysisLoopPrevention.completeAnalysis(id);
     setState('completed');
     setError(null);
+    setIsStuck(false);
     
     // Clear timeout and start time
     if (timeoutRef.current) {
@@ -175,6 +201,7 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
     analysisLoopPrevention.failAnalysis(id, errorMessage);
     setState('failed');
     setError(errorMessage);
+    setIsStuck(false);
     
     // Clear timeout and start time
     if (timeoutRef.current) {
@@ -193,6 +220,7 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
     console.log('Resetting analysis state for:', assessmentId);
     setState('idle');
     setError(null);
+    setIsStuck(false);
     
     // Clear timeout and start time
     if (timeoutRef.current) {
@@ -211,9 +239,13 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
       clearTimeout(timeoutRef.current);
     }
     
+    // Use the stuck analysis detector to clear everything
+    StuckAnalysisDetector.clearStuckAnalysis();
+    
     // Reset state immediately
     setState('idle');
     setError(null);
+    setIsStuck(false);
     
     // Clear analysis prevention state
     if (assessmentId) {
@@ -221,25 +253,23 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
       sessionStorage.removeItem(`analysis-start-${assessmentId}`);
     }
     
-    // Clear all analysis-related storage
-    try {
-      const keys = Object.keys(sessionStorage);
-      keys.forEach(key => {
-        if (key.includes('analysis') || key.includes('generating')) {
-          sessionStorage.removeItem(key);
-        }
-      });
-    } catch (error) {
-      console.error('Error clearing analysis storage:', error);
-    }
-    
     toast({
       title: "Analysis Stopped",
       description: "Analysis has been forcefully stopped and reset.",
     });
+    
+    // Force page reload after a short delay to ensure complete reset
+    setTimeout(() => {
+      console.log('🔄 Reloading page to ensure complete reset');
+      window.location.reload();
+    }, 2000);
   }, [assessmentId]);
 
   const getStatusMessage = useCallback(() => {
+    if (isStuck) {
+      return 'Analysis appears to be stuck - use Emergency Reset';
+    }
+    
     switch (state) {
       case 'idle':
         return 'Ready to analyze';
@@ -256,11 +286,12 @@ export const useAnalysisStateManager = (assessmentId?: string): AnalysisStateMan
       default:
         return 'Unknown state';
     }
-  }, [state, error]);
+  }, [state, error, isStuck]);
 
   return {
     state,
     error,
+    isStuck,
     canStartAnalysis: canStartAnalysis(),
     startAnalysis,
     completeAnalysis,
