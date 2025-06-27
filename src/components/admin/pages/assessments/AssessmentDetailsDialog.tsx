@@ -8,7 +8,7 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, RefreshCw, StopCircle, AlertTriangle } from "lucide-react";
+import { X, StopCircle, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AssessmentDetailsContainer from "@/components/assessment-details";
 import { useAssessmentEvaluation } from "@/hooks/useAssessmentEvaluation";
@@ -31,7 +31,6 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
     generatingSummary,
     evaluating,
     canStartAnalysis,
-    regenerateInsights,
     handleForceStopAnalysis
   } = useAssessmentEvaluation(localAssessment, setLocalAssessment);
 
@@ -41,38 +40,6 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
     // Return the current assessment data (in a real app, this would fetch from API)
     return localAssessment;
   }, [localAssessment]);
-
-  // Enhanced regenerate insights with proper error handling
-  const handleRegenerateInsights = useCallback(async () => {
-    if (generatingSummary) {
-      toast({
-        title: "Already Processing",
-        description: "AI analysis is already in progress. Please wait for it to complete.",
-      });
-      return;
-    }
-    
-    console.log("Regenerating insights in dialog for assessment:", localAssessment?.id);
-    
-    try {
-      const result = await regenerateInsights();
-      if (result) {
-        // Refresh the local assessment data
-        setLocalAssessment(prev => ({
-          ...prev,
-          // Force a re-render to show updated data
-          lastUpdated: new Date().toISOString()
-        }));
-      }
-    } catch (error: any) {
-      console.error("Error regenerating insights in dialog:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to regenerate insights",
-        variant: "destructive",
-      });
-    }
-  }, [generatingSummary, regenerateInsights, localAssessment?.id]);
 
   // Emergency reset for stuck analysis
   const handleEmergencyReset = useCallback(() => {
@@ -127,9 +94,9 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
           <DialogTitle className="flex items-center gap-4">
             Assessment Details
             
-            {/* Analysis Control Buttons */}
-            <div className="flex gap-2 ml-auto">
-              {shouldShowEmergencyReset && (
+            {/* Only Emergency Reset Button in Header */}
+            {shouldShowEmergencyReset && (
+              <div className="flex gap-2 ml-auto">
                 <Button 
                   variant="destructive" 
                   size="sm"
@@ -138,27 +105,8 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
                   <StopCircle className="h-4 w-4 mr-2" />
                   Emergency Reset
                 </Button>
-              )}
-              
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleRegenerateInsights}
-                disabled={generatingSummary || !localAssessment.writingScores || localAssessment.writingScores.length === 0}
-              >
-                {generatingSummary ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Generate Insights
-                  </>
-                )}
-              </Button>
-            </div>
+              </div>
+            )}
           </DialogTitle>
           <DialogClose className="absolute right-4 top-4">
             <X className="h-4 w-4" />
