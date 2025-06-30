@@ -4,8 +4,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
-  DialogClose
+  DialogTitle
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X, StopCircle, AlertTriangle } from "lucide-react";
@@ -90,8 +89,14 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
     }
   }, []);
 
-  // Check if we should show the emergency reset button
-  const shouldShowEmergencyReset = !canStartAnalysis || generatingSummary || evaluating;
+  // Check if we should show the emergency reset button - fix canStartAnalysis usage
+  const shouldShowEmergencyReset = typeof canStartAnalysis === 'function' ? !canStartAnalysis() : !canStartAnalysis || generatingSummary || evaluating;
+
+  // Custom close handler to prevent event bubbling
+  const handleClose = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    onClose();
+  }, [onClose]);
 
   // If no assessment data is provided, show error message
   if (!assessment) {
@@ -104,10 +109,14 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
               <AlertTriangle className="mr-2 h-5 w-5" />
               Error Loading Assessment
             </DialogTitle>
-            <DialogClose className="absolute right-4 top-4">
+            {/* Custom close button to replace DialogClose */}
+            <button 
+              onClick={handleClose}
+              className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
               <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
-            </DialogClose>
+            </button>
           </DialogHeader>
           
           <div className="py-4">
@@ -115,7 +124,7 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
               No assessment data was provided. This might be a temporary issue.
             </p>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={onClose}>
+              <Button variant="outline" onClick={handleClose}>
                 Close
               </Button>
               <Button onClick={() => window.location.reload()}>
@@ -149,16 +158,20 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
               </div>
             )}
           </DialogTitle>
-          <DialogClose className="absolute right-4 top-4">
+          {/* Custom close button to replace DialogClose and prevent duplicate */}
+          <button 
+            onClick={handleClose}
+            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
-          </DialogClose>
+          </button>
         </DialogHeader>
         
         <div className="py-2">
           <AssessmentDetailsContainer
             assessment={localAssessment}
-            onBack={onClose}
+            onBack={handleClose}
             refreshAssessment={refreshAssessment}
           />
         </div>

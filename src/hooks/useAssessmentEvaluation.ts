@@ -60,9 +60,10 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     }
   }, [assessmentData, startAnalysis]);
 
-  // Enhanced regenerate insights with unified system
+  // Enhanced regenerate insights with unified system and proper debugging
   const regenerateInsights = useCallback(async () => {
     if (!assessmentData || !assessmentData.id) {
+      console.error("Cannot regenerate insights: missing assessment data or ID");
       toast({
         title: "Missing Assessment",
         description: "No assessment data available.",
@@ -72,25 +73,67 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
     }
 
     console.log("Regenerating insights for:", assessmentData.id);
+    console.log("Assessment data:", {
+      id: assessmentData.id,
+      hasWritingScores: !!assessmentData.writingScores,
+      writingScoresLength: assessmentData.writingScores?.length || 0,
+      canStart: typeof canStartAnalysis === 'function' ? canStartAnalysis() : canStartAnalysis
+    });
     
-    const result = await generateInsightsOnly(assessmentData.id, assessmentData);
-    
-    if (result) {
+    // Check if analysis can start
+    const canStart = typeof canStartAnalysis === 'function' ? canStartAnalysis() : canStartAnalysis;
+    if (!canStart) {
+      console.log("Cannot start analysis - canStartAnalysis returned false");
       toast({
-        title: "Insights Regenerated",
-        description: "Assessment insights have been successfully regenerated.",
+        title: "Analysis Blocked",
+        description: "Analysis is currently blocked. Please wait or try the emergency reset.",
+        variant: "destructive",
       });
+      return null;
     }
     
-    return result;
-  }, [assessmentData, generateInsightsOnly]);
+    try {
+      const result = await generateInsightsOnly(assessmentData.id, assessmentData);
+      
+      if (result) {
+        console.log("Insights regeneration successful");
+        toast({
+          title: "Insights Regenerated",
+          description: "Assessment insights have been successfully regenerated.",
+        });
+        
+        // Update local state if we have new data
+        if (setAssessmentData && result !== assessmentData) {
+          setAssessmentData(result);
+        }
+      } else {
+        console.log("Insights regeneration returned null/false");
+        toast({
+          title: "Regeneration Failed",
+          description: "Failed to regenerate insights. Please try again.",
+          variant: "destructive",
+        });
+      }
+      
+      return result;
+    } catch (error: any) {
+      console.error("Error in regenerateInsights:", error);
+      toast({
+        title: "Regeneration Error",
+        description: `Error: ${error.message || "Unknown error occurred"}`,
+        variant: "destructive",
+      });
+      return null;
+    }
+  }, [assessmentData, generateInsightsOnly, canStartAnalysis, setAssessmentData]);
 
   // Force stop analysis with user confirmation
   const handleForceStopAnalysis = useCallback(() => {
     if (window.confirm('Are you sure you want to force stop the analysis? This will reset all analysis progress.')) {
+      console.log("Force stopping analysis for:", assessmentData?.id);
       forceStopAnalysis();
     }
-  }, [forceStopAnalysis]);
+  }, [forceStopAnalysis, assessmentData?.id]);
 
   return {
     // Unified analysis interface
