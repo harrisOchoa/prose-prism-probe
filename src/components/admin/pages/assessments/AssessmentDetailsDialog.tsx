@@ -26,6 +26,14 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
 }) => {
   const [localAssessment, setLocalAssessment] = useState(assessment);
   
+  // Add debugging to see what assessment data we're receiving
+  console.log("AssessmentDetailsDialog received assessment:", {
+    hasAssessment: !!assessment,
+    assessmentId: assessment?.id,
+    assessmentKeys: assessment ? Object.keys(assessment) : [],
+    fullAssessment: assessment
+  });
+  
   // Use the evaluation hook to get proper analysis state
   const {
     generatingSummary,
@@ -85,7 +93,40 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
   // Check if we should show the emergency reset button
   const shouldShowEmergencyReset = !canStartAnalysis || generatingSummary || evaluating;
 
-  if (!assessment) return null;
+  // If no assessment data is provided, show error message
+  if (!assessment) {
+    console.error("No assessment data provided to AssessmentDetailsDialog");
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="relative">
+            <DialogTitle className="flex items-center text-red-600">
+              <AlertTriangle className="mr-2 h-5 w-5" />
+              Error Loading Assessment
+            </DialogTitle>
+            <DialogClose className="absolute right-4 top-4">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </DialogClose>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-gray-600 mb-4">
+              No assessment data was provided. This might be a temporary issue.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onClose}>
+                Close
+              </Button>
+              <Button onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
