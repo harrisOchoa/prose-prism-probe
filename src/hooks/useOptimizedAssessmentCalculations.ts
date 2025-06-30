@@ -8,7 +8,26 @@ export interface AssessmentCalculationsProps {
   wordCount?: number;
 }
 
-export const useOptimizedAssessmentCalculations = (assessmentData: AssessmentCalculationsProps) => {
+export const useOptimizedAssessmentCalculations = (assessmentData: AssessmentCalculationsProps | null | undefined) => {
+  // Provide safe defaults when assessmentData is null or undefined
+  const safeAssessmentData = useMemo(() => {
+    if (!assessmentData) {
+      return {
+        aptitudeScore: 0,
+        aptitudeTotal: 0,
+        overallWritingScore: 0,
+        wordCount: 0
+      };
+    }
+    
+    return {
+      aptitudeScore: assessmentData.aptitudeScore || 0,
+      aptitudeTotal: assessmentData.aptitudeTotal || 0,
+      overallWritingScore: assessmentData.overallWritingScore || 0,
+      wordCount: assessmentData.wordCount || 0
+    };
+  }, [assessmentData]);
+
   // Memoize score color calculations
   const getScoreColor = useCallback((score: number) => {
     if (score === 0) return "text-gray-600";
@@ -37,33 +56,38 @@ export const useOptimizedAssessmentCalculations = (assessmentData: AssessmentCal
     return "Needs Improvement";
   }, []);
 
-  // Memoize percentage calculations as functions
+  // Memoize percentage calculations as functions with safe defaults
   const getAptitudeScorePercentage = useCallback(() => {
-    if (!assessmentData.aptitudeTotal) return 0;
-    return Math.round((assessmentData.aptitudeScore / assessmentData.aptitudeTotal) * 100);
-  }, [assessmentData.aptitudeScore, assessmentData.aptitudeTotal]);
+    if (!safeAssessmentData.aptitudeTotal || safeAssessmentData.aptitudeTotal === 0) return 0;
+    return Math.round((safeAssessmentData.aptitudeScore / safeAssessmentData.aptitudeTotal) * 100);
+  }, [safeAssessmentData.aptitudeScore, safeAssessmentData.aptitudeTotal]);
 
   const getWritingScorePercentage = useCallback(() => {
-    if (!assessmentData.overallWritingScore) return 0;
-    return Math.round((assessmentData.overallWritingScore / 5) * 100);
-  }, [assessmentData.overallWritingScore]);
+    if (!safeAssessmentData.overallWritingScore || safeAssessmentData.overallWritingScore === 0) return 0;
+    return Math.round((safeAssessmentData.overallWritingScore / 5) * 100);
+  }, [safeAssessmentData.overallWritingScore]);
 
   const getOverallScore = useCallback(() => {
     const aptitudePercentage = getAptitudeScorePercentage();
     const writingPercentage = getWritingScorePercentage();
     
-    if (!assessmentData.overallWritingScore) {
+    if (!safeAssessmentData.overallWritingScore || safeAssessmentData.overallWritingScore === 0) {
       return aptitudePercentage;
     }
     
     return Math.round((aptitudePercentage + writingPercentage) / 2);
-  }, [getAptitudeScorePercentage, getWritingScorePercentage, assessmentData.overallWritingScore]);
+  }, [getAptitudeScorePercentage, getWritingScorePercentage, safeAssessmentData.overallWritingScore]);
 
   const getProgressColor = useCallback((value: number) => {
     if (value >= 70) return "#22c55e"; // green
     if (value >= 50) return "#eab308"; // yellow
     return "#ef4444"; // red
   }, []);
+
+  // Add debugging when data is null
+  if (!assessmentData) {
+    console.log("Assessment data is null in useOptimizedAssessmentCalculations");
+  }
 
   return {
     getScoreColor,

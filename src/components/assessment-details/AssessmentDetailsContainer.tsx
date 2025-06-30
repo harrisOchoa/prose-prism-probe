@@ -10,6 +10,7 @@ import AssessmentTabs from "./AssessmentTabs";
 import { toast } from "@/hooks/use-toast";
 import { useAssessmentDetailsState } from "./hooks/useAssessmentDetailsState";
 import { useAdvancedAnalysisHandler } from "./hooks/useAdvancedAnalysisHandler";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
 
 interface AssessmentDetailsContainerProps {
   assessment: any;
@@ -25,6 +26,19 @@ const AssessmentDetailsContainer: React.FC<AssessmentDetailsContainerProps> = ({
   refreshAssessment
 }) => {
   const isMobile = useIsMobile();
+  
+  // Add debugging for null assessment
+  if (!assessment) {
+    console.log("Assessment is null in AssessmentDetailsContainer");
+    return (
+      <div className="text-center p-8">
+        <p>No assessment data available</p>
+        <button onClick={onBack} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+          Back to Admin
+        </button>
+      </div>
+    );
+  }
   
   // Extract state management
   const {
@@ -128,35 +142,49 @@ const AssessmentDetailsContainer: React.FC<AssessmentDetailsContainerProps> = ({
     }
   };
 
+  // If no assessment data after state processing, show error
+  if (!assessmentData) {
+    return (
+      <div className="text-center p-8">
+        <p>Failed to load assessment data</p>
+        <button onClick={onBack} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+          Back to Admin
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4 md:space-y-6 px-2 md:px-0">
-      <AssessmentHeader 
-        assessmentData={assessmentData}
-        onBack={handleBack}
-        evaluating={evaluating}
-        generatingSummary={generatingSummary}
-        handleManualEvaluation={handleManualEvaluation}
-        regenerateInsights={regenerateInsights}
-        handleExportPdf={handleExportPdfWithSections}
-      />
+    <ErrorBoundary fallback={<div className="text-center p-8"><p>Something went wrong. Please try refreshing the page.</p></div>}>
+      <div className="space-y-4 md:space-y-6 px-2 md:px-0">
+        <AssessmentHeader 
+          assessmentData={assessmentData}
+          onBack={handleBack}
+          evaluating={evaluating}
+          generatingSummary={generatingSummary}
+          handleManualEvaluation={handleManualEvaluation}
+          regenerateInsights={regenerateInsights}
+          handleExportPdf={handleExportPdfWithSections}
+        />
 
-      <CandidateSummaryCard 
-        assessmentData={assessmentData}
-        getOverallScore={calculations.getOverallScore}
-      />
+        <CandidateSummaryCard 
+          assessmentData={assessmentData}
+          getOverallScore={calculations.getOverallScore}
+        />
 
-      <AssessmentTabs 
-        key={renderKey}
-        activeTab={activeTab}
-        onTabChange={handleTabChangeWithRefresh}
-        assessmentData={assessmentData}
-        generatingSummary={generatingSummary}
-        generatingAnalysis={generatingAnalysis}
-        calculations={calculations}
-        generateAdvancedAnalysis={handleGenerateAdvancedAnalysis}
-        isMobile={isMobile}
-      />
-    </div>
+        <AssessmentTabs 
+          key={renderKey}
+          activeTab={activeTab}
+          onTabChange={handleTabChangeWithRefresh}
+          assessmentData={assessmentData}
+          generatingSummary={generatingSummary}
+          generatingAnalysis={generatingAnalysis}
+          calculations={calculations}
+          generateAdvancedAnalysis={handleGenerateAdvancedAnalysis}
+          isMobile={isMobile}
+        />
+      </div>
+    </ErrorBoundary>
   );
 };
 
