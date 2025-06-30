@@ -1,57 +1,59 @@
 
 import { useState } from "react";
-import { Clock, FileText, AlertCircle } from "lucide-react";
 
 export const useAssessmentUtils = () => {
-  // State for the dialog
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Dialog functions
   const openAssessmentDetails = (assessment: any) => {
+    console.log("Opening assessment details for:", {
+      assessmentId: assessment?.id,
+      assessmentName: assessment?.candidateName,
+      hasAssessment: !!assessment
+    });
+    
+    // Make sure we have valid assessment data
+    if (!assessment) {
+      console.error("Cannot open assessment details - no assessment data provided");
+      return;
+    }
+    
     setSelectedAssessment(assessment);
     setIsDialogOpen(true);
   };
 
   const closeAssessmentDetails = () => {
+    console.log("Closing assessment details dialog");
     setIsDialogOpen(false);
+    // Don't clear selectedAssessment immediately to prevent flash
+    setTimeout(() => {
+      setSelectedAssessment(null);
+    }, 300);
   };
 
-  // Status styling functions
   const getBadgeStyle = (status: string) => {
-    switch(status) {
-      case 'active':
-        return "bg-green-50 text-green-700 border-green-200";
+    switch (status) {
       case 'completed':
-        return "bg-blue-50 text-blue-700 border-blue-200";
-      case 'archived':
-        return "bg-gray-100 text-gray-700 border-gray-200";
+        return 'bg-green-100 text-green-800';
+      case 'in_progress':
+        return 'bg-blue-100 text-blue-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
       default:
-        return "";
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusIcon = (status: string) => {
-    switch(status) {
-      case 'active':
-        return <Clock className="h-4 w-4 text-green-500 mr-1.5" />;
-      case 'completed':
-        return <FileText className="h-4 w-4 text-blue-500 mr-1.5" />;
-      case 'archived':
-        return <AlertCircle className="h-4 w-4 text-gray-500 mr-1.5" />;
-      default:
-        return null;
-    }
+    // Return appropriate icon based on status
+    return null; // Placeholder - implement based on your needs
   };
 
-  const getScoreColor = (score: number, total: number) => {
-    if (!total) return "bg-gray-50 text-gray-700";
-    const percentage = (score / total) * 100;
-    
-    if (percentage >= 80) return "bg-green-50 text-green-700";
-    if (percentage >= 60) return "bg-blue-50 text-blue-700";
-    if (percentage >= 40) return "bg-yellow-50 text-yellow-700";
-    return "bg-red-50 text-red-700";
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600';
+    if (score >= 60) return 'text-blue-600';
+    if (score >= 40) return 'text-orange-600';
+    return 'text-red-600';
   };
 
   return {

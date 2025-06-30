@@ -32,6 +32,14 @@ const AssessmentsPage = () => {
     getScoreColor
   } = useAssessmentUtils();
 
+  // Add debugging to see what's happening with the selected assessment
+  console.log("AssessmentsPage - selectedAssessment:", {
+    hasSelectedAssessment: !!selectedAssessment,
+    selectedAssessmentId: selectedAssessment?.id,
+    isDialogOpen,
+    assessmentsCount: assessments.length
+  });
+
   return (
     <div className="p-6 space-y-6">
       <AssessmentsHeader 
@@ -72,11 +80,14 @@ const AssessmentsPage = () => {
         </TabsContent>
       </Tabs>
       
-      <AssessmentDetailsDialog
-        assessment={selectedAssessment}
-        isOpen={isDialogOpen}
-        onClose={closeAssessmentDetails}
-      />
+      {/* Make sure we're properly passing the selected assessment */}
+      {selectedAssessment && (
+        <AssessmentDetailsDialog
+          assessment={selectedAssessment}
+          isOpen={isDialogOpen}
+          onClose={closeAssessmentDetails}
+        />
+      )}
     </div>
   );
 };

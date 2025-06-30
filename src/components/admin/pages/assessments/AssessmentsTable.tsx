@@ -1,29 +1,20 @@
 
 import React from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, FileText, AlertCircle } from "lucide-react";
-import { format } from "date-fns";
-import EmptyState from "@/components/admin/dashboard/components/EmptyState";
-import { AssessmentWithStatus } from "@/hooks/useAdminAssessments";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Eye, FileText, Clock, AlertCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AssessmentsTableProps {
-  assessments: AssessmentWithStatus[];
+  assessments: any[];
   loading: boolean;
   error: string | null;
   activeTab: string;
-  openAssessmentDetails: (assessment: AssessmentWithStatus) => void;
+  openAssessmentDetails: (assessment: any) => void;
   getBadgeStyle: (status: string) => string;
   getStatusIcon: (status: string) => React.ReactNode;
-  getScoreColor: (score: number, total: number) => string;
+  getScoreColor: (score: number) => string;
 }
 
 const AssessmentsTable: React.FC<AssessmentsTableProps> = ({
@@ -36,91 +27,118 @@ const AssessmentsTable: React.FC<AssessmentsTableProps> = ({
   getStatusIcon,
   getScoreColor
 }) => {
+  // Add debugging to see what assessments we're working with
+  console.log("AssessmentsTable received:", {
+    assessmentsCount: assessments.length,
+    activeTab,
+    firstAssessment: assessments[0] ? {
+      id: assessments[0].id,
+      candidateName: assessments[0].candidateName,
+      keys: Object.keys(assessments[0])
+    } : null
+  });
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      <div className="space-y-4">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <EmptyState 
-        title="Error loading assessments" 
-        message={error}
-        icon={<FileText className="h-12 w-12 text-muted-foreground opacity-70" />}
-      />
+      <div className="text-center py-8">
+        <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+        <p className="text-red-600">{error}</p>
+      </div>
     );
   }
 
   if (assessments.length === 0) {
     return (
-      <EmptyState 
-        title="No assessments found" 
-        message={activeTab === 'all' 
-          ? "There are no assessments in the system yet." 
-          : `No ${activeTab} assessments found.`}
-        icon={<FileText className="h-12 w-12 text-muted-foreground opacity-70" />}
-      />
+      <div className="text-center py-8">
+        <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+        <p className="text-gray-600">No assessments found</p>
+      </div>
     );
   }
 
+  const handleViewAssessment = (assessment: any) => {
+    console.log("View button clicked for assessment:", {
+      assessmentId: assessment?.id,
+      candidateName: assessment?.candidateName,
+      fullAssessment: assessment
+    });
+    
+    // Make sure we have the complete assessment object
+    if (!assessment) {
+      console.error("Cannot view assessment - assessment object is null/undefined");
+      return;
+    }
+    
+    openAssessmentDetails(assessment);
+  };
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[250px]">Assessment</TableHead>
-          <TableHead>Position</TableHead>
-          <TableHead>Submitted</TableHead>
-          <TableHead className="text-center">Status</TableHead>
-          <TableHead className="text-center">Score</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {assessments.map((assessment) => (
-          <TableRow key={assessment.id}>
-            <TableCell className="font-medium">{assessment.candidateName || "Unknown"}</TableCell>
-            <TableCell>{assessment.candidatePosition || "Not specified"}</TableCell>
-            <TableCell>
-              <div className="flex items-center">
-                <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                {assessment.submittedAt?.toDate ? 
-                  format(assessment.submittedAt.toDate(), 'MMM d, yyyy') : 
-                  "Unknown date"}
-              </div>
-            </TableCell>
-            <TableCell className="text-center">
-              <Badge variant="outline" className={getBadgeStyle(assessment.status)}>
-                <div className="flex items-center">
-                  {getStatusIcon(assessment.status)}
-                  {assessment.status.charAt(0).toUpperCase() + assessment.status.slice(1)}
-                </div>
-              </Badge>
-            </TableCell>
-            <TableCell className="text-center">
-              <Badge variant="outline" 
-                className={getScoreColor(
-                  assessment.aptitudeScore || 0, 
-                  assessment.aptitudeTotal || 30
-                )}>
-                {assessment.aptitudeScore || 0}/{assessment.aptitudeTotal || 30}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-right">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => openAssessmentDetails(assessment)}
-              >
-                View
-              </Button>
-            </TableCell>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Candidate</TableHead>
+            <TableHead>Position</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Score</TableHead>
+            <TableHead>Submitted</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {assessments.map((assessment) => (
+            <TableRow key={assessment.id}>
+              <TableCell className="font-medium">
+                {assessment.candidateName || 'Unknown'}
+              </TableCell>
+              <TableCell>
+                {assessment.candidatePosition || 'Not specified'}
+              </TableCell>
+              <TableCell>
+                <Badge className={getBadgeStyle(assessment.status || 'pending')}>
+                  {assessment.status || 'pending'}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <span className={getScoreColor(assessment.overallScore || 0)}>
+                  {assessment.overallScore || 0}%
+                </span>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <Clock className="mr-1 h-4 w-4 text-gray-400" />
+                  {assessment.submittedAt ? 
+                    new Date(assessment.submittedAt.toDate()).toLocaleDateString() :
+                    'Unknown'
+                  }
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleViewAssessment(assessment)}
+                  className="flex items-center gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  View
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 
