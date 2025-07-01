@@ -77,13 +77,12 @@ export const useAssessmentEvaluation = (assessmentData: any, setAssessmentData: 
       id: assessmentData.id,
       hasWritingScores: !!assessmentData.writingScores,
       writingScoresLength: assessmentData.writingScores?.length || 0,
-      canStart: typeof canStartAnalysis === 'function' ? canStartAnalysis() : canStartAnalysis
+      canStart: canStartAnalysis
     });
     
-    // Check if analysis can start
-    const canStart = typeof canStartAnalysis === 'function' ? canStartAnalysis() : canStartAnalysis;
-    if (!canStart) {
-      console.log("Cannot start analysis - canStartAnalysis returned false");
+    // Check if analysis can start - treat as boolean, not function
+    if (!canStartAnalysis) {
+      console.log("Cannot start analysis - canStartAnalysis is false");
       toast({
         title: "Analysis Blocked",
         description: "Analysis is currently blocked. Please wait or try the emergency reset.",

@@ -89,8 +89,8 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
     }
   }, []);
 
-  // Check if we should show the emergency reset button - fix canStartAnalysis usage
-  const shouldShowEmergencyReset = typeof canStartAnalysis === 'function' ? !canStartAnalysis() : !canStartAnalysis || generatingSummary || evaluating;
+  // Check if we should show the emergency reset button - treat canStartAnalysis as boolean
+  const shouldShowEmergencyReset = !canStartAnalysis || generatingSummary || evaluating;
 
   // Custom close handler to prevent event bubbling
   const handleClose = useCallback((e?: React.MouseEvent) => {
