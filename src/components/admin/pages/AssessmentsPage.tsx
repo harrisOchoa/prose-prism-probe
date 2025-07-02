@@ -46,10 +46,19 @@ const AssessmentsPage = () => {
     }
   }, [assessmentState]);
 
+  // Add error boundary for debugging
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-red-600">Error loading assessments: {error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <AssessmentsHeader 
-        totalCount={counts.total} 
+        totalCount={counts?.total || 0} 
         loading={loading} 
       />
       
