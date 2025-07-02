@@ -7,6 +7,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // Calculate overall score from available assessment data
 const calculateOverallScore = (assessment: any): number => {
+  // Debug log to see actual data structure
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Assessment data for score calculation:', {
+      id: assessment.id,
+      candidateName: assessment.candidateName,
+      overallWritingScore: assessment.overallWritingScore,
+      writingScores: assessment.writingScores,
+      aptitudeScore: assessment.aptitudeScore,
+      aptitudeTotal: assessment.aptitudeTotal,
+      overallScore: assessment.overallScore,
+      allKeys: Object.keys(assessment)
+    });
+  }
+
   // Check for overall writing score first
   if (assessment.overallWritingScore && assessment.overallWritingScore > 0) {
     return Math.round(assessment.overallWritingScore);
