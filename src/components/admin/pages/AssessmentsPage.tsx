@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { FileText } from "lucide-react";
@@ -32,13 +32,19 @@ const AssessmentsPage = () => {
     getScoreColor
   } = useAssessmentUtils();
 
-  // Add debugging to see what's happening with the selected assessment
-  console.log("AssessmentsPage - selectedAssessment:", {
+  // Optimized assessment state logging with useMemo
+  const assessmentState = useMemo(() => ({
     hasSelectedAssessment: !!selectedAssessment,
     selectedAssessmentId: selectedAssessment?.id,
     isDialogOpen,
     assessmentsCount: assessments.length
-  });
+  }), [selectedAssessment, isDialogOpen, assessments.length]);
+
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log("AssessmentsPage - selectedAssessment:", assessmentState);
+    }
+  }, [assessmentState]);
 
   return (
     <div className="p-6 space-y-6">

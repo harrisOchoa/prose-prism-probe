@@ -1,7 +1,7 @@
 
 import React, { useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useAntiCheating } from "@/hooks/useAntiCheating";
+import { useOptimizedAntiCheating } from "@/hooks/useOptimizedAntiCheating";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { memo } from "react";
 
@@ -53,7 +53,7 @@ const WritingPrompt: React.FC<WritingPromptProps> = memo(({
     tabSwitches,
     windowBlurs,
     suspiciousActivity
-  } = useAntiCheating(text);
+  } = useOptimizedAntiCheating(text);
 
   // Extract focus warning logic
   const { showFocusWarning } = useFocusWarning(windowBlurs);

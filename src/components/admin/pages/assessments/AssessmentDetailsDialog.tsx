@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { 
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import { X, StopCircle, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AssessmentDetailsContainer from "@/components/assessment-details";
 import { useAssessmentEvaluation } from "@/hooks/useAssessmentEvaluation";
+import { logger } from "@/services/logging";
 
 interface AssessmentDetailsDialogProps {
   assessment: any;
@@ -25,13 +26,16 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
 }) => {
   const [localAssessment, setLocalAssessment] = useState(assessment);
   
-  // Add debugging to see what assessment data we're receiving
-  console.log("AssessmentDetailsDialog received assessment:", {
+  // Optimized assessment validation with logging
+  const assessmentInfo = useMemo(() => ({
     hasAssessment: !!assessment,
     assessmentId: assessment?.id,
-    assessmentKeys: assessment ? Object.keys(assessment) : [],
-    fullAssessment: assessment
-  });
+    assessmentKeys: assessment ? Object.keys(assessment) : []
+  }), [assessment]);
+
+  React.useEffect(() => {
+    logger.debug('ASSESSMENT_DIALOG', 'Assessment received', assessmentInfo);
+  }, [assessmentInfo]);
   
   // Use the evaluation hook to get proper analysis state
   const {
@@ -41,17 +45,17 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
     handleForceStopAnalysis
   } = useAssessmentEvaluation(localAssessment, setLocalAssessment);
 
-  // Function to handle refreshing assessment data
+  // Optimized function to handle refreshing assessment data
   const refreshAssessment = useCallback(async () => {
-    console.log("Refreshing assessment data in dialog");
+    logger.debug('ASSESSMENT_DIALOG', 'Refreshing assessment data', { assessmentId: localAssessment?.id });
     // Return the current assessment data (in a real app, this would fetch from API)
     return localAssessment;
   }, [localAssessment]);
 
-  // Emergency reset for stuck analysis
+  // Optimized emergency reset for stuck analysis
   const handleEmergencyReset = useCallback(() => {
     if (window.confirm('This will force stop all analysis and clear the stuck state. Continue?')) {
-      console.log('🚨 Emergency reset in dialog');
+      logger.warn('ASSESSMENT_DIALOG', 'Emergency reset initiated', { assessmentId: localAssessment?.id });
       
       // Clear analysis state from storage
       try {
@@ -59,7 +63,7 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
         keys.forEach(key => {
           if (key.includes('analysis') || key.includes('generating')) {
             sessionStorage.removeItem(key);
-            console.log('Cleared session key:', key);
+            logger.debug('STORAGE', 'Cleared session key', { key });
           }
         });
         
@@ -67,11 +71,11 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
         localKeys.forEach(key => {
           if (key.includes('analysis') || key.includes('generating')) {
             localStorage.removeItem(key);
-            console.log('Cleared local key:', key);
+            logger.debug('STORAGE', 'Cleared local key', { key });
           }
         });
       } catch (error) {
-        console.error('Error clearing storage:', error);
+        logger.error('STORAGE', 'Error clearing storage', error);
       }
       
       // Reset local state
@@ -87,10 +91,13 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
         description: "Analysis state has been cleared. Try generating insights again.",
       });
     }
-  }, []);
+  }, [localAssessment?.id]);
 
-  // Check if we should show the emergency reset button - treat canStartAnalysis as boolean
-  const shouldShowEmergencyReset = !canStartAnalysis || generatingSummary || evaluating;
+  // Memoized emergency reset button visibility
+  const shouldShowEmergencyReset = useMemo(() => 
+    !canStartAnalysis || generatingSummary || evaluating, 
+    [canStartAnalysis, generatingSummary, evaluating]
+  );
 
   // Custom close handler to prevent event bubbling
   const handleClose = useCallback((e?: React.MouseEvent) => {
@@ -100,7 +107,7 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
 
   // If no assessment data is provided, show error message
   if (!assessment) {
-    console.error("No assessment data provided to AssessmentDetailsDialog");
+    logger.error('ASSESSMENT_DIALOG', 'No assessment data provided to AssessmentDetailsDialog');
     return (
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <DialogContent className="max-w-md">
@@ -180,4 +187,8 @@ const AssessmentDetailsDialog: React.FC<AssessmentDetailsDialogProps> = ({
   );
 };
 
-export default AssessmentDetailsDialog;
+// Memoize the component for performance optimization
+const MemoizedAssessmentDetailsDialog = React.memo(AssessmentDetailsDialog);
+MemoizedAssessmentDetailsDialog.displayName = 'AssessmentDetailsDialog';
+
+export default MemoizedAssessmentDetailsDialog;

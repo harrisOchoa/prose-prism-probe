@@ -1,7 +1,7 @@
 
 import React, { useMemo, useCallback, memo } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useAntiCheating } from "@/hooks/useAntiCheating";
+import { useOptimizedAntiCheating } from "@/hooks/useOptimizedAntiCheating";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { shallowEqual } from "@/utils/shallowCompare";
 
@@ -46,7 +46,7 @@ const OptimizedWritingPrompt: React.FC<WritingPromptProps> = memo(({
   } = useWritingState(response, currentQuestion);
   
   // Extract anti-cheating functionality with memoization
-  const antiCheatingData = useAntiCheating(text);
+  const antiCheatingData = useOptimizedAntiCheating(text);
   const {
     handleKeyPress,
     preventCopyPaste,

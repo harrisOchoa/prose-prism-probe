@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,16 +27,20 @@ const AssessmentsTable: React.FC<AssessmentsTableProps> = ({
   getStatusIcon,
   getScoreColor
 }) => {
-  // Add debugging to see what assessments we're working with
-  console.log("AssessmentsTable received:", {
-    assessmentsCount: assessments.length,
-    activeTab,
-    firstAssessment: assessments[0] ? {
-      id: assessments[0].id,
-      candidateName: assessments[0].candidateName,
-      keys: Object.keys(assessments[0])
-    } : null
-  });
+  // Optimized assessment debugging with development-only logging
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log("AssessmentsTable received:", {
+        assessmentsCount: assessments.length,
+        activeTab,
+        firstAssessment: assessments[0] ? {
+          id: assessments[0].id,
+          candidateName: assessments[0].candidateName,
+          keys: Object.keys(assessments[0])
+        } : null
+      });
+    }
+  }, [assessments.length, activeTab, assessments]);
 
   if (loading) {
     return (
@@ -66,12 +70,13 @@ const AssessmentsTable: React.FC<AssessmentsTableProps> = ({
     );
   }
 
-  const handleViewAssessment = (assessment: any) => {
-    console.log("View button clicked for assessment:", {
-      assessmentId: assessment?.id,
-      candidateName: assessment?.candidateName,
-      fullAssessment: assessment
-    });
+  const handleViewAssessment = useCallback((assessment: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log("View button clicked for assessment:", {
+        assessmentId: assessment?.id,
+        candidateName: assessment?.candidateName
+      });
+    }
     
     // Make sure we have the complete assessment object
     if (!assessment) {
@@ -80,7 +85,7 @@ const AssessmentsTable: React.FC<AssessmentsTableProps> = ({
     }
     
     openAssessmentDetails(assessment);
-  };
+  }, [openAssessmentDetails]);
 
   return (
     <div className="rounded-md border">

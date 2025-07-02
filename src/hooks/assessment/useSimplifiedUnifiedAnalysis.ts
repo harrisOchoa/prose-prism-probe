@@ -6,6 +6,7 @@ import { AssessmentData } from "@/types/assessment";
 import { analysisLoopPrevention } from "@/services/analysis/AnalysisLoopPrevention";
 import { evaluateAllWritingPrompts, generateCandidateSummary, generateStrengthsAndWeaknesses } from "@/services/geminiService";
 import { updateAssessmentAnalysis } from "@/firebase/assessmentService";
+import { logger } from "@/services/logging";
 
 export const useSimplifiedUnifiedAnalysis = (assessmentId?: string) => {
   const [analysisInProgress, setAnalysisInProgress] = useState(false);
@@ -17,34 +18,35 @@ export const useSimplifiedUnifiedAnalysis = (assessmentId?: string) => {
     id: string, 
     assessmentData: AssessmentData
   ): Promise<boolean> => {
-    console.log('Starting simplified unified analysis for:', id);
+    logger.info('SIMPLIFIED_ANALYSIS', 'Starting simplified unified analysis', { assessmentId: id });
     
     if (!id || !assessmentData) {
-      console.error('Missing assessment ID or data');
+      logger.error('SIMPLIFIED_ANALYSIS', 'Missing assessment ID or data', { id, hasData: !!assessmentData });
       return false;
     }
     
     // Check if analysis can start
     if (!stateManager.canStartAnalysis) {
-      console.log('Cannot start analysis - state manager blocked it');
+      logger.warn('SIMPLIFIED_ANALYSIS', 'Cannot start analysis - state manager blocked it', { assessmentId: id });
       return false;
     }
 
     // Start analysis with loop prevention
     if (!stateManager.startAnalysis(id)) {
-      console.log('Cannot start analysis - already in progress');
+      logger.warn('SIMPLIFIED_ANALYSIS', 'Cannot start analysis - already in progress', { assessmentId: id });
       return false;
     }
     
     try {
       setAnalysisInProgress(true);
       
-      console.log('Phase 1: Evaluating writing responses');
+      logger.info('SIMPLIFIED_ANALYSIS', 'Phase 1: Evaluating writing responses', { assessmentId: id });
       
       // Step 1: Evaluate writing if not already done
       let updatedData = { ...assessmentData };
       if (!assessmentData.writingScores || assessmentData.writingScores.length === 0) {
         if (!assessmentData.completedPrompts || assessmentData.completedPrompts.length === 0) {
+          logger.error('SIMPLIFIED_ANALYSIS', 'No writing prompts to evaluate', { assessmentId: id });
           throw new Error("No writing prompts to evaluate");
         }
         
@@ -74,10 +76,10 @@ export const useSimplifiedUnifiedAnalysis = (assessmentId?: string) => {
           overallWritingScore: overallScore
         });
         
-        console.log('Writing evaluation completed');
+        logger.info('SIMPLIFIED_ANALYSIS', 'Writing evaluation completed', { assessmentId: id, scoreCount: scores.length });
       }
       
-      console.log('Phase 2: Generating insights');
+      logger.info('SIMPLIFIED_ANALYSIS', 'Phase 2: Generating insights', { assessmentId: id });
       
       // Step 2: Generate insights
       const [summary, analysis] = await Promise.all([
@@ -103,13 +105,13 @@ export const useSimplifiedUnifiedAnalysis = (assessmentId?: string) => {
         analysisStatus: 'basic_insights_generated'
       });
       
-      console.log('Insights generation completed');
+      logger.info('SIMPLIFIED_ANALYSIS', 'Insights generation completed', { assessmentId: id });
       stateManager.completeAnalysis(id);
       
       return true;
       
     } catch (error: any) {
-      console.error('Unified analysis failed:', error);
+      logger.error('SIMPLIFIED_ANALYSIS', 'Unified analysis failed', { assessmentId: id, error: error.message });
       stateManager.failAnalysis(id, error.message);
       return false;
     } finally {
@@ -121,9 +123,10 @@ export const useSimplifiedUnifiedAnalysis = (assessmentId?: string) => {
     id: string,
     assessmentData: AssessmentData
   ): Promise<boolean> => {
-    console.log('Generating insights only for:', id);
+    logger.info('SIMPLIFIED_ANALYSIS', 'Generating insights only', { assessmentId: id });
     
     if (!assessmentData.writingScores || assessmentData.writingScores.length === 0) {
+      logger.warn('SIMPLIFIED_ANALYSIS', 'No writing scores available for insights generation', { assessmentId: id });
       toast({
         title: "No Writing Scores",
         description: "Please evaluate the writing first to generate insights.",

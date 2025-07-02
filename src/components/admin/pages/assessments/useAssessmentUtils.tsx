@@ -1,16 +1,18 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 export const useAssessmentUtils = () => {
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const openAssessmentDetails = (assessment: any) => {
-    console.log("Opening assessment details for:", {
-      assessmentId: assessment?.id,
-      assessmentName: assessment?.candidateName,
-      hasAssessment: !!assessment
-    });
+  const openAssessmentDetails = useCallback((assessment: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Opening assessment details for:", {
+        assessmentId: assessment?.id,
+        assessmentName: assessment?.candidateName,
+        hasAssessment: !!assessment
+      });
+    }
     
     // Make sure we have valid assessment data
     if (!assessment) {
@@ -20,16 +22,18 @@ export const useAssessmentUtils = () => {
     
     setSelectedAssessment(assessment);
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  const closeAssessmentDetails = () => {
-    console.log("Closing assessment details dialog");
+  const closeAssessmentDetails = useCallback(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Closing assessment details dialog");
+    }
     setIsDialogOpen(false);
     // Don't clear selectedAssessment immediately to prevent flash
     setTimeout(() => {
       setSelectedAssessment(null);
     }, 300);
-  };
+  }, []);
 
   const getBadgeStyle = (status: string) => {
     switch (status) {

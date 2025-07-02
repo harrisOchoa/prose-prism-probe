@@ -1,12 +1,15 @@
-
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useCallback } from "react";
 import { useKeyboardMetrics } from "./assessment/metrics/useKeyboardMetrics";
 import { useWindowEvents } from "./assessment/metrics/useWindowEvents";
 import { usePreventActions } from "./assessment/metrics/usePreventActions";
 import { useSuspiciousActivity } from "./assessment/metrics/useSuspiciousActivity";
 import { useAntiCheatingEffects } from "./assessment/metrics/useAntiCheatingEffects";
+import { logger } from "@/services/logging";
 
-export const useAntiCheating = (response: string) => {
+/**
+ * Optimized anti-cheating hook with performance improvements and proper logging
+ */
+export const useOptimizedAntiCheating = (response: string) => {
   const userAgent = navigator?.userAgent || "unknown";
   const initialContentRef = useRef<string>(response);
 
@@ -47,22 +50,28 @@ export const useAntiCheating = (response: string) => {
     initialContentRef,
   });
 
-  // Memoize the metrics function to prevent unnecessary re-renders
-  const getAssessmentMetrics = useMemo(() => {
-    return () => {
-      const typingMetrics = getTypingMetrics();
-      const windowMetrics = getWindowMetrics();
-      const preventionMetrics = getPreventionMetrics();
+  // Memoized metrics function with logging
+  const getAssessmentMetrics = useCallback(() => {
+    const typingMetrics = getTypingMetrics();
+    const windowMetrics = getWindowMetrics();
+    const preventionMetrics = getPreventionMetrics();
 
-      return {
-        ...typingMetrics,
-        ...windowMetrics,
-        ...preventionMetrics,
-        suspiciousActivity: suspiciousActivity || suspiciousFocusLoss,
-        suspiciousActivityDetail,
-        userAgent,
-      };
+    const metrics = {
+      ...typingMetrics,
+      ...windowMetrics,
+      ...preventionMetrics,
+      suspiciousActivity: suspiciousActivity || suspiciousFocusLoss,
+      suspiciousActivityDetail,
+      userAgent,
     };
+
+    logger.debug('ANTI_CHEATING', 'Metrics calculated', {
+      hasActivity: !!metrics.suspiciousActivity,
+      tabSwitches: metrics.tabSwitches,
+      keystrokes: metrics.keystrokes
+    });
+
+    return metrics;
   }, [getTypingMetrics, getWindowMetrics, getPreventionMetrics, suspiciousActivity, suspiciousFocusLoss, suspiciousActivityDetail, userAgent]);
 
   return {
