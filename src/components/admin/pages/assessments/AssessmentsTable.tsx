@@ -17,16 +17,29 @@ const calculateOverallScore = (assessment: any): number => {
       aptitudeScore: assessment.aptitudeScore,
       aptitudeTotal: assessment.aptitudeTotal,
       overallScore: assessment.overallScore,
+      aptitudeData: assessment.aptitudeData,
       allKeys: Object.keys(assessment)
     });
   }
 
-  // Check for overall writing score first
+  // Priority 1: Check for aptitude score (most common for these assessments)
+  if (assessment.aptitudeScore !== undefined && assessment.aptitudeTotal && assessment.aptitudeTotal > 0) {
+    const percentage = (assessment.aptitudeScore / assessment.aptitudeTotal) * 100;
+    return Math.round(percentage);
+  }
+
+  // Priority 2: Check aptitudeData.correctAnswers if aptitudeScore isn't available
+  if (assessment.aptitudeData?.correctAnswers !== undefined && assessment.aptitudeTotal && assessment.aptitudeTotal > 0) {
+    const percentage = (assessment.aptitudeData.correctAnswers / assessment.aptitudeTotal) * 100;
+    return Math.round(percentage);
+  }
+
+  // Priority 3: Check for overall writing score
   if (assessment.overallWritingScore && assessment.overallWritingScore > 0) {
     return Math.round(assessment.overallWritingScore);
   }
   
-  // Fallback to calculating from writing scores
+  // Priority 4: Calculate from writing scores array
   if (assessment.writingScores && assessment.writingScores.length > 0) {
     const validScores = assessment.writingScores.filter((score: any) => score.score > 0);
     if (validScores.length > 0) {
@@ -35,13 +48,7 @@ const calculateOverallScore = (assessment: any): number => {
     }
   }
   
-  // Check for aptitude score
-  if (assessment.aptitudeScore && assessment.aptitudeTotal) {
-    const percentage = (assessment.aptitudeScore / assessment.aptitudeTotal) * 100;
-    return Math.round(percentage);
-  }
-  
-  // Fallback to any overallScore property
+  // Priority 5: Fallback to any overallScore property
   if (assessment.overallScore && assessment.overallScore > 0) {
     return Math.round(assessment.overallScore);
   }
