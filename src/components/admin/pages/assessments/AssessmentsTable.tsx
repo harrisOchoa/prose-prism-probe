@@ -5,6 +5,36 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Eye, FileText, Clock, AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Calculate overall score from available assessment data
+const calculateOverallScore = (assessment: any): number => {
+  // Check for overall writing score first
+  if (assessment.overallWritingScore && assessment.overallWritingScore > 0) {
+    return Math.round(assessment.overallWritingScore);
+  }
+  
+  // Fallback to calculating from writing scores
+  if (assessment.writingScores && assessment.writingScores.length > 0) {
+    const validScores = assessment.writingScores.filter((score: any) => score.score > 0);
+    if (validScores.length > 0) {
+      const average = validScores.reduce((sum: number, score: any) => sum + score.score, 0) / validScores.length;
+      return Math.round(average);
+    }
+  }
+  
+  // Check for aptitude score
+  if (assessment.aptitudeScore && assessment.aptitudeTotal) {
+    const percentage = (assessment.aptitudeScore / assessment.aptitudeTotal) * 100;
+    return Math.round(percentage);
+  }
+  
+  // Fallback to any overallScore property
+  if (assessment.overallScore && assessment.overallScore > 0) {
+    return Math.round(assessment.overallScore);
+  }
+  
+  return 0;
+};
+
 interface AssessmentsTableProps {
   assessments: any[];
   loading: boolean;
@@ -109,8 +139,8 @@ const AssessmentsTable: React.FC<AssessmentsTableProps> = ({
                 </Badge>
               </TableCell>
               <TableCell>
-                <span className={getScoreColor(assessment.overallScore || 0)}>
-                  {assessment.overallScore || 0}%
+                <span className={getScoreColor(calculateOverallScore(assessment))}>
+                  {calculateOverallScore(assessment)}%
                 </span>
               </TableCell>
               <TableCell>
