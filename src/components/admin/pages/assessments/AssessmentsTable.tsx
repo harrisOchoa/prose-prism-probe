@@ -1,4 +1,3 @@
-
 import React, { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,20 +26,32 @@ const AssessmentsTable: React.FC<AssessmentsTableProps> = ({
   getStatusIcon,
   getScoreColor
 }) => {
-  // Optimized assessment debugging with development-only logging
+  // All hooks must be at the top level
+  const handleViewAssessment = useCallback((assessment: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log("View button clicked for assessment:", {
+        assessmentId: assessment?.id,
+        candidateName: assessment?.candidateName
+      });
+    }
+    
+    if (!assessment) {
+      console.error("Cannot view assessment - assessment object is null/undefined");
+      return;
+    }
+    
+    openAssessmentDetails(assessment);
+  }, [openAssessmentDetails]);
+
+  // Development logging
   React.useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
       console.log("AssessmentsTable received:", {
         assessmentsCount: assessments.length,
-        activeTab,
-        firstAssessment: assessments[0] ? {
-          id: assessments[0].id,
-          candidateName: assessments[0].candidateName,
-          keys: Object.keys(assessments[0])
-        } : null
+        activeTab
       });
     }
-  }, [assessments.length, activeTab, assessments]);
+  }, [assessments.length, activeTab]);
 
   if (loading) {
     return (
@@ -69,23 +80,6 @@ const AssessmentsTable: React.FC<AssessmentsTableProps> = ({
       </div>
     );
   }
-
-  const handleViewAssessment = useCallback((assessment: any) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log("View button clicked for assessment:", {
-        assessmentId: assessment?.id,
-        candidateName: assessment?.candidateName
-      });
-    }
-    
-    // Make sure we have the complete assessment object
-    if (!assessment) {
-      console.error("Cannot view assessment - assessment object is null/undefined");
-      return;
-    }
-    
-    openAssessmentDetails(assessment);
-  }, [openAssessmentDetails]);
 
   return (
     <div className="rounded-md border">
